@@ -294,6 +294,10 @@ CREATE TABLE llm_call (
     confidence NUMERIC(4, 3),
     execution_time_sec NUMERIC(6, 3),
     cached BOOLEAN DEFAULT false,
+    provider VARCHAR(64) DEFAULT 'anthropic',
+    tokens INT DEFAULT 0,
+    ok BOOLEAN DEFAULT true,
+    error TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

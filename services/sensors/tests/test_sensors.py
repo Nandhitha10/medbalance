@@ -99,3 +99,4 @@ async def test_sensors_api_endpoints(sensors_app):
         r_repair = await client.post("/simulate/repair?target=H4")
         assert r_repair.status_code == 200
         assert r_repair.json()["status"] == "repaired"
+

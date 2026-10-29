@@ -1,7 +1,7 @@
 # Project Progress Log
 
 ## Status Overview
-- Current Phase: Cold Chain & Sensor Telemetry Pipeline (HX2 Live Story) Complete
+- Current Phase: Central GenAI Gateway (POST /llm/complete & GET /ai/health) Complete
 - Updated: 2026-10-29
 
 ## Completed Tasks
@@ -63,8 +63,23 @@
   - Recovery action: marks vehicle `cold_ok=true` and routes `status=safe` via core-api, and publishes recovery `coldchain.alert` (`severity="NORMAL"`). Alerts published exactly once per state transition.
   - Downsampled persistence: writes telemetry rows (at most 1 per 60s per device) into PostgreSQL `sensor_reading` table.
   - Endpoints: `GET /status`, `GET /devices/{id}/telemetry?since=` for sparklines, `POST /telemetry` for test injection.
-- [x] Docker Compose updated with `sensors` and `coldchain` wired with `USE_FIXTURES: "0"`, Mosquitto MQTT, and Redis dependency.
-- [x] Comprehensive test suites passing (61 total tests passing across monorepo).
+- [x] `services/genai` fully implemented:
+  - **Prompt Registry (`genai_service/registry.py`)**: Loads `prompts/*.yaml` (`id`, `version`, `model: fast|smart`, `temperature`, `max_tokens`, `system`, Jinja2 `user_template`, `json_schema`, `tools`), with dev hot-reload.
+  - **Provider Adapters (`genai_service/providers/`)**:
+    - `ClaudeProvider`: Anthropic Python SDK (`AsyncAnthropic`), forced single-tool schema enforcement (`tool_choice={"type": "tool", "name": "record_output"}`), copilot multi-tool support, model resolution from `LLM_MODEL_FAST` / `LLM_MODEL_SMART`.
+    - `GeminiProvider`: Direct REST adapter env-guarded by `GEMINI_API_KEY`.
+    - `OllamaProvider`: Offline local model adapter connecting via `OLLAMA_HOST`.
+    - `FakeProvider`: Deterministic mock provider for comprehensive automated testing.
+  - **Validation & Retries**: JSON schema validation via `jsonschema`; on violation, appends invalid output and error diagnostic to message history, retrying up to 2 times before returning `{ok: false, error, fallback: true}`.
+  - **Redis Replay Cache (`genai_service/cache.py`)**: Key = `sha256(prompt_id@version + model + canonical_json(input))`.
+    - `DEMO_MODE=live`: Uses cache as speed-up, populates on miss.
+    - `DEMO_MODE=record`: Always queries LLM provider and refreshes cache.
+    - `DEMO_MODE=replay`: Serves *only* from cache; on miss returns `{ok: false, fallback: true}` with zero network calls.
+  - **Call Logging (`genai_service/db_models.py`)**: Logs all attempts to PostgreSQL table `llm_call` (`purpose`, `provider`, `model`, `prompt_id`, `version`, `input_hash`, `cached`, `execution_time_sec`, `tokens`, `ok`, `error`).
+  - **Health & Metrics (`genai_service/metrics.py`, `GET /ai/health`)**: Reports provider info, fast/smart models, cache mode, firewall status, and 24-hour rolling metrics (`total_calls`, `cache_hits`, `cache_hit_rate`, `p50_latency_sec`, `p95_latency_sec`, `schema_failures`, `fallbacks`, `firewall_blocks`, and per-purpose breakdown).
+  - **Concurrency & Timeouts**: 4-worker semaphore, 20s fast timeout, 45s smart timeout.
+- [x] Docker Compose updated: `genai` wired with `USE_FIXTURES: "0"`, PostgreSQL and Redis dependencies.
+- [x] Monorepo test suite green: **71 passed out of 71 tests**.
 
 ## Table of Engineered Story Lots (For L2, L3, L4 Lanes)
 
@@ -221,12 +236,85 @@ Signed, Pharmacist Hesaraghatta PHC
 - `POST /reviews/{id}/resolve`: Resolve anomaly review item
 
 ### 3. `genai` (Port 8003 / Gateway: `/api/genai/*`)
-- `POST /llm/complete`: Central LLM gateway with Pydantic structured output
-- `POST /narrate/{order_id}`: Generate grounded order narration with numeric firewall
-- `POST /docs/dta/{order_id}`: Generate printable DTA voucher PDF
-- `POST /docs/credit-memo/{order_id}`: Generate financial credit memo
-- `POST /copilot/chat`: SSE interactive copilot stream
-- `GET /ai/health`: Model status and cache health
+- `POST /llm/complete`: Central LLM gateway with structured output, prompt registry, validation retries, and replay cache.
+- `GET /ai/health`: Model status, primary provider, and 24h rolling metrics.
+- `POST /narrate/{order_id}`: Generate grounded order narration with numeric firewall.
+- `POST /docs/dta/{order_id}`: Generate printable DTA voucher PDF.
+- `POST /docs/credit-memo/{order_id}`: Generate financial credit memo.
+- `POST /copilot/chat`: SSE interactive copilot stream.
+
+#### Calling the Gateway from Other Services
+
+All LLM calls across lanes must route through `POST /llm/complete` (via direct port 8003 or gateway `/api/genai/llm/complete`). Services must never import LLM provider SDKs directly (CLAUDE.md §8).
+
+**1. Example HTTP Request (`curl`):**
+```bash
+curl -X POST http://localhost:8080/api/genai/llm/complete \
+  -H "Content-Type: application/json" \
+  -d '{
+    "purpose": "extraction",
+    "prompt_id": "extract_stock",
+    "version": 1,
+    "input": {
+      "text": "Physical count: 50 vials inzulin (reg 100iu) batch LOT-INS-H4-01 exp 19/11/2026"
+    },
+    "model": "fast"
+  }'
+```
+
+**2. Example HTTP Response:**
+```json
+{
+  "request_id": "llm-a1b2c3d4e5f6",
+  "purpose": "extraction",
+  "prompt_id": "extract_stock",
+  "version": "1",
+  "model": "claude-3-5-haiku-20241022",
+  "confidence": 0.95,
+  "output": {
+    "drug_code": "INS-REG",
+    "batch_no": "LOT-INS-H4-01",
+    "expiry": "2026-11-19",
+    "quantity": 50
+  },
+  "cached": false,
+  "execution_time_sec": 0.8124,
+  "ok": true,
+  "fallback": false
+}
+```
+
+**3. Example Python Client Integration (e.g. Ingest-AI / Forecast):**
+```python
+import httpx
+from medbal_common.settings import get_settings
+
+settings = get_settings()
+
+async def call_llm(purpose: str, prompt_id: str, version: int, input_vars: dict, model: str = "fast") -> dict:
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        response = await client.post(
+            f"{settings.GENAI_URL}/llm/complete",
+            json={
+                "purpose": purpose,
+                "prompt_id": prompt_id,
+                "version": version,
+                "input": input_vars,
+                "model": model,
+            },
+        )
+        response.raise_for_status()
+        res = response.json()
+        if not res.get("ok"):
+            # Handle fallback
+            raise RuntimeError(f"LLM failure: {res.get('error')}")
+        return res["output"]  # Validated structured dictionary
+```
+
+**4. Cache and Replay Semantics:**
+- `DEMO_MODE=live`: Queries Redis cache first (`sha256(prompt_id@version + model + canonical_json(input))`). On cache miss, calls LLM provider, validates output, and caches result.
+- `DEMO_MODE=record`: Always calls LLM provider and refreshes cache.
+- `DEMO_MODE=replay`: Serves *only* from cache. On cache miss, immediately returns `{ "ok": false, "fallback": true }` without performing any network call.
 
 ### 4. `forecast` (Port 8004 / Gateway: `/api/forecast/*`)
 - `POST /forecast/run`: Trigger Holt-Winters consumption forecast calculation

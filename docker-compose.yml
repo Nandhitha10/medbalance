@@ -183,11 +183,18 @@ services:
     container_name: medbal-genai
     restart: unless-stopped
     profiles: ["ai", "full"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     env_file:
       - .env.example
     environment:
       SERVICE_NAME: genai
-      USE_FIXTURES: "1"
+      DATABASE_URL: postgresql+psycopg://medbal:medbal_secret_pw@postgres:5432/medbal
+      REDIS_URL: redis://redis:6379/0
+      USE_FIXTURES: "0"
     ports:
       - "8003:8003"
     healthcheck:

@@ -1,8 +1,5 @@
 """GenAI Service entrypoint."""
 
-from medbal_common.fastapi_base import create_app
-from medbal_common import fixtures
+from genai_service.app import app, build_app
 
-app = create_app(name="genai", title="MedBalance GenAI Gateway")
-fixtures.serve(app, "genai")
-
+__all__ = ["app", "build_app"]

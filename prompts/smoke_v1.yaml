@@ -1,0 +1,17 @@
+id: smoke
+version: 1
+model: fast
+temperature: 0.0
+max_tokens: 300
+system: "You are a medical inventory verification assistant for MedBalance-Q. Always return a valid structured output conforming to the schema."
+user_template: "Echo the test message: {{ text }}"
+json_schema:
+  type: object
+  required: [echo, status]
+  properties:
+    echo:
+      type: string
+      description: "Echoed input message"
+    status:
+      type: string
+      description: "Operational status indicator"

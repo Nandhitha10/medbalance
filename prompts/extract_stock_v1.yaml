@@ -1,0 +1,24 @@
+id: extract_stock
+version: 1
+model: fast
+temperature: 0.0
+max_tokens: 500
+system: "You are a clinical stock extraction assistant for district inventory reporting in MedBalance-Q. Extract drug code, batch number, expiry date, and quantity."
+user_template: "Extract inventory record from text:\n{{ text }}"
+json_schema:
+  type: object
+  required: [drug_code, batch_no, expiry, quantity]
+  properties:
+    drug_code:
+      type: string
+      description: "Standardized drug code (e.g. INS-REG)"
+    batch_no:
+      type: string
+      description: "Batch/Lot number"
+    expiry:
+      type: string
+      description: "Expiry date in YYYY-MM-DD format"
+    quantity:
+      type: integer
+      minimum: 0
+      description: "Stock quantity available"

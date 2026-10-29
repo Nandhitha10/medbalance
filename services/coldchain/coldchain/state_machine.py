@@ -311,3 +311,4 @@ class ColdChainManager:
             "system_status": system_status,
             "devices": devices_list,
         }
+
