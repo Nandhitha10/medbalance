@@ -49,3 +49,4 @@ class MaxCutPort(Protocol):
     ) -> MaxCutResult:
         """Partition graph vertices into two zones {0, 1} maximizing the cut."""
         ...
+

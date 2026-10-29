@@ -89,3 +89,4 @@ def build_qaoa_maxcut_circuit(
     # 3. Measurement
     qc.measure_all()
     return qc
+

@@ -181,3 +181,4 @@ def solve_milp_exact(
         "n_vars": n_vars,
         "metrics": metrics,
     }
+

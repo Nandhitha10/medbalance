@@ -151,3 +151,4 @@ def solve_maxcut_chain(
     fallback_res.evidence_file = str(evidence_path)
     fallback_res.error = "; ".join(errors_encountered)
     return fallback_res
+

@@ -220,7 +220,7 @@ services:
       - .env.example
     environment:
       SERVICE_NAME: forecast
-      USE_FIXTURES: "1"
+      USE_FIXTURES: "0"
     ports:
       - "8004:8004"
     healthcheck:

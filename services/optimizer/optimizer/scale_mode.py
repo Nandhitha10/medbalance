@@ -215,3 +215,4 @@ def generate_scale_district(scale: int = 40, seed: int = 42) -> Dict[str, Any]:
         "forecasts": forecasts,
         "snapshot_hash": f"scale-{scale}-seed-{seed}",
     }
+

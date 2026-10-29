@@ -1,7 +1,7 @@
 # Project Progress Log
 
 ## Status Overview
-- Current Phase: P11 QAOA Max-Cut Graph Zoning, Scale Mode Decomposition, Exact Classical MILP Baseline, and Solver Benchmarking Complete
+- Current Phase: P12 Epidemiological & Statistical Forecasting Engine (Holt-Winters, LLM Context Multiplier with Guardrails, and Outbreak Evaluation) Complete
 - Updated: 2026-10-30
 
 ## Completed Tasks
@@ -152,6 +152,23 @@
   - `scripts/sweep_p2.py`: Swept $P_2 \in \{0.5, 1.0, 1.5, 2.0, 3.0\}$ across 5 random seeds (42..46). Documented findings in `docs/DECISIONS.md` (ADR-005): $P_2 = 1.5$ achieves maximum shortage reduction (496.4 units) and expiry avoidance (Rs. 45,628.00) with minimum pre-repair constraint violations (32.20) and 0 post-repair violations.
   - Evidence file written and verified: `evidence/qpiai_runs/20261029_174952_fd9adf47.json`.
   - Monorepo test suite green: **All 31 automated tests passing** across brute-force, property tests, optimizer, and core-api.
+- [x] **P11 QAOA Max-Cut Graph Zoning, Scale Mode Decomposition, Exact Classical MILP Baseline, and Solver Benchmarking**:
+  - `services/optimizer/optimizer/qaoa/`: Tiered QAOA solver architecture (`QCloudSimulatorMaxCut`, `QSVLocalMaxCut`, `ExactBruteForceMaxCut`, `NetworkXGreedyMaxCut`) with QpiAI SDK circuit generation ($R_{ZZ}$, $R_X$), parameterized optimization, and immutable run evidence logging.
+  - `services/optimizer/optimizer/zoning.py`: Transit impedance graph zoning via QAOA Max-Cut vs Euclidean K-Means (achieving +42.5% cut value and -41.6% intra-zone impedance reduction).
+  - `services/optimizer/optimizer/scale_mode.py`: Scale-mode synthetic district generator (40 health facilities, 5 taluk super-nodes, 90 routes, 79 at-risk lots, 520 position records) supporting pure in-memory benchmarking.
+  - `services/optimizer/optimizer/decomposition.py`: Multi-tier zone decomposition pipeline (Zone 0 QUBO $\to$ Zone 1 QUBO $\to$ Boundary QUBO on residual demand $\to$ FEFO validator repair).
+  - `services/optimizer/optimizer/milp.py`: Google OR-Tools CP-SAT integer programming baseline solving exact quadratic formulations via product linearization with 0.0% optimality gap vs brute force.
+  - `services/optimizer/optimizer/routers/plan.py` (`GET /plan/{id}/benchmark`): 5-policy evaluation matrix (`no-transfer`, `greedy`, `greedy_f4`, `qubo`, `milp`) comparing energies, shortage, expiry avoided ₹, waste moved, trips, runtimes, and optimality gaps.
+- [x] **P12 Epidemiological & Statistical Forecasting Engine (Holt-Winters, LLM Context Multiplier with Guardrails, and Outbreak Evaluation)**:
+  - `services/forecast/forecast/baseline.py`: `statsmodels` `ExponentialSmoothing` with additive trend and weekly seasonality (`seasonal_periods=7`) fitted on 90+ days consumption series, with fallback to EWMA for short series (< 14 days) or degenerate cases; residual-based $p_{10}$ and $p_{90}$ prediction intervals.
+  - `services/forecast/forecast/calendar.py`: Static epidemiological calendar delivering signals for post-monsoon dengue vector surges (`SIG-CAL-DENGUE-POSTMONSOON`), Diwali air-pollution respiratory exacerbations (`SIG-CAL-DIWALI-FESTIVAL`), and winter pediatric respiratory illness (`SIG-CAL-WINTER-RESPIRATORY`).
+  - `services/forecast/forecast/context.py` & `prompts/forecast_ctx_v1.yaml`: Gateway prompt `forecast_ctx` (v1, `model: fast`) prompting LLM for `{multiplier, confidence, signal_ids, reasoning}` given facility, drug, baseline rate, 14-day history, and active signals.
+  - Code guardrails: Clamping multipliers to $[0.5, 3.0]$; falling back to $1.0$ if confidence $< 0.5$ or if signal citations are ungrounded / invalid.
+  - Zero-LLM call optimization: Pairs with zero relevant signals bypass LLM completely (0 LLM calls).
+  - Resilience: In-memory circuit breaker (`_genai_offline_until`) prevents gateway timeout stalls when GenAI is unreachable, falling back safely to deterministic signals.
+  - `services/forecast/forecast/backtest.py` (`GET /forecast/backtest`): Evaluates 14-day holdout window comparing actuals against baseline vs context-adjusted forecasts, computing MAPE and RMSE accuracy lift.
+  - `services/forecast/forecast/routers/forecast.py` (`POST /forecast/run`, `GET /forecast`): Computes 52 facility×drug forecasts, persists to PostgreSQL `forecast` table, publishes `forecast.updated` to Redis Streams, and listens to `clock.tick` for daily rolling forecast generation.
+  - Acceptance verified: Under `dengue_outbreak`, H3 ORS exhibits context multiplier $> 1.0$ with IDSP citation and clinical rationale, immediately propagating higher daily consumption rate to optimizer FEFO positions and reserves.
 
 ### QpiAI Run Evidence Excerpt (`evidence/qpiai_runs/20261029_174952_fd9adf47.json`)
 
@@ -654,11 +671,88 @@ All 40 tests passed cleanly across the entire optimizer test suite:
 
 ---
 
+## P12: Epidemiological & Statistical Forecasting Engine (Holt-Winters, LLM Context Multiplier with Guardrails)
+
+### 1. Statistical Baseline: Weekly Seasonal Holt-Winters & EWMA Fallback
+- **Seasonal Decomposition (`services/forecast/forecast/baseline.py`)**:
+  - Implements `statsmodels.tsa.holtwinters.ExponentialSmoothing` with additive trend and additive weekly seasonality (`seasonal_periods=7`).
+  - Fitted on 90+ days of facility×drug `consumption_daily` history (from PostgreSQL or generated seed Poisson distribution).
+  - Residuals ($e_t = y_t - \hat{y}_t$) are computed across fitted history; standard deviation $\sigma_e$ provides $p_{10}$ and $p_{90}$ bounds:
+    $$p_{10} = \max(0, \hat{y} - 1.28 \sigma_e), \quad p_{90} = \hat{y} + 1.28 \sigma_e$$
+- **EWMA Fallback**:
+  - For series shorter than 14 days or series with degenerate variance, automatically falls back to Exponentially Weighted Moving Average (`alpha=0.2`).
+  - Residual variance for EWMA produces proportional bounds ensuring robust intervals even on sparse rural clinic records.
+
+### 2. Epidemiological Calendar & Real-Time Signal Integration
+- **Static Calendar (`services/forecast/forecast/calendar.py`)**:
+  - Covers regional public health dynamics in Karnataka:
+    1. `SIG-CAL-DENGUE-POSTMONSOON` (Sep 15 - Nov 30): Post-monsoon Aedes vector spike affecting fluids, antibiotics, and analgesics.
+    2. `SIG-CAL-DIWALI-FESTIVAL` (Oct 20 - Nov 15): Severe particulate matter exacerbating asthma/COPD, affecting Salbutamol (`SALB-100`).
+    3. `SIG-CAL-WINTER-RESPIRATORY` (Dec 01 - Jan 31): Cold-weather respiratory viral infections.
+- **Dynamic Signal Feed**:
+  - Merges calendar signals with real-time IDSP outbreak and campaign signals fetched from `sim-control` (`GET /signals`).
+
+### 3. LLM Context Multiplier & Structured Prompt Registry
+- **Prompt Registry (`prompts/forecast_ctx_v1.yaml`)**:
+  - Registered prompt `forecast_ctx` (v1, `model: fast`).
+  - Strict JSON schema enforcement:
+    ```json
+    {
+      "multiplier": {"type": "number"},
+      "confidence": {"type": "number"},
+      "signal_ids": {"type": "array", "items": {"type": "string"}},
+      "reasoning": {"type": "string"}
+    }
+    ```
+- **Zero-LLM Call Optimization**:
+  - Filter logic in `find_relevant_signals()` strictly matches target facility and `drugs_affected`.
+  - Pairs with zero relevant signals are never sent to the LLM (strictly 0 LLM calls), conserving API quota and guaranteeing $O(1)$ evaluation for steady-state drugs.
+- **Deterministic Code Guardrails (`apply_guardrails()`)**:
+  - Clamps output multiplier to $[0.5, 3.0]$ (preventing runaway allocation).
+  - If model confidence $< 0.5$ or if none of the cited `signal_ids` are valid active signals, the multiplier is unconditionally forced to $1.0$ (disregarding ungrounded hallucinations).
+- **Circuit Breaker Resilience**:
+  - Fast timeout (0.5s) and 60-second in-memory circuit breaker (`_genai_offline_until`) prevent cascading latencies when GenAI service is offline, falling back safely to deterministic signals.
+
+### 4. Out-of-Sample Backtesting Engine (`GET /forecast/backtest`)
+- **Evaluation Methodology (`services/forecast/forecast/backtest.py`)**:
+  - Evaluates rolling out-of-sample prediction accuracy over a 14-day holdout window.
+  - Calculates Mean Absolute Percentage Error (MAPE) and Root Mean Squared Error (RMSE) for both baseline Holt-Winters and context-adjusted models.
+  - Quantifies accuracy lift:
+    $$\Delta\text{MAPE} = \text{MAPE}_{\text{baseline}} - \text{MAPE}_{\text{adjusted}}$$
+
+### 5. Dengue Outbreak Acceptance & Optimizer FEFO Propagation
+- **Acceptance Scenario**:
+  - During scenario `dengue_outbreak`, `sim-control` broadcasts active signal `SIG-OUTBREAK-DENGUE-H3` targeting facility H3 and `ORS-20.5`.
+  - Context engine retrieves the active signal, evaluates multiplier $> 1.0$ (e.g. $1.5\times$ to $2.0\times$), cites `SIG-OUTBREAK-DENGUE-H3`, and documents clinical fluid resuscitation requirements.
+  - The updated rate ($r = \text{baseline} \times \text{multiplier}$) persists to the `forecast` table and publishes `forecast.updated` to Redis Streams.
+  - Optimizer snapshot calculation (`core-api /positions`) incorporates this higher rate, directly expanding required reserves ($R = r \cdot L$) and identifying urgent transfer needs.
+
+---
+
+### Verification & Test Suite Summary (Forecast Engine)
+
+All 11 forecast tests passed cleanly:
+- `tests/test_forecast_guardrails.py`: **8 passed**
+  - `test_clamp_guardrail_upper_and_lower`: Verifies clamping at $[0.5, 3.0]$.
+  - `test_confidence_guardrail`: Verifies confidence thresholding (< 0.5 -> 1.0).
+  - `test_citation_guardrail`: Verifies ungrounded signal citations reset to 1.0.
+  - `test_no_signal_path_makes_zero_llm_calls`: Verifies 0 LLM calls on no-signal path.
+  - `test_holt_winters_synthetic_seasonal_data`: Verifies additive weekly seasonality fit and residual prediction intervals.
+  - `test_ewma_fallback_on_short_series`: Verifies graceful fallback on short (<14 day) sequences.
+  - `test_dengue_outbreak_h3_ors_acceptance`: Verifies full end-to-end acceptance from signal to FEFO position expansion.
+  - `test_backtest_report_evaluation`: Verifies out-of-sample MAPE/RMSE calculation.
+- `services/forecast/tests/test_forecast_api.py`: **3 passed**
+  - `test_forecast_run_endpoint`: Verifies `POST /forecast/run` computes and persists all 52 forecasts.
+  - `test_get_forecast_endpoint`: Verifies `GET /forecast` retrieval and filtering.
+  - `test_backtest_endpoint`: Verifies `GET /forecast/backtest` accuracy evaluation.
+
+---
+
 ## Decisions
 - See [docs/DECISIONS.md](DECISIONS.md) (ADR-001 through ADR-008)
 
 ## Requests & Next Steps for Lanes
-- **L1 (Core)**: Added `POST /vehicles/{id}/status` and `/internal/coldchain/vehicle-status` to `contracts/openapi/core-api.yaml` and implemented in `services/core-api/src/routers/master.py` to allow coldchain status updates to mark vehicles and routes safe/unsafe with audit tracking.
-- **L2 (Optimizer)**: Integrate QUBO solver and QpiAI adapters in `services/optimizer`.
-- **L3 (AI & Forecast)**: Wire GenAI gateway and Holt-Winters forecasting engine.
+- **L1 (Core)**: [COMPLETED] Core master data, lots batch upsert, FEFO positions, snapshot, transfer orders, audit chain, and SSE events.
+- **L2 (Optimizer)**: [COMPLETED] QUBO formulation v3, brute-force verification, QAOA Max-Cut graph zoning, scale-mode district, OR-Tools MILP baseline, and benchmark comparisons.
+- **L3 (AI & Forecast)**: [COMPLETED] Prompt registry, GenAI gateway providers with cache/call logging, Ingest-AI multi-format parser & review queue, Holt-Winters baseline + LLM context multiplier forecasting with code guardrails, and backtest reporting.
 - **L4 (ColdChain & Sim)**: [COMPLETED] `sim-control`, `sim-hospital` (all 4 styles), `sensors`, and `coldchain` fully implemented and tested.

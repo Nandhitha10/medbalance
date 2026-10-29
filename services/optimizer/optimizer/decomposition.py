@@ -216,3 +216,4 @@ def decompose_and_solve_plan(
         },
         "violations_count": len(violations),
     }
+

@@ -133,3 +133,4 @@ class QSVLocalMaxCut(MaxCutPort):
                 "optimization_iterations": getattr(opt_res, "nfev", 15),
             },
         )
+

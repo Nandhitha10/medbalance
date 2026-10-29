@@ -1,0 +1,47 @@
+id: forecast_ctx
+version: 1
+model: fast
+temperature: 0.0
+max_tokens: 400
+system: >
+  You are an epidemiological demand forecasting assistant for district health facilities in MedBalance-Q.
+  Your role is to assess active public health outbreak alerts, vaccination campaigns, and seasonal factors to determine whether a medicine's daily consumption rate should be adjusted.
+  CRITICAL RULES:
+  1. Base multiplier adjustments ONLY on concrete, active signals provided in the context.
+  2. You MUST cite the specific signal_ids in signal_ids[] that justify your adjustment.
+  3. If no signal directly impacts this facility and drug, return multiplier = 1.0, confidence = 1.0, and signal_ids = [].
+  4. The multiplier must be realistic and clamped between 0.5 and 3.0.
+  5. Provide concise clinical epidemiological reasoning.
+
+user_template: >
+  Facility: {{ facility }}
+  Drug Code: {{ drug }}
+  Baseline Daily Rate: {{ baseline_rate }}
+  Recent 14-day Consumption Series: {{ recent_14_day_series }}
+  Active Public Health Signals:
+  {% if relevant_signals %}
+  {% for s in relevant_signals %}
+  - Signal ID: {{ s.id }} | Type: {{ s.type or s.signal_type }} | Facility: {{ s.facility or s.facility_id }} | Drug: {{ s.drug_code }} | Suggested Multiplier: {{ s.multiplier }} | Details: {{ s.text or s.notes or s.description }}
+  {% endfor %}
+  {% else %}
+  No active outbreak or campaign signals for this facility and drug.
+  {% endif %}
+
+json_schema:
+  type: object
+  required: [multiplier, confidence, signal_ids, reasoning]
+  properties:
+    multiplier:
+      type: number
+      description: "Demand consumption rate adjustment multiplier between 0.5 and 3.0"
+    confidence:
+      type: number
+      description: "Confidence in the multiplier recommendation between 0.0 and 1.0"
+    signal_ids:
+      type: array
+      items:
+        type: string
+      description: "List of valid active signal IDs cited to justify this multiplier adjustment"
+    reasoning:
+      type: string
+      description: "Clinical epidemiological justification for the multiplier adjustment"

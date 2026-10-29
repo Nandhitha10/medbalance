@@ -1,8 +1,5 @@
 """Forecast Service entrypoint."""
 
-from medbal_common.fastapi_base import create_app
-from medbal_common import fixtures
+from forecast.app import app, build_app
 
-app = create_app(name="forecast", title="MedBalance Forecast Service")
-fixtures.serve(app, "forecast")
-
+__all__ = ["app", "build_app"]

@@ -78,3 +78,4 @@ The zoning engine wraps all graph partitioning behind the `MaxCutPort` protocol:
 
 Every call persists execution evidence to `evidence/qcloud_runs/<ts>_<hash>.json`, tracking:
 `{tier, depth, shots, cut_value, approximation_ratio, time_ms, partition, evidence_file}`.
+

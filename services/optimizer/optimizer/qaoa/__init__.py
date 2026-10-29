@@ -19,3 +19,4 @@ __all__ = [
     "QSVLocalMaxCut",
     "solve_maxcut_chain",
 ]
+

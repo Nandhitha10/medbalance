@@ -61,3 +61,4 @@ class ExactBruteForceMaxCut(MaxCutPort):
             exact_cut_value=max_cut,
             telemetry={"total_states_evaluated": 2 ** n},
         )
+

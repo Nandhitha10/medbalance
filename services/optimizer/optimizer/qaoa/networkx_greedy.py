@@ -69,3 +69,4 @@ class NetworkXGreedyMaxCut(MaxCutPort):
             time_ms=elapsed_ms,
             telemetry={"local_search_iterations": iterations},
         )
+

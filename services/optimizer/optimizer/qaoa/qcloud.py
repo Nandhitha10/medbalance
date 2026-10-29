@@ -79,3 +79,4 @@ class QCloudSimulatorMaxCut(MaxCutPort):
             time_ms=elapsed_ms,
             telemetry={"shots": shots, "device_name": "QpiAI-QSV-Simulator"},
         )
+
