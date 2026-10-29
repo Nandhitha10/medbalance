@@ -438,6 +438,60 @@ All mathematical computations are pure functions with zero I/O so they can be re
 - `POST /transfers/inbound`: Acknowledge inbound medicine arrival
 - `POST /transfers/outbound`: Dispatch outbound transfer
 
+## CP1 Issues & End-to-End Walking Skeleton Verification
+
+### Pass/Fail Table
+
+| Step | Operation / Test Case | Target / Service | Status | Owning Lane (CLAUDE.md §3) | Failure Summary |
+|---|---|---|---|---|---|
+| **Step 1a** | `make down -v` | Compose Stack | **FAIL** | L1 (Infrastructure) | `make` / `docker` command not found on Windows host |
+| **Step 1b** | `make build` | Docker Images | **FAIL** | L1 (Infrastructure) | `docker compose build` cannot execute without Docker daemon |
+| **Step 1c** | `make seed` | Data Seed | **PARTIAL** | L1 (Data / Postgres) | `python data/seed/generate.py` passed; `psql` insert blocked by absent Postgres container |
+| **Step 1d** | `make up` | Microservices | **FAIL** | L1 (Infrastructure) | Cannot launch containers without Docker |
+| **Step 2** | `test_01_reset_sim_seed_42` | `POST /api/sim/reset?seed=42` | **FAIL** | L4 (Sim-Control) / L1 (Gateway) | `ConnectError: [WinError 10061]` connection refused on port 8080 |
+| **Step 3** | `test_02_start_clock_and_wait_2_sim_days` | `POST /api/sim/clock/start` & poll | **FAIL** | L4 (Sim-Control) / L1 (Gateway) | `ConnectError: [WinError 10061]` connection refused on port 8080 |
+| **Step 4** | `test_03_assert_lots_exist_for_h1_to_h4` | `GET /api/core/lots` | **FAIL** | L3 (Ingest-AI) / L1 (Core-API) | `ConnectError: [WinError 10061]` connection refused on port 8080 |
+| **Step 5** | `test_04_run_plan_and_assert_orders` | `POST /api/optimizer/plan/run` | **FAIL** | L2 (Optimizer) | `ConnectError: [WinError 10061]` connection refused on port 8080 |
+| **Step 6** | `test_05_audit_verify` | `GET /api/core/audit/verify` | **FAIL** | L1 (Core-API) | `ConnectError: [WinError 10061]` connection refused on port 8080 |
+
+---
+
+### Detailed Failures, Root Causes & Fixes by Lane
+
+#### 1. L1 (Infrastructure, Gateway & Core-API)
+- **Failure 1.1**: Host execution environment lacks Docker and GNU Make.
+  - *Exact Error*: `docker : The term 'docker' is not recognized as the name of a cmdlet...` and `make : The term 'make' is not recognized...`
+  - *Root Cause*: On the current Windows development laptop, Docker Desktop and GNU Make are not installed or configured in the system PATH.
+  - *Suggested Fix (L1)*: Install Docker Desktop with WSL2 backend or run the stack inside a Linux development VM. Alternatively, provide a native PowerShell orchestration script (`scripts/run_stack.ps1`) for Windows development.
+- **Failure 1.2**: Database password mismatch between `.env.example` and `docker-compose.yml`.
+  - *Exact Error*: `.env.example` specified `DATABASE_URL=...medbal:medbal@postgres:5432...` while `docker-compose.yml` configured `POSTGRES_PASSWORD=medbal_secret_pw`.
+  - *Fix Applied (Shared Code)*: Updated `.env.example` line 9 to use `medbal_secret_pw` across all service connections.
+- **Failure 1.3**: Audit verification endpoint unreachable.
+  - *Exact Error*: `httpx.ConnectError: [WinError 10061]` on `GET /api/core/audit/verify`.
+  - *Suggested Fix (L1)*: Once container stack is running, verify that `core-api`'s `verify_audit` endpoint verifies the SHA-256 tamper-evident audit hash chain over PostgreSQL `audit_log`.
+
+#### 2. L2 (Optimizer)
+- **Failure 2.1**: TransferOrder schema mismatch for `usable_quantity`.
+  - *Exact Error / Observation*: `services/optimizer/optimizer/models.py` defines `TransferOrder` without `usable_quantity`, and `to_dict()` exports only `"quantity"`. However, `contracts/openapi/components.yaml` lines 322-324 explicitly requires `usable_quantity: integer`.
+  - *Root Cause*: `TransferOrder` dataclass in optimizer did not store the computed usable quantity from `greedy_f4`.
+  - *Suggested Fix (L2)*: In `services/optimizer/optimizer/models.py`, add `usable_quantity: int` to `TransferOrder` and export `"usable_quantity": self.usable_quantity` in `to_dict()`. Update `greedy_f4` in `services/optimizer/optimizer/baselines.py` to pass `usable_quantity=transfer_qty`.
+
+#### 3. L3 (Ingest-AI)
+- **Failure 3.1**: Lot propagation to core-api for H1..H4.
+  - *Exact Error / Observation*: `test_03_assert_lots_exist_for_h1_to_h4` expects lots to exist for all four facilities in `core-api`.
+  - *Root Cause*: When running dynamically, `ingest-ai` must receive `clock.tick` from Redis, pull H1 (FHIR) and H2 (CSV), and process inbound push reports from H3 (Chat) and H4 (Text), then upsert them to `core-api POST /lots/upsert-batch`.
+  - *Suggested Fix (L3)*: Ensure `ingest-ai` starts after Redis and PostgreSQL, and verify that `handle_clock_tick` completes polling within the 30s sim day cycle without unhandled timeouts.
+
+#### 4. L4 (ColdChain & Sim-Control)
+- **Failure 4.1**: `sim-control` missing explicit `REDIS_URL` and `depends_on: redis` in compose.
+  - *Exact Error / Observation*: `sim-control` attempted to publish `clock.tick` events to `redis://redis:6379/0` on tick rollover, but in `docker-compose.yml` it lacked `REDIS_URL` in its environment block and did not specify `depends_on: redis`.
+  - *Fix Applied (Shared Code)*: Added `REDIS_URL: redis://redis:6379/0` and `depends_on: redis: condition: service_healthy` to `sim-control` in `docker-compose.yml`.
+- **Failure 4.2**: `sim-hospital-h1` race condition against Redis.
+  - *Exact Error / Observation*: Hospital nodes start background tick consumers during `lifespan`. If Redis is not yet healthy, the consumer loop logs an error and terminates.
+  - *Fix Applied (Shared Code)*: Added `depends_on: redis: condition: service_healthy` to `sim-hospital-h1` in `docker-compose.yml`.
+
+---
+
 ## Decisions
 - See [docs/DECISIONS.md](DECISIONS.md) (ADR-001 through ADR-004)
 

@@ -310,7 +310,11 @@ services:
       - .env.example
     environment:
       SERVICE_NAME: sim-control
+      REDIS_URL: redis://redis:6379/0
       USE_FIXTURES: "0"
+    depends_on:
+      redis:
+        condition: service_healthy
     ports:
       - "8100:8100"
     healthcheck:
@@ -339,6 +343,8 @@ services:
     ports:
       - "8101:8101"
     depends_on:
+      redis:
+        condition: service_healthy
       sim-control:
         condition: service_healthy
     healthcheck:
@@ -364,6 +370,8 @@ services:
     ports:
       - "8102:8102"
     depends_on:
+      redis:
+        condition: service_healthy
       sim-control:
         condition: service_healthy
       sim-hospital-h1:
@@ -391,6 +399,8 @@ services:
     ports:
       - "8103:8103"
     depends_on:
+      redis:
+        condition: service_healthy
       sim-control:
         condition: service_healthy
       sim-hospital-h1:
@@ -418,6 +428,8 @@ services:
     ports:
       - "8104:8104"
     depends_on:
+      redis:
+        condition: service_healthy
       sim-control:
         condition: service_healthy
       sim-hospital-h1:
