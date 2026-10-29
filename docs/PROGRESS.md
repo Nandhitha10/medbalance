@@ -1,7 +1,7 @@
 # Project Progress Log
 
 ## Status Overview
-- Current Phase: Sim-Control & Sim-Hospital (4-Style District Twin) Implementation Complete
+- Current Phase: Cold Chain & Sensor Telemetry Pipeline (HX2 Live Story) Complete
 - Updated: 2026-10-29
 
 ## Completed Tasks
@@ -33,6 +33,7 @@
   - Provenance: `GET /provenance/{order_id}` delivering full DAG nodes and edges (`stock_report -> extraction_item -> lot -> candidate -> order -> custody_event`) with feasibility proofs and audit sequence numbers.
   - Audit chain: `GET /audit/verify` and `GET /audit?entity=&id=`, verified for integrity and cryptographic tamper detection.
   - Real-time events: `GET /events` Server-Sent Events (SSE) streaming Redis Streams with 15-second heartbeats.
+  - Vehicle status: `POST /vehicles/{id}/status` allowing cold chain status updates and marking associated routes safe/unsafe.
 - [x] `services/sim-control` fully implemented:
   - Simulation clock: configurable day length (`SIM_DAY_SECONDS=30` default), start/pause/speed control, advances virtual datetime starting at `SIM_START_DATE`.
   - Publishes `clock.tick` event to Redis Streams on each new sim day turnover.
@@ -49,8 +50,21 @@
     - **H2 (CSV)**: `GET /export/stock.csv` returning e-Aushadhi export with 10-pack strip conversions and missing batch number clerical defects.
     - **H3 (Chat)**: Daily bilingual Kannada + English informal chat report with 15 template variants pushed to `ingest-ai /ingest/H3`.
     - **H4 (Handwritten/Text)**: Messy physical stock register note with common clerical typos (`inzulin`, `paracetmol`); when `bad_data` is active, outputs anomalous quantity (10000) and corrupted year (1999) pushed to `ingest-ai /ingest/H4`.
-- [x] Docker Compose configured with `sim-control` (port 8100) and 4 `sim-hospital` instances (`sim-hospital-h1`..`h4` on ports 8101..8104).
-- [x] Comprehensive test suites passing (51 total tests passing across monorepo).
+- [x] `services/sensors` fully implemented:
+  - Simulates temperature devices across cold transport vans (`DEV-CV-01`, `DEV-CV-02`) and facility ILRs (`DEV-ILR-H1`..`H4`, `W0`).
+  - Publishes telemetry every 5 real seconds to MQTT topic `district/coldchain/{device_id}/telemetry` with payload `{ts, temp_c, door_open, battery}`.
+  - Normal operation: 4.5 °C ± 1.0 with Gaussian noise.
+  - Fault mode: polls Redis key `sensors:faults`; when `fridge_failure` triggers, drifts `CV-02` temperature up towards ~11.4 °C over 60 seconds.
+  - H4 ILR starts in `offline` state until `ilr_repaired` signal received.
+- [x] `services/coldchain` fully implemented:
+  - Subscribes to MQTT topic `district/coldchain/+/telemetry`.
+  - Deterministic per-device state machine: `OK` -> `WARNING` (1 reading out of 2–8 °C) -> `EXCURSION` (3 consecutive out of 2–8 °C or door open > 2 min) -> `RECOVERED` (6 consecutive good readings).
+  - Excursion action: marks vehicle `cold_ok=false` and its routes `status=unsafe` with `status_reason` via core-api (`POST /vehicles/{id}/status`), and publishes `coldchain.alert` to Redis Streams (`{device, vehicle, route_ids, temp_c, since, severity="CRITICAL"}`).
+  - Recovery action: marks vehicle `cold_ok=true` and routes `status=safe` via core-api, and publishes recovery `coldchain.alert` (`severity="NORMAL"`). Alerts published exactly once per state transition.
+  - Downsampled persistence: writes telemetry rows (at most 1 per 60s per device) into PostgreSQL `sensor_reading` table.
+  - Endpoints: `GET /status`, `GET /devices/{id}/telemetry?since=` for sparklines, `POST /telemetry` for test injection.
+- [x] Docker Compose updated with `sensors` and `coldchain` wired with `USE_FIXTURES: "0"`, Mosquitto MQTT, and Redis dependency.
+- [x] Comprehensive test suites passing (61 total tests passing across monorepo).
 
 ## Table of Engineered Story Lots (For L2, L3, L4 Lanes)
 
@@ -182,6 +196,7 @@ Signed, Pharmacist Hesaraghatta PHC
 - `GET /drugs`: List drug formulary
 - `GET /routes`: List transit routes and transit times
 - `GET /vehicles`: List transport fleet and cold capabilities
+- `POST /vehicles/{id}/status`: Update vehicle cold chain status and associated routes safe/unsafe
 - `GET /lots?facility=&drug=`: Query inventory lots
 - `POST /lots/upsert-batch`: Batch upsert inventory lots
 - `GET /positions?facility=&drug=`: Computed stock positions (shortage, reserve, at-risk)
@@ -253,7 +268,7 @@ Signed, Pharmacist Hesaraghatta PHC
 - See [docs/DECISIONS.md](DECISIONS.md) (ADR-001 through ADR-004)
 
 ## Requests & Next Steps for Lanes
-- **L1 (Core)**: Implement endpoints in `services/core-api` backed by PostgreSQL and audit chain.
+- **L1 (Core)**: Added `POST /vehicles/{id}/status` and `/internal/coldchain/vehicle-status` to `contracts/openapi/core-api.yaml` and implemented in `services/core-api/src/routers/master.py` to allow coldchain status updates to mark vehicles and routes safe/unsafe with audit tracking.
 - **L2 (Optimizer)**: Integrate QUBO solver and QpiAI adapters in `services/optimizer`.
 - **L3 (AI & Forecast)**: Wire GenAI gateway and Holt-Winters forecasting engine.
-- **L4 (ColdChain & Sim)**: Implement MQTT ingestion in `services/coldchain` and hospital SQLite instances.
+- **L4 (ColdChain & Sim)**: [COMPLETED] `sim-control`, `sim-hospital` (all 4 styles), `sensors`, and `coldchain` fully implemented and tested.

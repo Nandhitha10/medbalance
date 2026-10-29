@@ -68,3 +68,4 @@ def generate_stock_csv(inventory: List[Dict[str, Any]]) -> str:
         writer.writerow([name, batch, exp_mmyyyy, qty_val, unit_val])
 
     return output.getvalue()
+

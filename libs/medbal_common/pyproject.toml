@@ -17,6 +17,7 @@ dependencies = [
     "redis>=5.0.3",
     "uvicorn>=0.28.0",
     "python-dateutil>=2.9.0",
+    "paho-mqtt>=2.0.0",
 ]
 
 [dependency-groups]

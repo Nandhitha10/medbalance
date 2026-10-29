@@ -8,7 +8,10 @@ from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
 from medbal_common.bus import get_redis_client
-from src.clock import clock
+try:
+    from sim_control.clock import clock
+except ImportError:
+    from src.clock import clock
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +83,7 @@ class ScenarioManager:
                 signal_type="COLDCHAIN_EXCURSION",
                 duration_days=3,
                 text="Cold chain telemetry warning: CV-02 refrigeration unit temperature excursion above 8°C",
-                device_fault={"vehicle_id": "CV-02", "device_id": "DEV-VEH-02", "fault": "EXCURSION", "temperature_c": 11.4},
+                device_fault={"vehicle_id": "CV-02", "device_id": "DEV-CV-02", "fault": "EXCURSION", "temperature_c": 11.4},
             ),
             "bad_data": Scenario(
                 name="bad_data",
@@ -100,6 +103,7 @@ class ScenarioManager:
                 taluk="North",
                 duration_days=30,
                 text="Biomedical engineering update: Ice-Lined Refrigerator at Hesaraghatta PHC (H4) repaired and verified",
+                device_fault={"facility_id": "H4", "device_id": "DEV-ILR-H4", "fault": "REPAIRED"},
             ),
             "road_closure": Scenario(
                 name="road_closure",
@@ -146,6 +150,11 @@ class ScenarioManager:
                     r_client.set("sensors:faults", json.dumps(sc.device_fault)),
                     timeout=0.5,
                 )
+                if sc.device_fault.get("fault") == "REPAIRED":
+                    await asyncio.wait_for(
+                        r_client.set("sensors:ilr_repaired", "1"),
+                        timeout=0.5,
+                    )
             except Exception as e:
                 logger.debug(f"Redis fault publish notice: {e}")
 

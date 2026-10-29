@@ -84,3 +84,4 @@ def generate_fhir_inventory_report(
         "inventoryListing": items_listing,
         "item": r4_items,
     }
+

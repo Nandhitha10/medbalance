@@ -60,6 +60,56 @@ paths:
                 items:
                   $ref: './components.yaml#/components/schemas/Vehicle'
 
+  /vehicles/{id}/status:
+    post:
+      summary: Update vehicle cold chain status and associated routes
+      operationId: updateVehicleStatus
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [cold_ok]
+              properties:
+                cold_ok:
+                  type: boolean
+                route_status:
+                  type: string
+                status_reason:
+                  type: string
+                route_ids:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Vehicle and route status updated
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [vehicle_id, cold_ok, status]
+                properties:
+                  vehicle_id:
+                    type: string
+                  cold_ok:
+                    type: boolean
+                  route_status:
+                    type: string
+                  status_reason:
+                    type: string
+                  updated_routes_count:
+                    type: integer
+                  status:
+                    type: string
+
   /lots:
     get:
       summary: Query inventory lots

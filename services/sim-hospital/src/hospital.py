@@ -187,3 +187,4 @@ class HospitalNode:
         """Render e-Aushadhi CSV for H2."""
         inventory = self.db.get_inventory()
         return generate_stock_csv(inventory)
+

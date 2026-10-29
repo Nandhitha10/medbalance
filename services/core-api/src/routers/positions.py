@@ -219,6 +219,8 @@ def get_snapshot() -> Dict[str, Any]:
                 "distance_km": float(r.distance_km),
                 "transit_hours": float(r.transit_hours),
                 "cold_chain_compliant": bool(r.cold_capable),
+                "status": getattr(r, "status", "active") or "active",
+                "status_reason": getattr(r, "status_reason", None),
             }
             for r in routes_raw
         ]

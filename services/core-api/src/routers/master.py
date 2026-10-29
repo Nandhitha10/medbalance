@@ -1,9 +1,11 @@
 """Master data endpoints: facilities, drugs, routes, vehicles."""
 
-from typing import Any, Dict, List
-from fastapi import APIRouter
+from typing import Any, Dict, List, Optional
+from fastapi import APIRouter, HTTPException, status
+from pydantic import BaseModel
 from sqlalchemy import select
 
+from medbal_common.audit import append
 from medbal_common.db import session_scope
 from src.db_models import (
     DrugModel,
@@ -88,9 +90,79 @@ def get_routes() -> List[Dict[str, Any]]:
                 "distance_km": float(r.distance_km),
                 "transit_hours": float(r.transit_hours),
                 "cold_chain_compliant": bool(r.cold_capable),
+                "status": getattr(r, "status", "active") or "active",
+                "status_reason": getattr(r, "status_reason", None),
             }
             for r in routes
         ]
+
+
+class VehicleStatusUpdatePayload(BaseModel):
+    cold_ok: bool
+    route_status: Optional[str] = "unsafe"
+    status_reason: Optional[str] = ""
+    route_ids: Optional[List[str]] = None
+
+
+@router.post("/vehicles/{id}/status", response_model=Dict[str, Any])
+@router.post("/internal/coldchain/vehicle-status", response_model=Dict[str, Any])
+def update_vehicle_status(
+    id: Optional[str] = None, payload: Optional[VehicleStatusUpdatePayload] = None
+) -> Dict[str, Any]:
+    """Update vehicle cold capability and mark associated routes safe/unsafe."""
+    # Handle id from either path parameter or payload
+    target_id = id
+    if payload is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Payload required")
+
+    with session_scope() as session:
+        vehicle = session.execute(
+            select(VehicleModel).where(VehicleModel.id == target_id)
+        ).scalar_one_or_none()
+
+        if vehicle is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Vehicle '{target_id}' not found")
+
+        vehicle.cold_capable = payload.cold_ok
+
+        # Update routes
+        routes_query = select(RouteModel)
+        if payload.route_ids:
+            routes_query = routes_query.where(RouteModel.id.in_(payload.route_ids))
+        else:
+            routes_query = routes_query.where(RouteModel.cold_capable == True)
+
+        routes = session.execute(routes_query).scalars().all()
+        for r in routes:
+            r.status = payload.route_status
+            r.status_reason = payload.status_reason
+            if not payload.cold_ok:
+                r.cold_capable = False
+            else:
+                r.cold_capable = True
+
+        append(
+            session=session,
+            actor="coldchain-service",
+            action="UPDATE_VEHICLE_STATUS",
+            entity="vehicle",
+            entity_id=target_id,
+            payload={
+                "cold_ok": payload.cold_ok,
+                "route_status": payload.route_status,
+                "status_reason": payload.status_reason,
+                "updated_routes": [r.id for r in routes],
+            },
+        )
+
+        return {
+            "vehicle_id": target_id,
+            "cold_ok": payload.cold_ok,
+            "route_status": payload.route_status,
+            "status_reason": payload.status_reason,
+            "updated_routes_count": len(routes),
+            "status": "updated",
+        }
 
 
 @router.get("/vehicles", response_model=List[Dict[str, Any]])

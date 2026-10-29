@@ -179,6 +179,8 @@ class RouteModel(Base):
     transit_hours: Mapped[float] = mapped_column(Numeric(6, 2), nullable=False)
     cost_inr: Mapped[float] = mapped_column(Numeric(10, 2), default=0.00)
     cold_capable: Mapped[bool] = mapped_column(Boolean, default=False)
+    status: Mapped[str] = mapped_column(String(32), default="active", nullable=True)
+    status_reason: Mapped[Optional[str]] = mapped_column(String(256), nullable=True)
 
 
 class VehicleModel(Base):
@@ -194,6 +196,7 @@ class VehicleModel(Base):
 
 class SensorReadingModel(Base):
     __tablename__ = "sensor_reading"
+    __table_args__ = {"extend_existing": True}
 
     id: Mapped[int] = mapped_column(
         BigInteger().with_variant(Integer, "sqlite"), primary_key=True, autoincrement=True

@@ -152,7 +152,9 @@ CREATE TABLE route (
     transit_days INT NOT NULL DEFAULT 1 CHECK (transit_days >= 1),
     transit_hours NUMERIC(6, 2) NOT NULL,
     cost_inr NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
-    cold_capable BOOLEAN NOT NULL DEFAULT false
+    cold_capable BOOLEAN NOT NULL DEFAULT false,
+    status VARCHAR(32) DEFAULT 'active',
+    status_reason TEXT
 );
 
 -- 11. Vehicle (Transport fleet)

@@ -18,3 +18,4 @@ __all__ = [
     "generate_fhir_inventory_report",
     "generate_messy_register_note",
 ]
+
