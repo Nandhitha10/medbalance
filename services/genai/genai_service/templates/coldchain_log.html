@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cold-Chain Consignment Log - {{ order_id }}</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 18mm;
+      @bottom-center {
+        content: "Synthetic demo data";
+        font-size: 9pt;
+        color: #64748b;
+        font-style: italic;
+      }
+    }
+    body {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      color: #0f172a;
+      line-height: 1.4;
+      font-size: 10pt;
+      margin: 0;
+      padding: 0;
+    }
+    .header {
+      border-bottom: 2px solid #0284c7;
+      padding-bottom: 10px;
+      margin-bottom: 16px;
+    }
+    .header h1 {
+      margin: 0;
+      color: #0284c7;
+      font-size: 18pt;
+      letter-spacing: -0.5px;
+      text-transform: uppercase;
+    }
+    .header .subtitle {
+      font-size: 9.5pt;
+      color: #475569;
+      margin-top: 2px;
+    }
+    .grid-4 {
+      display: table;
+      width: 100%;
+      margin-bottom: 16px;
+    }
+    .card {
+      display: table-cell;
+      width: 25%;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 10px;
+      text-align: center;
+    }
+    .card-label {
+      font-size: 8pt;
+      color: #64748b;
+      text-transform: uppercase;
+      font-weight: bold;
+    }
+    .card-val {
+      font-size: 14pt;
+      font-weight: bold;
+      color: #0284c7;
+      margin-top: 4px;
+    }
+    .status-ok {
+      color: #16a34a;
+    }
+    .status-warn {
+      color: #dc2626;
+    }
+    table.trace-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0;
+      font-size: 9pt;
+    }
+    table.trace-table th, table.trace-table td {
+      border: 1px solid #cbd5e1;
+      padding: 6px 8px;
+      text-align: left;
+    }
+    table.trace-table th {
+      background: #0284c7;
+      color: #ffffff;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 8pt;
+    }
+    table.trace-table tr:nth-child(even) {
+      background: #f8fafc;
+    }
+    .text-center { text-align: center; }
+    .text-right { text-align: right; }
+    .footer {
+      margin-top: 25px;
+      font-size: 8pt;
+      color: #94a3b8;
+      text-align: center;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>Cold-Chain Consignment & Telemetry Log</h1>
+    <div class="subtitle">Continuous IoT Thermal Compliance Record &bull; Standard 2°C – 8°C Protocol</div>
+  </div>
+
+  <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 6px; padding: 10px 14px; margin-bottom: 16px;">
+    <div style="display: table; width: 100%;">
+      <div style="display: table-cell; width: 50%;">
+        <div><strong>Transfer Order DTA:</strong> {{ order_id }}</div>
+        <div><strong>Consignment Drug:</strong> {{ drug_name }} ({{ drug_code }}) &bull; Qty: {{ quantity }} units</div>
+        <div><strong>Batch / Lot:</strong> <code>{{ batch_no }}</code></div>
+      </div>
+      <div style="display: table-cell; width: 50%;">
+        <div><strong>Route:</strong> {{ source_facility_id }} &rarr; {{ destination_facility_id }}</div>
+        <div><strong>Transport Vehicle:</strong> {{ vehicle_id }}</div>
+        <div><strong>Telemetry Sensor ID:</strong> {{ device_id }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-4">
+    <div class="card" style="margin-right: 6px;">
+      <div class="card-label">Allowed Range</div>
+      <div class="card-val">2.0 – 8.0 °C</div>
+    </div>
+    <div class="card" style="margin: 0 3px;">
+      <div class="card-label">Min Observed</div>
+      <div class="card-val">{{ min_temp }} °C</div>
+    </div>
+    <div class="card" style="margin: 0 3px;">
+      <div class="card-label">Max Observed</div>
+      <div class="card-val">{{ max_temp }} °C</div>
+    </div>
+    <div class="card" style="margin-left: 6px;">
+      <div class="card-label">Thermal Status</div>
+      <div class="card-val {% if excursions == 0 %}status-ok{% else %}status-warn{% endif %}">
+        {% if excursions == 0 %}COMPLIANT{% else %}EXCURSION{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <h3 style="font-size: 11pt; color: #0f172a; margin: 15px 0 8px 0; text-transform: uppercase;">Sensor Telemetry Trace</h3>
+  <table class="trace-table">
+    <thead>
+      <tr>
+        <th style="width: 25%;">Timestamp</th>
+        <th style="width: 20%;">Device ID</th>
+        <th class="text-right" style="width: 15%;">Temperature</th>
+        <th class="text-right" style="width: 15%;">Battery</th>
+        <th class="text-right" style="width: 12%;">Signal</th>
+        <th class="text-center" style="width: 13%;">Integrity</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for trace in traces %}
+      <tr>
+        <td>{{ trace.timestamp }}</td>
+        <td><code>{{ trace.device_id }}</code></td>
+        <td class="text-right"><strong>{{ trace.temperature_c }} °C</strong></td>
+        <td class="text-right">{{ trace.battery_pct }}%</td>
+        <td class="text-right">{{ trace.signal_dbm }} dBm</td>
+        <td class="text-center">
+          <span style="color: #16a34a; font-weight: bold;">{{ trace.status }}</span>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div style="margin-top: 25px; border-top: 1px dashed #cbd5e1; padding-top: 12px; display: table; width: 100%;">
+    <div style="display: table-cell; width: 50%;">
+      <div style="font-size: 8pt; color: #64748b; text-transform: uppercase;">Cold-Chain Officer Verification</div>
+      <div style="font-size: 9.5pt; font-weight: bold; margin-top: 2px;">{{ verified_by }}</div>
+    </div>
+    <div style="display: table-cell; width: 50%; text-align: right;">
+      <div style="font-size: 8pt; color: #64748b; text-transform: uppercase;">Cryptographic Audit Sign-off</div>
+      <div style="font-family: monospace; font-size: 7.5pt; color: #475569;">{{ audit_hash }}</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    Synthetic demo data &bull; MedBalance-Q Continuous Cold-Chain Telemetry System
+  </div>
+
+</body>
+</html>

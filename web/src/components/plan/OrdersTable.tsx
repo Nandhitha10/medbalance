@@ -1,6 +1,6 @@
 import React from "react";
 import { TransferOrder, Drug, Facility } from "../../types";
-import { Snowflake, ArrowRight, CheckCircle2, Clock, FileText, Check, ShieldCheck, MapPin } from "lucide-react";
+import { Snowflake, ArrowRight, CheckCircle2, Clock, FileText, Check, ShieldCheck, MapPin, Download } from "lucide-react";
 import { formatNumber } from "../../lib/utils";
 
 interface OrdersTableProps {
@@ -21,6 +21,30 @@ export const OrdersTable: React.FC<OrdersTableProps> = ({
 
   const facilityMap = new Map<string, Facility>();
   facilities.forEach((f) => facilityMap.set(f.id, f));
+
+  const handleDownloadDta = async (orderId: string) => {
+    try {
+      const url = `/api/genai/docs/dta/${encodeURIComponent(orderId)}`;
+      let resp = await fetch(url, { method: "POST" });
+      if (!resp.ok) {
+        resp = await fetch(url);
+      }
+      if (!resp.ok) {
+        throw new Error(`Failed to fetch voucher: HTTP ${resp.status}`);
+      }
+      const blob = await resp.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = `DTA_${orderId.replace(/\//g, "_")}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      console.error("Failed to download DTA voucher PDF:", err);
+    }
+  };
 
   // Group transfer orders by destination facility
   const ordersByDestination = orders.reduce<Record<string, TransferOrder[]>>((acc, order) => {
@@ -216,9 +240,19 @@ export const OrdersTable: React.FC<OrdersTableProps> = ({
                                 <span>Approve</span>
                               </button>
                             ) : (
-                              <span className="text-[11px] text-emerald-700 font-bold">
-                                Ready for Dispatch
-                              </span>
+                              <div className="flex items-center justify-end space-x-2">
+                                <button
+                                  onClick={() => handleDownloadDta(order.id)}
+                                  className="bg-teal-700 hover:bg-teal-800 active:scale-95 text-white font-semibold px-2.5 py-1.5 rounded text-xs transition-colors shadow-2xs inline-flex items-center space-x-1"
+                                  title="Download Drug Transfer Advice (DTA) PDF voucher"
+                                >
+                                  <Download className="w-3.5 h-3.5 mr-1" />
+                                  <span>DTA Voucher</span>
+                                </button>
+                                <span className="text-[11px] text-emerald-700 font-bold hidden sm:inline">
+                                  Ready
+                                </span>
+                              </div>
                             )}
                           </td>
                         </tr>

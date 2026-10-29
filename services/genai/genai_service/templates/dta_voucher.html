@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Drug Transfer Advice - {{ order_id }}</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 20mm;
+      @bottom-center {
+        content: "Synthetic demo data";
+        font-size: 9pt;
+        color: #64748b;
+        font-style: italic;
+      }
+    }
+    body {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      color: #0f172a;
+      line-height: 1.4;
+      font-size: 11pt;
+      margin: 0;
+      padding: 0;
+    }
+    .header {
+      border-bottom: 2px solid #0f766e;
+      padding-bottom: 12px;
+      margin-bottom: 20px;
+    }
+    .header h1 {
+      margin: 0;
+      color: #0f766e;
+      font-size: 20pt;
+      letter-spacing: -0.5px;
+      text-transform: uppercase;
+    }
+    .header .subtitle {
+      font-size: 10pt;
+      color: #475569;
+      margin-top: 4px;
+    }
+    .grid-2 {
+      display: table;
+      width: 100%;
+      margin-bottom: 20px;
+    }
+    .col {
+      display: table-cell;
+      width: 50%;
+      vertical-align: top;
+    }
+    .meta-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 12px;
+      margin-right: 10px;
+    }
+    .meta-box-right {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 12px;
+      margin-left: 10px;
+    }
+    .meta-label {
+      font-size: 8.5pt;
+      text-transform: uppercase;
+      font-weight: bold;
+      color: #64748b;
+      margin-bottom: 2px;
+    }
+    .meta-value {
+      font-size: 11pt;
+      font-weight: 600;
+      color: #0f172a;
+      margin-bottom: 8px;
+    }
+    .meta-value:last-child {
+      margin-bottom: 0;
+    }
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 9.5pt;
+    }
+    table.data-table th, table.data-table td {
+      border: 1px solid #cbd5e1;
+      padding: 8px 10px;
+      text-align: left;
+    }
+    table.data-table th {
+      background: #0f766e;
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 9pt;
+      text-transform: uppercase;
+    }
+    table.data-table tr:nth-child(even) {
+      background: #f8fafc;
+    }
+    .text-right {
+      text-align: right;
+    }
+    .text-center {
+      text-align: center;
+    }
+    .near-expiry {
+      color: #b45309;
+      font-weight: bold;
+    }
+    .audit-box {
+      margin-top: 25px;
+      border-top: 1px dashed #cbd5e1;
+      padding-top: 15px;
+      display: table;
+      width: 100%;
+    }
+    .audit-text {
+      display: table-cell;
+      vertical-align: middle;
+      width: 75%;
+    }
+    .qr-container {
+      display: table-cell;
+      vertical-align: middle;
+      text-align: right;
+      width: 25%;
+    }
+    .qr-container img {
+      width: 100px;
+      height: 100px;
+      border: 1px solid #e2e8f0;
+      padding: 4px;
+      background: #ffffff;
+    }
+    .hash-text {
+      font-family: monospace;
+      font-size: 8pt;
+      color: #475569;
+      word-break: break-all;
+      background: #f1f5f9;
+      padding: 4px 6px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-top: 4px;
+    }
+    .footer {
+      margin-top: 35px;
+      font-size: 8.5pt;
+      color: #94a3b8;
+      text-align: center;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>Drug Transfer Advice</h1>
+    <div class="subtitle">Inter-Facility Redistribution Order &bull; MedBalance-Q Clinical Supply Network</div>
+  </div>
+
+  <div class="grid-2">
+    <div class="col">
+      <div class="meta-box">
+        <div class="meta-label">DTA Voucher No</div>
+        <div class="meta-value">{{ order_id }}</div>
+
+        <div class="meta-label">Date of Issue</div>
+        <div class="meta-value">{{ date }}</div>
+
+        <div class="meta-label">Optimization Plan Run ID</div>
+        <div class="meta-value">{{ plan_id }}</div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="meta-box-right">
+        <div class="meta-label">Transferring Store (Source)</div>
+        <div class="meta-value">{{ source_facility_name }} ({{ source_facility_id }})</div>
+
+        <div class="meta-label">Receiving Store (Destination)</div>
+        <div class="meta-value">{{ destination_facility_name }} ({{ destination_facility_id }})</div>
+
+        <div class="meta-label">Storage & Transport Requirement</div>
+        <div class="meta-value">{{ temperature_requirement }} &bull; Vehicle: {{ vehicle_info }}</div>
+      </div>
+    </div>
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width: 5%;">#</th>
+        <th style="width: 15%;">Drug Code</th>
+        <th style="width: 25%;">Drug Description</th>
+        <th style="width: 15%;">Batch No</th>
+        <th style="width: 12%;">Expiry Date</th>
+        <th class="text-right" style="width: 14%;">Near to Expiry<br><small>(&lt; 90 days)</small></th>
+        <th class="text-right" style="width: 14%;">Normal<br><small>(&ge; 90 days)</small></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="text-center">1</td>
+        <td><strong>{{ drug_code }}</strong></td>
+        <td>{{ drug_name }}</td>
+        <td><code>{{ batch_no }}</code></td>
+        <td>{{ expiry_date }}</td>
+        <td class="text-right near-expiry">
+          {% if is_near_expiry %}
+            {{ quantity }}
+          {% else %}
+            —
+          {% endif %}
+        </td>
+        <td class="text-right">
+          {% if not is_near_expiry %}
+            {{ quantity }}
+          {% else %}
+            —
+          {% endif %}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  {% if narration %}
+  <div style="background: #f0fdfa; border-left: 4px solid #0f766e; padding: 10px 14px; margin: 15px 0; border-radius: 4px;">
+    <div style="font-size: 8.5pt; font-weight: bold; color: #0f766e; text-transform: uppercase; margin-bottom: 3px;">Clinical Transfer Rationale</div>
+    <div style="font-size: 9.5pt; color: #134e4a;">{{ narration }}</div>
+  </div>
+  {% endif %}
+
+  <div class="audit-box">
+    <div class="audit-text">
+      <div class="meta-label">Approving Authority</div>
+      <div style="font-weight: bold; font-size: 10pt; color: #0f172a;">{{ approver_name }}</div>
+      <div style="font-size: 8.5pt; color: #475569;">Approved At: {{ approved_at }} &bull; ETA: {{ eta }}</div>
+
+      <div style="margin-top: 10px;">
+        <div class="meta-label">Cryptographic Audit Entry Hash</div>
+        <div class="hash-text">{{ audit_hash }}</div>
+      </div>
+    </div>
+    <div class="qr-container">
+      {% if qr_code_base64 %}
+      <img src="data:image/png;base64,{{ qr_code_base64 }}" alt="QR Custody Token" />
+      <div style="font-size: 7.5pt; color: #64748b; margin-top: 3px; font-family: monospace;">{{ qr_token }}</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="footer">
+    Synthetic demo data &bull; MedBalance-Q Algorithmic Drug Rebalancing Platform
+  </div>
+
+</body>
+</html>

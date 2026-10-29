@@ -55,10 +55,16 @@ class ClaudeProvider(LLMProvider):
         api_kwargs: Dict[str, Any] = {
             "model": target_model,
             "max_tokens": max_tokens,
-            "temperature": temperature,
             "messages": messages,
             "timeout": timeout_sec,
         }
+        if temperature is not None:
+            import inspect
+            sig = inspect.signature(client.messages.create)
+            if "temperature" in sig.parameters:
+                api_kwargs["temperature"] = temperature
+            else:
+                api_kwargs["extra_body"] = {"temperature": temperature}
         if system:
             api_kwargs["system"] = system
 

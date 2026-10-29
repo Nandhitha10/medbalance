@@ -1,7 +1,7 @@
 # Project Progress Log
 
 ## Status Overview
-- Current Phase: P14 Explainability Core, What-If Sandbox & Reactive Cold-Chain Auto Re-Planning Complete
+- Current Phase: P15 Grounded Narrations, Numeric Firewall & Official PDF Documents Complete
 - Updated: 2026-10-30
 
 ## Completed Tasks
@@ -234,6 +234,50 @@
     - `test_whatif_repair_cold_storage_h4_makes_h4_destination`: Verified `repair_cold_storage(H4)` enables H4 to receive cold-chain inventory (`OXY-10` from H2), appearing in `orders_added`.
     - `test_auto_replan_moves_cold_orders_off_cv02`: Verified orders assigned to failing `CV-02` are superseded and moved off `CV-02` in revised plan.
     - `test_acceptance_fridge_failure_produces_plan_revised_within_60s`: Verified end-to-end auto re-planning executes in < 2.0 s (< 60 s SLA) producing valid `plan.revised` event with diff and 0 violations.
+- [x] **P15 Grounded Narrations, Numeric Firewall & Official Document PDF Generation (`services/genai/`)**:
+  - **Prompt Registry (`prompts/narrate_v1.yaml`, `prompts/credit_memo_v1.yaml`)**:
+    - `narrate_v1`: Prompt instructing the LLM to output 2–3 plain clinical/logistics sentences for the District Drug Officer citing exact numbers from order facts (drug code, qty, batch, expiry, usable, rates, shortage before/after, expiry avoided, top alternative with reason).
+    - `credit_memo_v1`: Prompt for the District Financial Comptroller authoring an audit-compliant financial credit recommendation memo paragraph citing donor facility, units transferred, value in ₹ avoided, and recommended indent credit.
+  - **Numeric Grounding Firewall (`services/genai/genai_service/firewall.py`)**:
+    - Regex engine extracting numbers (Indian comma notation e.g. `1,25,000`, floats, integers), percentages (e.g. `93%`), currencies (`₹`, `Rs.`, `INR`), and dates (`YYYY-MM-DD`, `DD/MM/YYYY`, Month Year).
+    - Masks known facility identifiers (`District Hospital 1`, `H1..H4`) and consignment codes to prevent digit false positives.
+    - Grounding verification: exact match on numbers and dates, with $\pm 0.5\%$ tolerance on derived percentages pre-computed from facts (e.g. fill rate).
+    - Hallucination protection: any ungrounded entity triggers `grounding_ok = False`, logs a firewall block via `metrics_tracker.record(firewall_block=True)`, and substitutes a guaranteed-grounded deterministic template citing true facts.
+  - **PDF Generation Engine (`services/genai/genai_service/pdf_generator.py`)**:
+    - Dual-engine rendering: Jinja2 HTML templates for WeasyPrint with automatic pure-python ReportLab fallback on environments missing native C libraries (e.g. Windows).
+    - **Drug Transfer Advice (DTA) Voucher (`templates/dta_voucher.html`)**:
+      - Strictly titled "Drug Transfer Advice" (**Never called "Form 19"**).
+      - Header, DTA number, date, plan ID, transferring store and receiving store with codes.
+      - Table separating quantities into "Near to expiry (< 90 days)" and "Normal (≥ 90 days)" columns.
+      - Temperature requirements and transport vehicle, ETA, approver name and time, cryptographic audit hash.
+      - Scannable QR code generated with `qrcode` library encoding `/scan/{qr_token}`.
+      - Footer "Synthetic demo data".
+    - **Cold-Chain Consignment Log (`templates/coldchain_log.html`)**:
+      - Sensor telemetry trace table, minimum/maximum/mean temperatures, and 2.0–8.0 °C excursion status.
+    - **Inter-Facility Credit Memo (`templates/credit_memo.html`)**:
+      - Official letterhead, financial reconciliation table (quantities, unit cost, total value ₹), and grounded recommendation paragraph.
+  - **FastAPI Endpoints (`genai_service/routers/narrate.py`, `documents.py`)**:
+    - `POST /narrate/{order_id}`: Generates grounded narration with grounding check; persists headline and narration directly to `transfer_order` in database and core-api.
+    - `POST` & `GET /docs/dta/{order_id}`: Returns binary application/pdf DTA voucher.
+    - `POST` & `GET /docs/coldchain/{order_id}`: Returns binary application/pdf cold-chain consignment log.
+    - `POST` & `GET /docs/credit-memo/{order_id}`: Returns JSON credit memo voucher with firewall grounding check.
+    - `POST` & `GET /docs/credit-memo/{order_id}/pdf`: Returns binary application/pdf credit memo voucher.
+    - `GET /ai/health`: Displays `firewall_active: True` and cumulative `firewall_blocks`.
+  - **Batch Narration on Plan Completion (`genai_service/events.py`, `app.py`)**:
+    - Background Redis stream consumer listening to `plan.completed` and `plan.revised` within GenAI lifespan, automatically triggering batch narration for all orders in the plan.
+  - **UI Integration (`web/src/components/plan/OrdersTable.tsx`)**:
+    - Approved transfer orders display an interactive "DTA Voucher" download button with Lucide `Download` icon, allowing one-click download of the PDF voucher with embedded scannable QR code.
+  - **Automated Verification (`tests/test_narration_firewall_pdf.py`)**:
+    - 13 comprehensive unit and integration tests passing:
+      - Prompt definitions parse valid YAML.
+      - Numeric firewall passes grounded text and pre-computed derived percentages.
+      - Numeric firewall catches injected hallucinated numbers (999 vials) and fake currencies (₹99,999.00).
+      - Firewall replaces hallucinations with deterministic templates and increments `firewall_blocks`.
+      - DTA voucher PDF renders valid binary without "Form 19".
+      - Embedded QR code in generated PDF extracted with `pypdf` and verified with `pyzbar` to decode to `/scan/{qr_token}`.
+      - Cold-chain log and credit memo PDFs render cleanly.
+      - All REST endpoints return 200 OK.
+    - Monorepo test suite green: **13/13 P15 tests + 31 regression tests passing**.
 
 ### QpiAI Run Evidence Excerpt (`evidence/qpiai_runs/20261029_174952_fd9adf47.json`)
 

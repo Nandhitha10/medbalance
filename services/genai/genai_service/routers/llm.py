@@ -75,51 +75,8 @@ async def ai_health() -> Dict[str, Any]:
 
 
 # =====================================================================
-# Additional OpenAPI Contract Stubs (for downstream services)
+# Additional Endpoints
 # =====================================================================
-
-@router.post("/narrate/{order_id}")
-async def narrate_order(order_id: str) -> Dict[str, Any]:
-    """Generate clinician-friendly grounded narration for transfer order."""
-    return {
-        "order_id": order_id,
-        "headline": f"Redistribution order {order_id} generated for stockout prevention",
-        "explanation": f"Automated transfer of surplus near-expiry units under standard transport conditions.",
-        "grounding_check": {
-            "passed": True,
-            "verified_numbers": [28.0],
-            "unverified_numbers": [],
-        },
-    }
-
-
-@router.post("/docs/dta/{order_id}")
-async def docs_dta(order_id: str):
-    """Generate official DTA PDF voucher."""
-    dummy_pdf = (
-        b"%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj 2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj "
-        b"3 0 obj<</Type/Page/MediaBox[0 0 612 792]>>endobj\nxref\n0 4\n0000000000 65535 f\n0000000010 00000 n\n"
-        b"0000000053 00000 n\n0000000102 00000 n\ntrailer<</Size 4/Root 1 0 R>>\nstartxref\n162\n%%EOF"
-    )
-    return Response(content=dummy_pdf, media_type="application/pdf")
-
-
-@router.post("/docs/credit-memo/{order_id}")
-async def docs_credit_memo(order_id: str) -> Dict[str, Any]:
-    """Generate financial credit memo voucher."""
-    return {
-        "memo_id": f"CM-{order_id.replace('/', '-')}",
-        "order_id": order_id,
-        "creditor_facility_id": "H1",
-        "debtor_facility_id": "H2",
-        "drug_code": "INS-REG",
-        "quantity": 50,
-        "unit_cost_inr": 145.50,
-        "total_credit_inr": 7275.00,
-        "issue_date": "2026-11-01",
-        "authorized_by": "Dr. Ramesh (District Health Officer)",
-    }
-
 
 @router.post("/copilot/chat")
 async def copilot_chat(req: Dict[str, Any]):

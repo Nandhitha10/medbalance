@@ -1,5 +1,6 @@
 """Transfer orders lifecycle management: list, get, approve, reject, and audit logging."""
 
+import hashlib
 import logging
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
@@ -22,7 +23,13 @@ class RejectOrderPayload(BaseModel):
     reason: Optional[str] = None
 
 
+class UpdateOrderNarrationPayload(BaseModel):
+    narration: str
+    headline: Optional[str] = None
+
+
 def _format_order(order: TransferOrderModel, lot_qty: Optional[int] = None) -> Dict[str, Any]:
+    qr_token = order.qr_token or f"tok-{hashlib.sha256(order.id.encode()).hexdigest()[:16]}"
     return {
         "id": order.id,
         "plan_id": order.plan_run_id,
@@ -36,6 +43,12 @@ def _format_order(order: TransferOrderModel, lot_qty: Optional[int] = None) -> D
         "status": order.status,
         "temperature_controlled": bool(order.temperature_controlled),
         "savings_inr": float(order.savings_inr) if order.savings_inr is not None else 0.0,
+        "qr_token": qr_token,
+        "audit_hash": order.audit_hash,
+        "narration": order.narration,
+        "headline": order.headline,
+        "approved_by": order.approved_by,
+        "approved_at": order.approved_at.isoformat() if order.approved_at else None,
         "created_at": order.created_at.isoformat() if order.created_at else None,
         "updated_at": order.updated_at.isoformat() if order.updated_at else None,
     }
@@ -101,9 +114,11 @@ async def approve_order(id: str, actor: str = "district_officer") -> Dict[str, A
         old_status = order.status
         order.status = "APPROVED"
         order.updated_at = current_time
+        order.approved_by = actor
+        order.approved_at = current_time
 
         # Audit entry in same transaction
-        audit_append(
+        audit_entry = audit_append(
             session=session,
             actor=actor,
             action="approve_order",
@@ -117,6 +132,10 @@ async def approve_order(id: str, actor: str = "district_officer") -> Dict[str, A
             },
             timestamp=current_time,
         )
+
+        order.audit_hash = audit_entry.hash
+        if not order.qr_token:
+            order.qr_token = f"tok-{hashlib.sha256(f'{id}:{audit_entry.hash}'.encode()).hexdigest()[:16]}"
 
         formatted = _format_order(order)
 
@@ -200,3 +219,32 @@ async def reject_order(
         logger.warning(f"Could not publish order.status event: {exc}")
 
     return formatted
+
+
+@router.put("/orders/{id:path}/narration", response_model=Dict[str, Any])
+def update_order_narration(id: str, payload: UpdateOrderNarrationPayload) -> Dict[str, Any]:
+    """Store grounded narration and headline directly on the transfer order."""
+    with session_scope() as session:
+        order = session.get(TransferOrderModel, id)
+        if not order:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Order {id} not found")
+
+        order.narration = payload.narration
+        if payload.headline:
+            order.headline = payload.headline
+
+        # Also store in term_breakdown
+        tb = dict(order.term_breakdown or {})
+        tb["narration"] = payload.narration
+        tb["headline"] = payload.headline
+        order.term_breakdown = tb
+
+        lot = session.execute(
+            select(LotModel).where(
+                LotModel.facility_id == order.source_facility_id,
+                LotModel.drug_code == order.drug_code,
+                LotModel.batch_no == order.batch_no,
+            )
+        ).scalar_one_or_none()
+        return _format_order(order, lot.quantity if lot else None)
+

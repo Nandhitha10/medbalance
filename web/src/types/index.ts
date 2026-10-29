@@ -61,6 +61,12 @@ export interface TransferOrder {
   status: "DRAFT" | "APPROVED" | "IN_TRANSIT" | "DELIVERED" | "CANCELLED";
   temperature_controlled: boolean;
   savings_inr?: number;
+  qr_token?: string;
+  audit_hash?: string;
+  narration?: string;
+  headline?: string;
+  approved_by?: string;
+  approved_at?: string;
   created_at?: string;
   updated_at?: string;
 }

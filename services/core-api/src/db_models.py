@@ -263,6 +263,12 @@ class TransferOrderModel(Base):
     temperature_controlled: Mapped[bool] = mapped_column(Boolean, default=False)
     savings_inr: Mapped[Optional[float]] = mapped_column(Numeric(10, 2), default=0.00)
     term_breakdown: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, default=dict)
+    qr_token: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    audit_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    narration: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    headline: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    approved_by: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    approved_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
