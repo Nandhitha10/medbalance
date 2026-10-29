@@ -1,0 +1,536 @@
+openapi: 3.1.0
+info:
+  title: MedBalance-Q Shared Components
+  version: 0.1.0
+components:
+  schemas:
+    Facility:
+      type: object
+      required: [id, name, facility_type]
+      properties:
+        id:
+          type: string
+          example: H1
+        name:
+          type: string
+          example: District Hospital 1
+        facility_type:
+          type: string
+          example: Hospital
+        latitude:
+          type: [number, "null"]
+          example: 13.0827
+        longitude:
+          type: [number, "null"]
+          example: 77.5877
+        cold_storage_available:
+          type: boolean
+          default: false
+        min_reserve_days:
+          type: integer
+          default: 7
+
+    Drug:
+      type: object
+      required: [code, name, category, unit]
+      properties:
+        code:
+          type: string
+          example: INS-REG
+        name:
+          type: string
+          example: Insulin Regular 100 IU/ml
+        category:
+          type: string
+          enum: [V, E, N]
+          example: V
+        unit:
+          type: string
+          example: vial
+        pack_size:
+          type: integer
+          default: 1
+        storage_condition:
+          type: string
+          enum: [ambient, cold_chain]
+          default: ambient
+        min_residual_days:
+          type: integer
+          default: 30
+        unit_cost_inr:
+          type: number
+          format: float
+          example: 145.50
+
+    Lot:
+      type: object
+      required: [facility_id, drug_code, batch_no, expiry, quantity]
+      properties:
+        id:
+          type: [integer, "null"]
+        facility_id:
+          type: string
+          example: H1
+        drug_code:
+          type: string
+          example: INS-REG
+        batch_no:
+          type: string
+          example: LOT-INS-H1-01
+        expiry:
+          type: string
+          format: date
+          example: "2026-11-20"
+        quantity:
+          type: integer
+          minimum: 0
+          example: 50
+        created_at:
+          type: [string, "null"]
+          format: date-time
+
+    Position:
+      type: object
+      required: [facility_id, drug_code, stock_on_hand, effective_stock, at_risk_stock, reserve, shortage, daily_consumption_rate]
+      properties:
+        facility_id:
+          type: string
+          example: H1
+        drug_code:
+          type: string
+          example: INS-REG
+        stock_on_hand:
+          type: integer
+          minimum: 0
+          example: 50
+        effective_stock:
+          type: integer
+          minimum: 0
+          example: 10
+        at_risk_stock:
+          type: integer
+          minimum: 0
+          example: 40
+        reserve:
+          type: integer
+          minimum: 0
+          example: 10
+        shortage:
+          type: integer
+          minimum: 0
+          example: 0
+        daily_consumption_rate:
+          type: number
+          minimum: 0
+          example: 0.5
+
+    Route:
+      type: object
+      required: [id, source_facility_id, destination_facility_id, distance_km, transit_hours]
+      properties:
+        id:
+          type: string
+          example: RTE-H1-H2
+        source_facility_id:
+          type: string
+          example: H1
+        destination_facility_id:
+          type: string
+          example: H2
+        distance_km:
+          type: number
+          example: 18.5
+        transit_hours:
+          type: number
+          example: 1.0
+        cold_chain_compliant:
+          type: boolean
+          default: false
+
+    Vehicle:
+      type: object
+      required: [id, name, vehicle_type]
+      properties:
+        id:
+          type: string
+          example: VEH-CC-01
+        name:
+          type: string
+          example: Refrigerated Van 01
+        vehicle_type:
+          type: string
+          example: Refrigerated Van
+        cold_chain_capable:
+          type: boolean
+          default: false
+        current_temp_c:
+          type: [number, "null"]
+          example: 4.1
+        is_active:
+          type: boolean
+          default: true
+
+    StockReport:
+      type: object
+      required: [id, facility_code, received_at, status, source_type]
+      properties:
+        id:
+          type: string
+          example: REP-H1-20261101
+        facility_code:
+          type: string
+          example: H1
+        received_at:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [RECEIVED, PROCESSED, NEEDS_REVIEW, FAILED]
+          example: PROCESSED
+        source_type:
+          type: string
+          enum: [pdf, excel, csv, fhir]
+          example: pdf
+        extracted_items_count:
+          type: integer
+          default: 0
+        anomalies_detected:
+          type: integer
+          default: 0
+
+    ExtractionItem:
+      type: object
+      required: [drug_code, batch_no, expiry, quantity]
+      properties:
+        drug_code:
+          type: string
+          example: INS-REG
+        batch_no:
+          type: string
+          example: LOT-INS-H1-01
+        expiry:
+          type: string
+          format: date
+          example: "2026-11-20"
+        quantity:
+          type: integer
+          minimum: 0
+          example: 50
+        confidence:
+          type: [number, "null"]
+          example: 0.95
+
+    Forecast:
+      type: object
+      required: [facility_id, drug_code, forecast_date, effective_daily_rate, target_days, projected_consumption]
+      properties:
+        facility_id:
+          type: string
+          example: H1
+        drug_code:
+          type: string
+          example: INS-REG
+        forecast_date:
+          type: string
+          format: date
+          example: "2026-11-01"
+        baseline_daily_rate:
+          type: number
+          example: 0.5
+        llm_multiplier:
+          type: number
+          example: 1.0
+        effective_daily_rate:
+          type: number
+          example: 0.5
+        target_days:
+          type: integer
+          example: 14
+        projected_consumption:
+          type: integer
+          example: 7
+
+    Candidate:
+      type: object
+      required: [id, lot_batch_no, drug_code, source_facility_id, destination_facility_id, chunk_quantity, usable_quantity]
+      properties:
+        id:
+          type: string
+          example: CND-01
+        lot_batch_no:
+          type: string
+          example: LOT-INS-H1-01
+        drug_code:
+          type: string
+          example: INS-REG
+        source_facility_id:
+          type: string
+          example: H1
+        destination_facility_id:
+          type: string
+          example: H2
+        chunk_quantity:
+          type: integer
+          example: 28
+        usable_quantity:
+          type: integer
+          example: 28
+        is_feasible:
+          type: boolean
+          default: true
+        feasibility_flags:
+          type: object
+          additionalProperties:
+            type: boolean
+        reward:
+          type: number
+          example: 0.95
+        cost:
+          type: number
+          example: 0.12
+
+    TransferOrder:
+      type: object
+      required: [id, source_facility_id, destination_facility_id, drug_code, batch_no, quantity, status, created_at]
+      properties:
+        id:
+          type: string
+          pattern: '^DTA/[A-Z0-9\-]+/\d{4}/\d{6}$'
+          example: DTA/BLR-U/2026/000101
+        plan_id:
+          type: [string, "null"]
+          example: PLAN-20261101-01
+        source_facility_id:
+          type: string
+          example: H1
+        destination_facility_id:
+          type: string
+          example: H2
+        drug_code:
+          type: string
+          example: INS-REG
+        batch_no:
+          type: string
+          example: LOT-INS-H1-01
+        lot_quantity:
+          type: [integer, "null"]
+          example: 50
+        quantity:
+          type: integer
+          minimum: 1
+          example: 28
+        usable_quantity:
+          type: [integer, "null"]
+          example: 28
+        status:
+          type: string
+          enum: [DRAFT, APPROVED, IN_TRANSIT, DELIVERED, CANCELLED]
+          example: APPROVED
+        temperature_controlled:
+          type: boolean
+          default: false
+        savings_inr:
+          type: [number, "null"]
+          example: 4074.00
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: [string, "null"]
+          format: date-time
+
+    RegretEntry:
+      type: object
+      required: [order_id, alternate_destination_id, chosen_reward, alternate_reward, regret_delta]
+      properties:
+        order_id:
+          type: string
+          example: DTA/BLR-U/2026/000101
+        alternate_destination_id:
+          type: string
+          example: W0
+        chosen_reward:
+          type: number
+          example: 0.95
+        alternate_reward:
+          type: number
+          example: 0.40
+        regret_delta:
+          type: number
+          example: 0.55
+        reason:
+          type: [string, "null"]
+
+    PlanRun:
+      type: object
+      required: [id, timestamp, status, mode, solver_tier, total_orders, total_units, shortage_reduction, expiry_avoided]
+      properties:
+        id:
+          type: string
+          example: PLAN-20261101-01
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: string
+          example: COMPLETED
+        mode:
+          type: string
+          enum: [live, whatif, eval]
+          example: live
+        solver_tier:
+          type: string
+          example: platform
+        execution_time_sec:
+          type: number
+          example: 4.12
+        total_orders:
+          type: integer
+          example: 6
+        total_units:
+          type: integer
+          example: 1428
+        shortage_reduction:
+          type: integer
+          example: 1350
+        expiry_avoided:
+          type: integer
+          example: 1428
+        total_savings_inr:
+          type: [number, "null"]
+          example: 12450.00
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransferOrder'
+        candidates:
+          type: array
+          items:
+            $ref: '#/components/schemas/Candidate'
+        regret:
+          type: array
+          items:
+            $ref: '#/components/schemas/RegretEntry'
+
+    CustodyEvent:
+      type: object
+      required: [order_id, actor, event_type, timestamp]
+      properties:
+        id:
+          type: [integer, "null"]
+        order_id:
+          type: string
+          example: DTA/BLR-U/2026/000101
+        actor:
+          type: string
+          example: pharmacist_h1
+        event_type:
+          type: string
+          enum: [DISPATCH, HANDOVER, RECEIVE]
+          example: DISPATCH
+        timestamp:
+          type: string
+          format: date-time
+        location:
+          type: [string, "null"]
+          example: SIM-HOSP-H1 Main Cold Pharmacy
+        temperature_c:
+          type: [number, "null"]
+          example: 4.2
+        notes:
+          type: [string, "null"]
+
+    AuditVerify:
+      type: object
+      required: [ok, entries, first_bad_seq]
+      properties:
+        ok:
+          type: boolean
+          example: true
+        entries:
+          type: integer
+          minimum: 0
+          example: 42
+        first_bad_seq:
+          type: [integer, "null"]
+          example: null
+
+    LlmRequest:
+      type: object
+      required: [purpose, prompt_id, version, input]
+      properties:
+        purpose:
+          type: string
+          example: extraction
+        prompt_id:
+          type: string
+          example: extract_stock
+        version:
+          type: string
+          example: v1
+        input:
+          type: object
+        model:
+          type: string
+          enum: [fast, smart]
+          default: fast
+
+    LlmResponse:
+      type: object
+      required: [request_id, purpose, prompt_id, version, model, confidence, output]
+      properties:
+        request_id:
+          type: string
+          example: llm-req-001
+        purpose:
+          type: string
+          example: extraction
+        prompt_id:
+          type: string
+          example: extract_stock
+        version:
+          type: string
+          example: v1
+        model:
+          type: string
+          example: claude-3-5-haiku-20241022
+        confidence:
+          type: number
+          example: 0.96
+        output:
+          type: object
+        cached:
+          type: boolean
+          default: false
+        execution_time_sec:
+          type: number
+          example: 0.85
+
+    ChatMessage:
+      type: object
+      required: [role, content]
+      properties:
+        role:
+          type: string
+          enum: [user, assistant, system, tool]
+          example: user
+        content:
+          type: string
+          example: "What is the redistribution plan for insulin?"
+        tool_calls:
+          type: array
+          items:
+            $ref: '#/components/schemas/ToolCall'
+
+    ToolCall:
+      type: object
+      required: [id, name, arguments]
+      properties:
+        id:
+          type: string
+          example: call_01
+        name:
+          type: string
+          example: get_stock_position
+        arguments:
+          type: object

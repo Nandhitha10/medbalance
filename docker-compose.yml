@@ -1,0 +1,453 @@
+services:
+  # ============================================================================
+  # Infrastructure (PostgreSQL, Redis, Mosquitto MQTT)
+  # ============================================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: medbal-postgres
+    restart: unless-stopped
+    profiles: ["core", "full"]
+    environment:
+      POSTGRES_USER: medbal
+      POSTGRES_PASSWORD: medbal_secret_pw
+      POSTGRES_DB: medbal
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init/01_init.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U medbal -d medbal"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - medbal
+
+  redis:
+    image: redis:7-alpine
+    container_name: medbal-redis
+    restart: unless-stopped
+    profiles: ["core", "full"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 3s
+    networks:
+      - medbal
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: medbal-mosquitto
+    restart: unless-stopped
+    profiles: ["core", "full"]
+    ports:
+      - "1883:1883"
+    volumes:
+      - mosquitto_data:/mosquitto/data
+      - ./docker/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mosquitto_sub -t '$$SYS/#' -C 1 -i healthcheck -W 3 || exit 0"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 3s
+    networks:
+      - medbal
+
+  # ============================================================================
+  # Base Shared Python Image (used by microservices)
+  # ============================================================================
+  py-base:
+    build:
+      context: .
+      dockerfile: docker/py-base.Dockerfile
+    image: medbal-py-base
+    profiles: ["none"]
+
+  # ============================================================================
+  # Core Profile Services
+  # ============================================================================
+  core-api:
+    build:
+      context: .
+      dockerfile: services/core-api/Dockerfile
+    container_name: medbal-core-api
+    restart: unless-stopped
+    profiles: ["core", "full"]
+    env_file:
+      - .env.example
+    environment:
+      SERVICE_NAME: core-api
+      DATABASE_URL: postgresql+psycopg://medbal:medbal_secret_pw@postgres:5432/medbal
+      REDIS_URL: redis://redis:6379/0
+      USE_FIXTURES: "1"
+    ports:
+      - "8001:8001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - medbal
+
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    container_name: medbal-web
+    restart: unless-stopped
+    profiles: ["core", "full"]
+    ports:
+      - "8081:80"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:80"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 3s
+    networks:
+      - medbal
+
+  gateway:
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
+    container_name: medbal-gateway
+    restart: unless-stopped
+    profiles: ["core", "full"]
+    ports:
+      - "8080:8080"
+    depends_on:
+      core-api:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/api/core/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - medbal
+
+  # ============================================================================
+  # AI Profile Services
+  # ============================================================================
+  ingest-ai:
+    build:
+      context: .
+      dockerfile: services/ingest-ai/Dockerfile
+    container_name: medbal-ingest-ai
+    restart: unless-stopped
+    profiles: ["ai", "full"]
+    env_file:
+      - .env.example
+    environment:
+      SERVICE_NAME: ingest-ai
+      REDIS_URL: redis://redis:6379/0
+      USE_FIXTURES: "1"
+    ports:
+      - "8002:8002"
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - medbal
+
+  genai:
+    build:
+      context: .
+      dockerfile: services/genai/Dockerfile
+    container_name: medbal-genai
+    restart: unless-stopped
+    profiles: ["ai", "full"]
+    env_file:
+      - .env.example
+    environment:
+      SERVICE_NAME: genai
+      USE_FIXTURES: "1"
+    ports:
+      - "8003:8003"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - medbal
+
+  forecast:
+    build:
+      context: .
+      dockerfile: services/forecast/Dockerfile
+    container_name: medbal-forecast
+    restart: unless-stopped
+    profiles: ["ai", "full"]
+    env_file:
+      - .env.example
+    environment:
+      SERVICE_NAME: forecast
+      USE_FIXTURES: "1"
+    ports:
+      - "8004:8004"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - medbal
+
+  # ============================================================================
+  # Optimization Profile Services
+  # ============================================================================
+  optimizer:
+    build:
+      context: .
+      dockerfile: services/optimizer/Dockerfile
+    container_name: medbal-optimizer
+    restart: unless-stopped
+    profiles: ["opt", "full"]
+    env_file:
+      - .env.example
+    environment:
+      SERVICE_NAME: optimizer
+      REDIS_URL: redis://redis:6379/0
+      USE_FIXTURES: "1"
+    ports:
+      - "8005:8005"
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8005/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - medbal
+
+  coldchain:
+    build:
+      context: .
+      dockerfile: services/coldchain/Dockerfile
+    container_name: medbal-coldchain
+    restart: unless-stopped
+    profiles: ["opt", "full"]
+    env_file:
+      - .env.example
+    environment:
+      SERVICE_NAME: coldchain
+      MQTT_URL: mqtt://mosquitto:1883
+      REDIS_URL: redis://redis:6379/0
+      USE_FIXTURES: "1"
+    ports:
+      - "8006:8006"
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8006/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - medbal
+
+  # ============================================================================
+  # Simulation Profile Services
+  # ============================================================================
+  sim-control:
+    build:
+      context: .
+      dockerfile: services/sim-control/Dockerfile
+    container_name: medbal-sim-control
+    restart: unless-stopped
+    profiles: ["sim", "full"]
+    env_file:
+      - .env.example
+    environment:
+      SERVICE_NAME: sim-control
+      USE_FIXTURES: "1"
+    ports:
+      - "8100:8100"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8100/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - medbal
+
+  sim-hospital-h1:
+    build:
+      context: .
+      dockerfile: services/sim-hospital/Dockerfile
+    image: medbal-sim-hospital
+    container_name: medbal-sim-hospital-h1
+    restart: unless-stopped
+    profiles: ["sim", "full"]
+    env_file:
+      - .env.example
+    environment:
+      HOSPITAL_ID: H1
+      PORT: "8100"
+      USE_FIXTURES: "1"
+    ports:
+      - "8101:8100"
+    depends_on:
+      sim-control:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8100/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - medbal
+
+  sim-hospital-h2:
+    image: medbal-sim-hospital
+    container_name: medbal-sim-hospital-h2
+    restart: unless-stopped
+    profiles: ["sim", "full"]
+    env_file:
+      - .env.example
+    environment:
+      HOSPITAL_ID: H2
+      PORT: "8100"
+      USE_FIXTURES: "1"
+    ports:
+      - "8102:8100"
+    depends_on:
+      sim-control:
+        condition: service_healthy
+      sim-hospital-h1:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8100/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - medbal
+
+  sim-hospital-h3:
+    image: medbal-sim-hospital
+    container_name: medbal-sim-hospital-h3
+    restart: unless-stopped
+    profiles: ["sim", "full"]
+    env_file:
+      - .env.example
+    environment:
+      HOSPITAL_ID: H3
+      PORT: "8100"
+      USE_FIXTURES: "1"
+    ports:
+      - "8103:8100"
+    depends_on:
+      sim-control:
+        condition: service_healthy
+      sim-hospital-h1:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8100/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - medbal
+
+  sim-hospital-h4:
+    image: medbal-sim-hospital
+    container_name: medbal-sim-hospital-h4
+    restart: unless-stopped
+    profiles: ["sim", "full"]
+    env_file:
+      - .env.example
+    environment:
+      HOSPITAL_ID: H4
+      PORT: "8100"
+      USE_FIXTURES: "1"
+    ports:
+      - "8104:8100"
+    depends_on:
+      sim-control:
+        condition: service_healthy
+      sim-hospital-h1:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8100/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - medbal
+
+  sensors:
+    build:
+      context: .
+      dockerfile: services/sensors/Dockerfile
+    container_name: medbal-sensors
+    restart: unless-stopped
+    profiles: ["sim", "full"]
+    env_file:
+      - .env.example
+    environment:
+      SERVICE_NAME: sensors
+      MQTT_URL: mqtt://mosquitto:1883
+    ports:
+      - "8105:8105"
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8105/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - medbal
+
+volumes:
+  postgres_data:
+  redis_data:
+  mosquitto_data:
+
+networks:
+  medbal:
+    driver: bridge

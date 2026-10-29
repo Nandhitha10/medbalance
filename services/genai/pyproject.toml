@@ -1,0 +1,15 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "genai"
+version = "0.1.0"
+description = "MedBalance GenAI Service"
+requires-python = ">=3.12"
+dependencies = [
+    "medbal-common",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]

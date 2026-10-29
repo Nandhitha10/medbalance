@@ -1,0 +1,366 @@
+{
+  "timestamp": "2026-11-01T08:00:00+05:30",
+  "facilities": [
+    {
+      "id": "H1",
+      "name": "District Hospital 1 (North)",
+      "facility_type": "Hospital",
+      "latitude": 13.0827,
+      "longitude": 77.5877,
+      "cold_storage_available": true,
+      "min_reserve_days": 7
+    },
+    {
+      "id": "H2",
+      "name": "District Hospital 2 (South)",
+      "facility_type": "Hospital",
+      "latitude": 12.9250,
+      "longitude": 77.5938,
+      "cold_storage_available": true,
+      "min_reserve_days": 7
+    },
+    {
+      "id": "H3",
+      "name": "Community Health Centre 3 (East)",
+      "facility_type": "CHC",
+      "latitude": 12.9716,
+      "longitude": 77.7499,
+      "cold_storage_available": false,
+      "min_reserve_days": 5
+    },
+    {
+      "id": "H4",
+      "name": "Primary Health Centre 4 (West)",
+      "facility_type": "PHC",
+      "latitude": 12.9856,
+      "longitude": 77.4812,
+      "cold_storage_available": false,
+      "min_reserve_days": 5
+    },
+    {
+      "id": "W0",
+      "name": "District Central Medical Warehouse",
+      "facility_type": "Warehouse",
+      "latitude": 13.0358,
+      "longitude": 77.5970,
+      "cold_storage_available": true,
+      "min_reserve_days": 14
+    }
+  ],
+  "drugs": [
+    {
+      "code": "INS-REG",
+      "name": "Insulin Regular 100 IU/ml",
+      "category": "V",
+      "unit": "vial",
+      "pack_size": 1,
+      "storage_condition": "cold_chain",
+      "min_residual_days": 15,
+      "unit_cost_inr": 145.50
+    },
+    {
+      "code": "AMOX-500",
+      "name": "Amoxicillin 500mg",
+      "category": "E",
+      "unit": "tablet",
+      "pack_size": 10,
+      "storage_condition": "ambient",
+      "min_residual_days": 30,
+      "unit_cost_inr": 4.25
+    },
+    {
+      "code": "OXY-10",
+      "name": "Oxytocin Injection 10 IU",
+      "category": "V",
+      "unit": "ampoule",
+      "pack_size": 5,
+      "storage_condition": "cold_chain",
+      "min_residual_days": 30,
+      "unit_cost_inr": 28.00
+    },
+    {
+      "code": "ORS-20",
+      "name": "Oral Rehydration Salts 20.5g",
+      "category": "E",
+      "unit": "sachet",
+      "pack_size": 1,
+      "storage_condition": "ambient",
+      "min_residual_days": 60,
+      "unit_cost_inr": 8.50
+    },
+    {
+      "code": "AZITH-500",
+      "name": "Azithromycin 500mg",
+      "category": "E",
+      "unit": "tablet",
+      "pack_size": 3,
+      "storage_condition": "ambient",
+      "min_residual_days": 45,
+      "unit_cost_inr": 18.75
+    },
+    {
+      "code": "PARA-500",
+      "name": "Paracetamol 500mg",
+      "category": "N",
+      "unit": "tablet",
+      "pack_size": 10,
+      "storage_condition": "ambient",
+      "min_residual_days": 30,
+      "unit_cost_inr": 1.20
+    }
+  ],
+  "routes": [
+    {
+      "id": "RTE-H1-H2",
+      "source_facility_id": "H1",
+      "destination_facility_id": "H2",
+      "distance_km": 18.5,
+      "transit_hours": 1.0,
+      "cold_chain_compliant": true
+    },
+    {
+      "id": "RTE-H1-H3",
+      "source_facility_id": "H1",
+      "destination_facility_id": "H3",
+      "distance_km": 24.0,
+      "transit_hours": 1.2,
+      "cold_chain_compliant": true
+    },
+    {
+      "id": "RTE-H2-H4",
+      "source_facility_id": "H2",
+      "destination_facility_id": "H4",
+      "distance_km": 15.2,
+      "transit_hours": 0.8,
+      "cold_chain_compliant": true
+    },
+    {
+      "id": "RTE-W0-H4",
+      "source_facility_id": "W0",
+      "destination_facility_id": "H4",
+      "distance_km": 22.0,
+      "transit_hours": 1.1,
+      "cold_chain_compliant": true
+    },
+    {
+      "id": "RTE-H2-H1",
+      "source_facility_id": "H2",
+      "destination_facility_id": "H1",
+      "distance_km": 18.5,
+      "transit_hours": 1.0,
+      "cold_chain_compliant": true
+    },
+    {
+      "id": "RTE-H3-H4",
+      "source_facility_id": "H3",
+      "destination_facility_id": "H4",
+      "distance_km": 32.0,
+      "transit_hours": 1.5,
+      "cold_chain_compliant": false
+    }
+  ],
+  "vehicles": [
+    {
+      "id": "VEH-CC-01",
+      "name": "Refrigerated Van 01",
+      "vehicle_type": "Refrigerated Van",
+      "cold_chain_capable": true,
+      "current_temp_c": 4.1,
+      "is_active": true
+    },
+    {
+      "id": "VEH-CC-02",
+      "name": "Refrigerated Van 02",
+      "vehicle_type": "Refrigerated Van",
+      "cold_chain_capable": true,
+      "current_temp_c": 3.8,
+      "is_active": true
+    },
+    {
+      "id": "VEH-AMB-01",
+      "name": "General Cargo Van 01",
+      "vehicle_type": "Cargo Van",
+      "cold_chain_capable": false,
+      "current_temp_c": 24.5,
+      "is_active": true
+    }
+  ],
+  "lots": [
+    {
+      "id": 1,
+      "facility_id": "H1",
+      "drug_code": "INS-REG",
+      "batch_no": "LOT-INS-H1-01",
+      "expiry": "2026-11-20",
+      "quantity": 50,
+      "created_at": "2026-10-15T10:00:00+05:30"
+    },
+    {
+      "id": 2,
+      "facility_id": "H1",
+      "drug_code": "AMOX-500",
+      "batch_no": "LOT-AMX-H1-02",
+      "expiry": "2026-11-25",
+      "quantity": 800,
+      "created_at": "2026-10-15T10:00:00+05:30"
+    },
+    {
+      "id": 3,
+      "facility_id": "H2",
+      "drug_code": "OXY-10",
+      "batch_no": "LOT-OXY-H2-01",
+      "expiry": "2026-11-28",
+      "quantity": 100,
+      "created_at": "2026-10-16T11:00:00+05:30"
+    },
+    {
+      "id": 4,
+      "facility_id": "W0",
+      "drug_code": "ORS-20",
+      "batch_no": "LOT-ORS-W0-01",
+      "expiry": "2026-12-05",
+      "quantity": 1500,
+      "created_at": "2026-10-10T09:00:00+05:30"
+    },
+    {
+      "id": 5,
+      "facility_id": "H2",
+      "drug_code": "AZITH-500",
+      "batch_no": "LOT-AZT-H2-01",
+      "expiry": "2026-12-10",
+      "quantity": 400,
+      "created_at": "2026-10-18T14:30:00+05:30"
+    },
+    {
+      "id": 6,
+      "facility_id": "H3",
+      "drug_code": "PARA-500",
+      "batch_no": "LOT-PAR-H3-01",
+      "expiry": "2026-12-15",
+      "quantity": 1000,
+      "created_at": "2026-10-20T08:15:00+05:30"
+    }
+  ],
+  "positions": [
+    {
+      "facility_id": "H1",
+      "drug_code": "INS-REG",
+      "stock_on_hand": 50,
+      "effective_stock": 10,
+      "at_risk_stock": 40,
+      "reserve": 10,
+      "shortage": 0,
+      "daily_consumption_rate": 0.5
+    },
+    {
+      "facility_id": "H2",
+      "drug_code": "INS-REG",
+      "stock_on_hand": 5,
+      "effective_stock": 5,
+      "at_risk_stock": 0,
+      "reserve": 14,
+      "shortage": 30,
+      "daily_consumption_rate": 2.5
+    },
+    {
+      "facility_id": "H1",
+      "drug_code": "AMOX-500",
+      "stock_on_hand": 800,
+      "effective_stock": 300,
+      "at_risk_stock": 500,
+      "reserve": 100,
+      "shortage": 0,
+      "daily_consumption_rate": 12.0
+    },
+    {
+      "facility_id": "H3",
+      "drug_code": "AMOX-500",
+      "stock_on_hand": 20,
+      "effective_stock": 20,
+      "at_risk_stock": 0,
+      "reserve": 50,
+      "shortage": 400,
+      "daily_consumption_rate": 30.0
+    },
+    {
+      "facility_id": "H2",
+      "drug_code": "OXY-10",
+      "stock_on_hand": 100,
+      "effective_stock": 30,
+      "at_risk_stock": 70,
+      "reserve": 20,
+      "shortage": 0,
+      "daily_consumption_rate": 1.0
+    },
+    {
+      "facility_id": "H4",
+      "drug_code": "OXY-10",
+      "stock_on_hand": 0,
+      "effective_stock": 0,
+      "at_risk_stock": 0,
+      "reserve": 10,
+      "shortage": 50,
+      "daily_consumption_rate": 3.0
+    },
+    {
+      "facility_id": "W0",
+      "drug_code": "ORS-20",
+      "stock_on_hand": 1500,
+      "effective_stock": 500,
+      "at_risk_stock": 1000,
+      "reserve": 200,
+      "shortage": 0,
+      "daily_consumption_rate": 20.0
+    },
+    {
+      "facility_id": "H4",
+      "drug_code": "ORS-20",
+      "stock_on_hand": 50,
+      "effective_stock": 50,
+      "at_risk_stock": 0,
+      "reserve": 100,
+      "shortage": 500,
+      "daily_consumption_rate": 40.0
+    },
+    {
+      "facility_id": "H2",
+      "drug_code": "AZITH-500",
+      "stock_on_hand": 400,
+      "effective_stock": 150,
+      "at_risk_stock": 250,
+      "reserve": 50,
+      "shortage": 0,
+      "daily_consumption_rate": 5.0
+    },
+    {
+      "facility_id": "H1",
+      "drug_code": "AZITH-500",
+      "stock_on_hand": 10,
+      "effective_stock": 10,
+      "at_risk_stock": 0,
+      "reserve": 30,
+      "shortage": 200,
+      "daily_consumption_rate": 15.0
+    },
+    {
+      "facility_id": "H3",
+      "drug_code": "PARA-500",
+      "stock_on_hand": 1000,
+      "effective_stock": 400,
+      "at_risk_stock": 600,
+      "reserve": 150,
+      "shortage": 0,
+      "daily_consumption_rate": 15.0
+    },
+    {
+      "facility_id": "H4",
+      "drug_code": "PARA-500",
+      "stock_on_hand": 100,
+      "effective_stock": 100,
+      "at_risk_stock": 0,
+      "reserve": 200,
+      "shortage": 250,
+      "daily_consumption_rate": 25.0
+    }
+  ]
+}

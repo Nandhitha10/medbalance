@@ -1,0 +1,9 @@
+{
+  "drug_code": "INS-REG",
+  "facility_id": "H2",
+  "evaluation_window_days": 30,
+  "mape_percent": 6.8,
+  "rmse": 1.45,
+  "model_used": "HoltWintersAdditive_x_LLMContext",
+  "baseline_mape_percent": 11.2
+}

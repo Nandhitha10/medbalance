@@ -1,0 +1,165 @@
+openapi: 3.1.0
+info:
+  title: MedBalance Simulated Hospital Service
+  version: 0.1.0
+  description: Hospital node simulation supporting FHIR InventoryReport, CSV export, and transfer lifecycle.
+paths:
+  /fhir/InventoryReport:
+    get:
+      summary: Export stock as standard FHIR R4 InventoryReport
+      operationId: getFhirInventoryReport
+      responses:
+        '200':
+          description: FHIR InventoryReport resource
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [resourceType, id, status, countType, reportedDateTime, item]
+                properties:
+                  resourceType:
+                    type: string
+                    example: InventoryReport
+                  id:
+                    type: string
+                  status:
+                    type: string
+                  countType:
+                    type: string
+                  reportedDateTime:
+                    type: string
+                    format: date-time
+                  reporter:
+                    type: object
+                  item:
+                    type: array
+                    items:
+                      type: object
+
+  /export/stock.csv:
+    get:
+      summary: Export stock as CSV
+      operationId: exportStockCsv
+      responses:
+        '200':
+          description: CSV stock file
+          content:
+            text/csv:
+              schema:
+                type: string
+
+  /state:
+    get:
+      summary: Get hospital local stock state
+      operationId: getHospitalState
+      responses:
+        '200':
+          description: Current hospital internal inventory state
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [hospital_id, name, stock_items_count, inventory]
+                properties:
+                  hospital_id:
+                    type: string
+                  name:
+                    type: string
+                  stock_items_count:
+                    type: integer
+                  last_synced_at:
+                    type: string
+                    format: date-time
+                  pending_transfers_in:
+                    type: integer
+                  pending_transfers_out:
+                    type: integer
+                  inventory:
+                    type: array
+                    items:
+                      type: object
+                      required: [drug_code, batch_no, expiry, quantity]
+                      properties:
+                        drug_code:
+                          type: string
+                        batch_no:
+                          type: string
+                        expiry:
+                          type: string
+                          format: date
+                        quantity:
+                          type: integer
+
+  /transfers/inbound:
+    post:
+      summary: Receive inbound transfer arrival
+      operationId: receiveInboundTransfer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [order_id, drug_code, batch_no, quantity]
+              properties:
+                order_id:
+                  type: string
+                drug_code:
+                  type: string
+                batch_no:
+                  type: string
+                quantity:
+                  type: integer
+      responses:
+        '200':
+          description: Inbound transfer acknowledged
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, order_id, stock_updated]
+                properties:
+                  status:
+                    type: string
+                    example: received
+                  order_id:
+                    type: string
+                  stock_updated:
+                    type: boolean
+
+  /transfers/outbound:
+    post:
+      summary: Dispatch outbound transfer from hospital
+      operationId: dispatchOutboundTransfer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [order_id, drug_code, batch_no, quantity]
+              properties:
+                order_id:
+                  type: string
+                drug_code:
+                  type: string
+                batch_no:
+                  type: string
+                quantity:
+                  type: integer
+      responses:
+        '200':
+          description: Outbound transfer dispatched
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, order_id, remaining_stock]
+                properties:
+                  status:
+                    type: string
+                    example: dispatched
+                  order_id:
+                    type: string
+                  remaining_stock:
+                    type: integer

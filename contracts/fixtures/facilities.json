@@ -1,0 +1,47 @@
+[
+  {
+    "id": "H1",
+    "name": "District Hospital 1 (North)",
+    "facility_type": "Hospital",
+    "latitude": 13.0827,
+    "longitude": 77.5877,
+    "cold_storage_available": true,
+    "min_reserve_days": 7
+  },
+  {
+    "id": "H2",
+    "name": "District Hospital 2 (South)",
+    "facility_type": "Hospital",
+    "latitude": 12.9250,
+    "longitude": 77.5938,
+    "cold_storage_available": true,
+    "min_reserve_days": 7
+  },
+  {
+    "id": "H3",
+    "name": "Community Health Centre 3 (East)",
+    "facility_type": "CHC",
+    "latitude": 12.9716,
+    "longitude": 77.7499,
+    "cold_storage_available": false,
+    "min_reserve_days": 5
+  },
+  {
+    "id": "H4",
+    "name": "Primary Health Centre 4 (West)",
+    "facility_type": "PHC",
+    "latitude": 12.9856,
+    "longitude": 77.4812,
+    "cold_storage_available": false,
+    "min_reserve_days": 5
+  },
+  {
+    "id": "W0",
+    "name": "District Central Medical Warehouse",
+    "facility_type": "Warehouse",
+    "latitude": 13.0358,
+    "longitude": 77.5970,
+    "cold_storage_available": true,
+    "min_reserve_days": 14
+  }
+]

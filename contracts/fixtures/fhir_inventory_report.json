@@ -1,0 +1,47 @@
+{
+  "resourceType": "InventoryReport",
+  "id": "ir-h1-20261101",
+  "status": "completed",
+  "countType": "snapshot",
+  "reportedDateTime": "2026-11-01T08:00:00+05:30",
+  "reporter": {
+    "reference": "Location/H1",
+    "display": "District Hospital 1"
+  },
+  "item": [
+    {
+      "item": {
+        "concept": {
+          "coding": [
+            {
+              "system": "http://medbalance.district.health/drugs",
+              "code": "INS-REG",
+              "display": "Insulin Regular 100 IU/ml"
+            }
+          ]
+        }
+      },
+      "quantity": {
+        "value": 50,
+        "unit": "vial"
+      }
+    },
+    {
+      "item": {
+        "concept": {
+          "coding": [
+            {
+              "system": "http://medbalance.district.health/drugs",
+              "code": "AMOX-500",
+              "display": "Amoxicillin 500mg"
+            }
+          ]
+        }
+      },
+      "quantity": {
+        "value": 800,
+        "unit": "tablet"
+      }
+    }
+  ]
+}

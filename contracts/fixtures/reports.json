@@ -1,0 +1,20 @@
+[
+  {
+    "id": "REP-H1-20261101",
+    "facility_code": "H1",
+    "received_at": "2026-11-01T08:15:00+05:30",
+    "status": "PROCESSED",
+    "source_type": "pdf",
+    "extracted_items_count": 12,
+    "anomalies_detected": 0
+  },
+  {
+    "id": "REP-H2-20261101",
+    "facility_code": "H2",
+    "received_at": "2026-11-01T08:20:00+05:30",
+    "status": "NEEDS_REVIEW",
+    "source_type": "excel",
+    "extracted_items_count": 8,
+    "anomalies_detected": 1
+  }
+]

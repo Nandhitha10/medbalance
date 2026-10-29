@@ -1,0 +1,28 @@
+{
+  "order_id": "DTA/BLR-U/2026/000101",
+  "plan_id": "PLAN-20261101-01",
+  "generated_at": "2026-11-01T08:35:15+05:30",
+  "solver_tier": "platform",
+  "source_lot": {
+    "batch_no": "LOT-INS-H1-01",
+    "facility_id": "H1",
+    "expiry": "2026-11-20",
+    "original_quantity": 50,
+    "allocated_quantity": 28
+  },
+  "destination_position": {
+    "facility_id": "H2",
+    "stock_on_hand_before": 5,
+    "shortage_before": 30,
+    "shortage_after": 2
+  },
+  "feasibility_proof": {
+    "F1_identity": true,
+    "F2_route_transit_hours": 1.0,
+    "F3_cold_chain_maintained": true,
+    "F4_residual_shelf_life_days": 19,
+    "F5_reserve_protected": 10,
+    "F6_controlled_substance": false
+  },
+  "audit_seq": 2
+}

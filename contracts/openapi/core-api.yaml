@@ -1,0 +1,447 @@
+openapi: 3.1.0
+info:
+  title: MedBalance Core API
+  version: 0.1.0
+  description: Facilities, drugs, lots, positions, orders, custody, audit chain, and SSE events.
+paths:
+  /facilities:
+    get:
+      summary: List all facilities
+      operationId: getFacilities
+      responses:
+        '200':
+          description: List of facilities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: './components.yaml#/components/schemas/Facility'
+
+  /drugs:
+    get:
+      summary: List drug formulary
+      operationId: getDrugs
+      responses:
+        '200':
+          description: List of drugs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: './components.yaml#/components/schemas/Drug'
+
+  /routes:
+    get:
+      summary: List transit routes
+      operationId: getRoutes
+      responses:
+        '200':
+          description: List of routes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: './components.yaml#/components/schemas/Route'
+
+  /vehicles:
+    get:
+      summary: List vehicles
+      operationId: getVehicles
+      responses:
+        '200':
+          description: List of vehicles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: './components.yaml#/components/schemas/Vehicle'
+
+  /lots:
+    get:
+      summary: Query inventory lots
+      operationId: getLots
+      parameters:
+        - name: facility
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: drug
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of inventory lots
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: './components.yaml#/components/schemas/Lot'
+
+  /lots/upsert-batch:
+    post:
+      summary: Batch upsert inventory lots
+      operationId: upsertLotsBatch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: './components.yaml#/components/schemas/Lot'
+      responses:
+        '200':
+          description: Upsert summary
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, upserted_count]
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  upserted_count:
+                    type: integer
+                    example: 2
+
+  /positions:
+    get:
+      summary: Query computed stock positions
+      operationId: getPositions
+      parameters:
+        - name: facility
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: drug
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of stock positions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: './components.yaml#/components/schemas/Position'
+
+  /snapshot:
+    get:
+      summary: Complete data snapshot for optimizer
+      operationId: getSnapshot
+      responses:
+        '200':
+          description: Complete district snapshot
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [timestamp, facilities, drugs, routes, vehicles, lots, positions]
+                properties:
+                  timestamp:
+                    type: string
+                    format: date-time
+                  facilities:
+                    type: array
+                    items:
+                      $ref: './components.yaml#/components/schemas/Facility'
+                  drugs:
+                    type: array
+                    items:
+                      $ref: './components.yaml#/components/schemas/Drug'
+                  routes:
+                    type: array
+                    items:
+                      $ref: './components.yaml#/components/schemas/Route'
+                  vehicles:
+                    type: array
+                    items:
+                      $ref: './components.yaml#/components/schemas/Vehicle'
+                  lots:
+                    type: array
+                    items:
+                      $ref: './components.yaml#/components/schemas/Lot'
+                  positions:
+                    type: array
+                    items:
+                      $ref: './components.yaml#/components/schemas/Position'
+
+  /plans:
+    post:
+      summary: Persist completed plan run with candidates, orders, and regret
+      operationId: persistPlan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './components.yaml#/components/schemas/PlanRun'
+      responses:
+        '201':
+          description: Plan persisted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, plan_id]
+                properties:
+                  status:
+                    type: string
+                    example: created
+                  plan_id:
+                    type: string
+                    example: PLAN-20261101-01
+
+  /orders:
+    get:
+      summary: List transfer orders
+      operationId: getOrders
+      parameters:
+        - name: plan_id
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of transfer orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: './components.yaml#/components/schemas/TransferOrder'
+
+  /orders/{id}:
+    get:
+      summary: Get order details by ID
+      operationId: getOrderById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Order details
+          content:
+            application/json:
+              schema:
+                $ref: './components.yaml#/components/schemas/TransferOrder'
+
+  /orders/{id}/approve:
+    post:
+      summary: Approve a transfer order
+      operationId: approveOrder
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Approved transfer order
+          content:
+            application/json:
+              schema:
+                $ref: './components.yaml#/components/schemas/TransferOrder'
+
+  /orders/{id}/reject:
+    post:
+      summary: Reject a transfer order
+      operationId: rejectOrder
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Rejected transfer order
+          content:
+            application/json:
+              schema:
+                $ref: './components.yaml#/components/schemas/TransferOrder'
+
+  /custody/scan:
+    post:
+      summary: Record barcode / QR custody scan event
+      operationId: recordCustodyScan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './components.yaml#/components/schemas/CustodyEvent'
+      responses:
+        '200':
+          description: Scan recorded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, event_id]
+                properties:
+                  status:
+                    type: string
+                    example: recorded
+                  event_id:
+                    type: integer
+                    example: 1
+
+  /custody/{order_id}:
+    get:
+      summary: Get custody event trail for an order
+      operationId: getCustodyTrail
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Custody event chain
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: './components.yaml#/components/schemas/CustodyEvent'
+
+  /audit/verify:
+    get:
+      summary: Verify tamper-evident audit hash chain
+      operationId: verifyAuditChain
+      responses:
+        '200':
+          description: Audit chain status
+          content:
+            application/json:
+              schema:
+                $ref: './components.yaml#/components/schemas/AuditVerify'
+
+  /audit:
+    get:
+      summary: Query audit log entries
+      operationId: getAuditEntries
+      parameters:
+        - name: entity
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: id
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of audit entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required: [seq, timestamp, actor, action, entity, entity_id, prev_hash, hash]
+                  properties:
+                    seq:
+                      type: integer
+                    timestamp:
+                      type: string
+                      format: date-time
+                    actor:
+                      type: string
+                    action:
+                      type: string
+                    entity:
+                      type: string
+                    entity_id:
+                      type: string
+                    payload:
+                      type: object
+                    prev_hash:
+                      type: string
+                    hash:
+                      type: string
+
+  /events:
+    get:
+      summary: SSE real-time event stream
+      operationId: getEventsStream
+      responses:
+        '200':
+          description: Server-sent event stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+  /provenance/{order_id}:
+    get:
+      summary: Get full mathematical and audit provenance for an order
+      operationId: getProvenance
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Provenance documentation
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [order_id, plan_id, generated_at, solver_tier, source_lot, destination_position, feasibility_proof, audit_seq]
+                properties:
+                  order_id:
+                    type: string
+                  plan_id:
+                    type: string
+                  generated_at:
+                    type: string
+                    format: date-time
+                  solver_tier:
+                    type: string
+                  source_lot:
+                    type: object
+                  destination_position:
+                    type: object
+                  feasibility_proof:
+                    type: object
+                  audit_seq:
+                    type: integer

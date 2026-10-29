@@ -1,0 +1,26 @@
+[
+  {
+    "id": "VEH-CC-01",
+    "name": "Refrigerated Van 01",
+    "vehicle_type": "Refrigerated Van",
+    "cold_chain_capable": true,
+    "current_temp_c": 4.1,
+    "is_active": true
+  },
+  {
+    "id": "VEH-CC-02",
+    "name": "Refrigerated Van 02",
+    "vehicle_type": "Refrigerated Van",
+    "cold_chain_capable": true,
+    "current_temp_c": 3.8,
+    "is_active": true
+  },
+  {
+    "id": "VEH-AMB-01",
+    "name": "General Cargo Van 01",
+    "vehicle_type": "Cargo Van",
+    "cold_chain_capable": false,
+    "current_temp_c": 24.5,
+    "is_active": true
+  }
+]

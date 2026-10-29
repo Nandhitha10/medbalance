@@ -1,0 +1,206 @@
+openapi: 3.1.0
+info:
+  title: MedBalance Simulation Control Service
+  version: 0.1.0
+  description: Sim clock management, scenarios, reset, outbreak and campaign signals.
+paths:
+  /clock:
+    get:
+      summary: Get current simulation clock state
+      operationId: getClock
+      responses:
+        '200':
+          description: Simulation clock
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [now, today, is_running, speed]
+                properties:
+                  now:
+                    type: string
+                    format: date-time
+                  today:
+                    type: string
+                    format: date
+                  is_running:
+                    type: boolean
+                  speed:
+                    type: number
+                  elapsed_seconds:
+                    type: integer
+
+  /clock/start:
+    post:
+      summary: Start or resume simulation clock
+      operationId: startClock
+      responses:
+        '200':
+          description: Clock started
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, is_running]
+                properties:
+                  status:
+                    type: string
+                  is_running:
+                    type: boolean
+
+  /clock/pause:
+    post:
+      summary: Pause simulation clock
+      operationId: pauseClock
+      responses:
+        '200':
+          description: Clock paused
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, is_running]
+                properties:
+                  status:
+                    type: string
+                  is_running:
+                    type: boolean
+
+  /clock/speed:
+    post:
+      summary: Set simulation clock speed multiplier
+      operationId: setClockSpeed
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [speed]
+              properties:
+                speed:
+                  type: number
+                  minimum: 0.1
+                  maximum: 100.0
+      responses:
+        '200':
+          description: Speed updated
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, speed]
+                properties:
+                  status:
+                    type: string
+                  speed:
+                    type: number
+
+  /scenario/{name}:
+    post:
+      summary: Apply simulation scenario
+      operationId: applyScenario
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Scenario activation
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, scenario]
+                properties:
+                  status:
+                    type: string
+                  scenario:
+                    type: string
+
+  /reset:
+    post:
+      summary: Reset simulation environment
+      operationId: resetSimulation
+      parameters:
+        - name: seed
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Reset confirmation
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, seed, reset_time]
+                properties:
+                  status:
+                    type: string
+                  seed:
+                    type: integer
+                  reset_time:
+                    type: string
+                    format: date-time
+
+  /signals:
+    get:
+      summary: List active outbreak and campaign signals
+      operationId: getSignals
+      responses:
+        '200':
+          description: List of epidemiological signals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required: [id, signal_type, drug_code, multiplier, effective_from, effective_to]
+                  properties:
+                    id:
+                      type: string
+                    signal_type:
+                      type: string
+                    district:
+                      type: string
+                    taluk:
+                      type: string
+                    drug_code:
+                      type: string
+                    multiplier:
+                      type: number
+                    effective_from:
+                      type: string
+                      format: date
+                    effective_to:
+                      type: string
+                      format: date
+                    notes:
+                      type: string
+
+  /scenarios:
+    get:
+      summary: List available simulation scenarios
+      operationId: getScenarios
+      responses:
+        '200':
+          description: List of scenarios
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required: [name, description, active]
+                  properties:
+                    name:
+                      type: string
+                    description:
+                      type: string
+                    active:
+                      type: boolean

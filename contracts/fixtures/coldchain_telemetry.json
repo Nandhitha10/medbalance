@@ -1,0 +1,16 @@
+[
+  {
+    "device_id": "DEV-VEH-01",
+    "timestamp": "2026-11-01T08:30:00+05:30",
+    "temperature_c": 4.0,
+    "humidity_percent": 55.0,
+    "battery_percent": 95
+  },
+  {
+    "device_id": "DEV-VEH-01",
+    "timestamp": "2026-11-01T08:45:00+05:30",
+    "temperature_c": 4.2,
+    "humidity_percent": 54.0,
+    "battery_percent": 94
+  }
+]

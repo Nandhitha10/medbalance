@@ -1,0 +1,26 @@
+[project]
+name = "medbalance"
+version = "0.1.0"
+description = "MedBalance-Q monorepo"
+requires-python = ">=3.12"
+dependencies = [
+    "medbal-common",
+]
+
+[dependency-groups]
+dev = [
+    "jsonschema>=4.26.0",
+    "openapi-schema-validator>=0.9.0",
+    "pytest>=8.1.0",
+    "pytest-asyncio>=0.23.5",
+    "pyyaml>=6.0.3",
+]
+
+[tool.uv.workspace]
+members = [
+    "libs/medbal_common",
+    "services/*",
+]
+
+[tool.uv.sources]
+medbal-common = { workspace = true }

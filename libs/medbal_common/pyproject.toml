@@ -1,0 +1,29 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "medbal-common"
+version = "0.1.0"
+description = "Shared Python library for MedBalance-Q"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2.6.0",
+    "pydantic-settings>=2.2.0",
+    "sqlalchemy>=2.0.28",
+    "httpx>=0.27.0",
+    "fastapi>=0.110.0",
+    "redis>=5.0.3",
+    "uvicorn>=0.28.0",
+    "python-dateutil>=2.9.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.1.0",
+    "pytest-asyncio>=0.23.5",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["medbal_common"]

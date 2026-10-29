@@ -1,0 +1,175 @@
+openapi: 3.1.0
+info:
+  title: MedBalance GenAI Service
+  version: 0.1.0
+  description: LLM gateway, structured completion, narration with numeric firewall, DTA vouchers, credit memos, and copilot.
+paths:
+  /llm/complete:
+    post:
+      summary: Central LLM gateway completion
+      operationId: llmComplete
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './components.yaml#/components/schemas/LlmRequest'
+      responses:
+        '200':
+          description: Structured LLM output
+          content:
+            application/json:
+              schema:
+                $ref: './components.yaml#/components/schemas/LlmResponse'
+
+  /narrate/{order_id}:
+    post:
+      summary: Generate grounded narration for an order
+      operationId: narrateOrder
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Clinician-friendly grounded narration
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [order_id, headline, explanation, grounding_check]
+                properties:
+                  order_id:
+                    type: string
+                  headline:
+                    type: string
+                  explanation:
+                    type: string
+                  grounding_check:
+                    type: object
+                    required: [passed, verified_numbers, unverified_numbers]
+                    properties:
+                      passed:
+                        type: boolean
+                      verified_numbers:
+                        type: array
+                        items:
+                          type: number
+                      unverified_numbers:
+                        type: array
+                        items:
+                          type: number
+
+  /docs/dta/{order_id}:
+    post:
+      summary: Generate official DTA PDF voucher
+      operationId: generateDtaPdf
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Binary PDF document
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+
+  /docs/credit-memo/{order_id}:
+    post:
+      summary: Generate financial credit memo
+      operationId: generateCreditMemo
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Financial credit memo voucher
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [memo_id, order_id, creditor_facility_id, debtor_facility_id, drug_code, quantity, unit_cost_inr, total_credit_inr, issue_date]
+                properties:
+                  memo_id:
+                    type: string
+                  order_id:
+                    type: string
+                  creditor_facility_id:
+                    type: string
+                  debtor_facility_id:
+                    type: string
+                  drug_code:
+                    type: string
+                  quantity:
+                    type: integer
+                  unit_cost_inr:
+                    type: number
+                  total_credit_inr:
+                    type: number
+                  issue_date:
+                    type: string
+                    format: date
+                  authorized_by:
+                    type: string
+
+  /copilot/chat:
+    post:
+      summary: Interactive district copilot chat stream
+      operationId: copilotChat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [messages]
+              properties:
+                messages:
+                  type: array
+                  items:
+                    $ref: './components.yaml#/components/schemas/ChatMessage'
+      responses:
+        '200':
+          description: Real-time token / tool event stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+  /ai/health:
+    get:
+      summary: GenAI provider health and model status
+      operationId: getAiHealth
+      responses:
+        '200':
+          description: AI subsystem health
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, gateway, primary_provider, fast_model, smart_model, cache_mode, firewall_active]
+                properties:
+                  status:
+                    type: string
+                  gateway:
+                    type: string
+                  primary_provider:
+                    type: string
+                  fast_model:
+                    type: string
+                  smart_model:
+                    type: string
+                  cache_mode:
+                    type: string
+                  firewall_active:
+                    type: boolean

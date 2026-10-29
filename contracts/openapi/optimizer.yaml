@@ -1,0 +1,239 @@
+openapi: 3.1.0
+info:
+  title: MedBalance Optimizer Service
+  version: 0.1.0
+  description: QUBO redistribution optimization, QpiAI solvers, feasibility checks (F1-F6), what-if scenarios, and regret analysis.
+paths:
+  /plan/run:
+    post:
+      summary: Run redistribution optimizer
+      operationId: runPlan
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                mode:
+                  type: string
+                  enum: [live, whatif, eval]
+                  default: live
+                overrides:
+                  type: object
+      responses:
+        '200':
+          description: Completed optimization plan
+          content:
+            application/json:
+              schema:
+                $ref: './components.yaml#/components/schemas/PlanRun'
+
+  /plan/{id}:
+    get:
+      summary: Retrieve plan by ID
+      operationId: getPlanById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Plan details
+          content:
+            application/json:
+              schema:
+                $ref: './components.yaml#/components/schemas/PlanRun'
+
+  /plan/{id}/benchmark:
+    get:
+      summary: Benchmark solver against classical exact MILP gap
+      operationId: getPlanBenchmark
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Benchmark comparison report
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [plan_id, solver_tier, milp_optimal_energy, solver_energy, optimality_gap_percent, solver_time_sec, milp_time_sec]
+                properties:
+                  plan_id:
+                    type: string
+                  solver_tier:
+                    type: string
+                  milp_optimal_energy:
+                    type: number
+                  solver_energy:
+                    type: number
+                  optimality_gap_percent:
+                    type: number
+                  solver_time_sec:
+                    type: number
+                  milp_time_sec:
+                    type: number
+
+  /plan/{id}/regret:
+    get:
+      summary: Inspect regret and non-chosen alternatives for orders
+      operationId: getPlanRegret
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: order_id
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of regret entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: './components.yaml#/components/schemas/RegretEntry'
+
+  /whynot:
+    get:
+      summary: Explain why a lot or facility was not allocated (F1-F6 failure breakdown)
+      operationId: explainWhyNot
+      parameters:
+        - name: facility
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: drug
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Explanatory breakdown
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [facility_id, drug_code, candidates_evaluated, feasible_candidates, reasons]
+                properties:
+                  facility_id:
+                    type: string
+                  drug_code:
+                    type: string
+                  candidates_evaluated:
+                    type: integer
+                  feasible_candidates:
+                    type: integer
+                  reasons:
+                    type: array
+                    items:
+                      type: string
+
+  /whatif:
+    post:
+      summary: Simulate what-if allocation scenario without persisting
+      operationId: simulateWhatIf
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [scenario_type]
+              properties:
+                scenario_type:
+                  type: string
+                overrides:
+                  type: object
+      responses:
+        '200':
+          description: Simulated plan run
+          content:
+            application/json:
+              schema:
+                $ref: './components.yaml#/components/schemas/PlanRun'
+
+  /eval/replay:
+    post:
+      summary: Replay historical simulation days for policy evaluation
+      operationId: replayEval
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [start_date, end_date]
+              properties:
+                start_date:
+                  type: string
+                  format: date
+                end_date:
+                  type: string
+                  format: date
+                policy:
+                  type: string
+                  default: qubo_dynamic
+      responses:
+        '200':
+          description: Replay evaluation run
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [eval_id, status, days_replayed, total_stockout_reduction, total_expiry_avoided]
+                properties:
+                  eval_id:
+                    type: string
+                  status:
+                    type: string
+                  days_replayed:
+                    type: integer
+                  total_stockout_reduction:
+                    type: integer
+                  total_expiry_avoided:
+                    type: integer
+
+  /eval/{id}:
+    get:
+      summary: Get evaluation run details
+      operationId: getEvalById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Evaluation run report
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [eval_id, status, days_replayed, total_stockout_reduction, total_expiry_avoided]
+                properties:
+                  eval_id:
+                    type: string
+                  status:
+                    type: string
+                  days_replayed:
+                    type: integer
+                  total_stockout_reduction:
+                    type: integer
+                  total_expiry_avoided:
+                    type: integer

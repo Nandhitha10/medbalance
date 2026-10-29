@@ -1,0 +1,50 @@
+[
+  {
+    "id": "RTE-H1-H2",
+    "source_facility_id": "H1",
+    "destination_facility_id": "H2",
+    "distance_km": 18.5,
+    "transit_hours": 1.0,
+    "cold_chain_compliant": true
+  },
+  {
+    "id": "RTE-H1-H3",
+    "source_facility_id": "H1",
+    "destination_facility_id": "H3",
+    "distance_km": 24.0,
+    "transit_hours": 1.2,
+    "cold_chain_compliant": true
+  },
+  {
+    "id": "RTE-H2-H4",
+    "source_facility_id": "H2",
+    "destination_facility_id": "H4",
+    "distance_km": 15.2,
+    "transit_hours": 0.8,
+    "cold_chain_compliant": true
+  },
+  {
+    "id": "RTE-W0-H4",
+    "source_facility_id": "W0",
+    "destination_facility_id": "H4",
+    "distance_km": 22.0,
+    "transit_hours": 1.1,
+    "cold_chain_compliant": true
+  },
+  {
+    "id": "RTE-H2-H1",
+    "source_facility_id": "H2",
+    "destination_facility_id": "H1",
+    "distance_km": 18.5,
+    "transit_hours": 1.0,
+    "cold_chain_compliant": true
+  },
+  {
+    "id": "RTE-H3-H4",
+    "source_facility_id": "H3",
+    "destination_facility_id": "H4",
+    "distance_km": 32.0,
+    "transit_hours": 1.5,
+    "cold_chain_compliant": false
+  }
+]

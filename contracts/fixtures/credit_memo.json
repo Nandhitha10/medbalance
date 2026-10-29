@@ -1,0 +1,12 @@
+{
+  "memo_id": "CM/BLR-U/2026/000042",
+  "order_id": "DTA/BLR-U/2026/000101",
+  "creditor_facility_id": "H1",
+  "debtor_facility_id": "H2",
+  "drug_code": "INS-REG",
+  "quantity": 28,
+  "unit_cost_inr": 145.50,
+  "total_credit_inr": 4074.00,
+  "issue_date": "2026-11-01",
+  "authorized_by": "District Financial Comptroller"
+}

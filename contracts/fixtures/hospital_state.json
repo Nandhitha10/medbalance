@@ -1,0 +1,22 @@
+{
+  "hospital_id": "H1",
+  "name": "District Hospital 1",
+  "stock_items_count": 2,
+  "last_synced_at": "2026-11-01T08:00:00+05:30",
+  "pending_transfers_in": 0,
+  "pending_transfers_out": 2,
+  "inventory": [
+    {
+      "drug_code": "INS-REG",
+      "batch_no": "LOT-INS-H1-01",
+      "expiry": "2026-11-20",
+      "quantity": 50
+    },
+    {
+      "drug_code": "AMOX-500",
+      "batch_no": "LOT-AMX-H1-02",
+      "expiry": "2026-11-25",
+      "quantity": 800
+    }
+  ]
+}

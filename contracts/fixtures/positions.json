@@ -1,0 +1,122 @@
+[
+  {
+    "facility_id": "H1",
+    "drug_code": "INS-REG",
+    "stock_on_hand": 50,
+    "effective_stock": 10,
+    "at_risk_stock": 40,
+    "reserve": 10,
+    "shortage": 0,
+    "daily_consumption_rate": 0.5
+  },
+  {
+    "facility_id": "H2",
+    "drug_code": "INS-REG",
+    "stock_on_hand": 5,
+    "effective_stock": 5,
+    "at_risk_stock": 0,
+    "reserve": 14,
+    "shortage": 30,
+    "daily_consumption_rate": 2.5
+  },
+  {
+    "facility_id": "H1",
+    "drug_code": "AMOX-500",
+    "stock_on_hand": 800,
+    "effective_stock": 300,
+    "at_risk_stock": 500,
+    "reserve": 100,
+    "shortage": 0,
+    "daily_consumption_rate": 12.0
+  },
+  {
+    "facility_id": "H3",
+    "drug_code": "AMOX-500",
+    "stock_on_hand": 20,
+    "effective_stock": 20,
+    "at_risk_stock": 0,
+    "reserve": 50,
+    "shortage": 400,
+    "daily_consumption_rate": 30.0
+  },
+  {
+    "facility_id": "H2",
+    "drug_code": "OXY-10",
+    "stock_on_hand": 100,
+    "effective_stock": 30,
+    "at_risk_stock": 70,
+    "reserve": 20,
+    "shortage": 0,
+    "daily_consumption_rate": 1.0
+  },
+  {
+    "facility_id": "H4",
+    "drug_code": "OXY-10",
+    "stock_on_hand": 0,
+    "effective_stock": 0,
+    "at_risk_stock": 0,
+    "reserve": 10,
+    "shortage": 50,
+    "daily_consumption_rate": 3.0
+  },
+  {
+    "facility_id": "W0",
+    "drug_code": "ORS-20",
+    "stock_on_hand": 1500,
+    "effective_stock": 500,
+    "at_risk_stock": 1000,
+    "reserve": 200,
+    "shortage": 0,
+    "daily_consumption_rate": 20.0
+  },
+  {
+    "facility_id": "H4",
+    "drug_code": "ORS-20",
+    "stock_on_hand": 50,
+    "effective_stock": 50,
+    "at_risk_stock": 0,
+    "reserve": 100,
+    "shortage": 500,
+    "daily_consumption_rate": 40.0
+  },
+  {
+    "facility_id": "H2",
+    "drug_code": "AZITH-500",
+    "stock_on_hand": 400,
+    "effective_stock": 150,
+    "at_risk_stock": 250,
+    "reserve": 50,
+    "shortage": 0,
+    "daily_consumption_rate": 5.0
+  },
+  {
+    "facility_id": "H1",
+    "drug_code": "AZITH-500",
+    "stock_on_hand": 10,
+    "effective_stock": 10,
+    "at_risk_stock": 0,
+    "reserve": 30,
+    "shortage": 200,
+    "daily_consumption_rate": 15.0
+  },
+  {
+    "facility_id": "H3",
+    "drug_code": "PARA-500",
+    "stock_on_hand": 1000,
+    "effective_stock": 400,
+    "at_risk_stock": 600,
+    "reserve": 150,
+    "shortage": 0,
+    "daily_consumption_rate": 15.0
+  },
+  {
+    "facility_id": "H4",
+    "drug_code": "PARA-500",
+    "stock_on_hand": 100,
+    "effective_stock": 100,
+    "at_risk_stock": 0,
+    "reserve": 200,
+    "shortage": 250,
+    "daily_consumption_rate": 25.0
+  }
+]

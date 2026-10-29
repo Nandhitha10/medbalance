@@ -1,0 +1,15 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ingest-ai"
+version = "0.1.0"
+description = "MedBalance Ingest-AI Service"
+requires-python = ">=3.12"
+dependencies = [
+    "medbal-common",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]

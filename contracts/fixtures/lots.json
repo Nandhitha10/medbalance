@@ -1,0 +1,56 @@
+[
+  {
+    "id": 1,
+    "facility_id": "H1",
+    "drug_code": "INS-REG",
+    "batch_no": "LOT-INS-H1-01",
+    "expiry": "2026-11-20",
+    "quantity": 50,
+    "created_at": "2026-10-15T10:00:00+05:30"
+  },
+  {
+    "id": 2,
+    "facility_id": "H1",
+    "drug_code": "AMOX-500",
+    "batch_no": "LOT-AMX-H1-02",
+    "expiry": "2026-11-25",
+    "quantity": 800,
+    "created_at": "2026-10-15T10:00:00+05:30"
+  },
+  {
+    "id": 3,
+    "facility_id": "H2",
+    "drug_code": "OXY-10",
+    "batch_no": "LOT-OXY-H2-01",
+    "expiry": "2026-11-28",
+    "quantity": 100,
+    "created_at": "2026-10-16T11:00:00+05:30"
+  },
+  {
+    "id": 4,
+    "facility_id": "W0",
+    "drug_code": "ORS-20",
+    "batch_no": "LOT-ORS-W0-01",
+    "expiry": "2026-12-05",
+    "quantity": 1500,
+    "created_at": "2026-10-10T09:00:00+05:30"
+  },
+  {
+    "id": 5,
+    "facility_id": "H2",
+    "drug_code": "AZITH-500",
+    "batch_no": "LOT-AZT-H2-01",
+    "expiry": "2026-12-10",
+    "quantity": 400,
+    "created_at": "2026-10-18T14:30:00+05:30"
+  },
+  {
+    "id": 6,
+    "facility_id": "H3",
+    "drug_code": "PARA-500",
+    "batch_no": "LOT-PAR-H3-01",
+    "expiry": "2026-12-15",
+    "quantity": 1000,
+    "created_at": "2026-10-20T08:15:00+05:30"
+  }
+]

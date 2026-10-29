@@ -1,0 +1,16 @@
+{
+  "id": "DTA/BLR-U/2026/000101",
+  "plan_id": "PLAN-20261101-01",
+  "source_facility_id": "H1",
+  "destination_facility_id": "H2",
+  "drug_code": "INS-REG",
+  "batch_no": "LOT-INS-H1-01",
+  "lot_quantity": 50,
+  "quantity": 28,
+  "usable_quantity": 28,
+  "status": "APPROVED",
+  "temperature_controlled": true,
+  "savings_inr": 4074.00,
+  "created_at": "2026-11-01T08:35:15+05:30",
+  "updated_at": "2026-11-01T08:45:00+05:30"
+}

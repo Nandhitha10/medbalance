@@ -1,0 +1,22 @@
+[
+  {
+    "facility_id": "H1",
+    "drug_code": "INS-REG",
+    "forecast_date": "2026-11-01",
+    "baseline_daily_rate": 0.5,
+    "llm_multiplier": 1.0,
+    "effective_daily_rate": 0.5,
+    "target_days": 14,
+    "projected_consumption": 7
+  },
+  {
+    "facility_id": "H2",
+    "drug_code": "INS-REG",
+    "forecast_date": "2026-11-01",
+    "baseline_daily_rate": 2.0,
+    "llm_multiplier": 1.25,
+    "effective_daily_rate": 2.5,
+    "target_days": 14,
+    "projected_consumption": 35
+  }
+]

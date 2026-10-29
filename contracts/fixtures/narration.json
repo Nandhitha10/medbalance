@@ -1,0 +1,10 @@
+{
+  "order_id": "DTA/BLR-U/2026/000101",
+  "headline": "Urgent Cold-Chain Insulin Reallocation to District Hospital 2",
+  "explanation": "District Hospital 1 has 50 vials of Insulin Regular expiring on 2026-11-20 with a daily consumption of 0.5 vials, leaving 40 vials at risk of expiration. District Hospital 2 faces an immediate shortage of 30 vials under current surge conditions. Transferring 28 vials preserves an essential 10-vial reserve at H1 and satisfies 93% of H2's immediate deficit prior to expiration.",
+  "grounding_check": {
+    "passed": true,
+    "verified_numbers": [50, 40, 30, 28, 10],
+    "unverified_numbers": []
+  }
+}

@@ -1,0 +1,99 @@
+openapi: 3.1.0
+info:
+  title: MedBalance Forecast Service
+  version: 0.1.0
+  description: Holt-Winters baseline consumption forecasting combined with LLM context multiplier.
+paths:
+  /forecast/run:
+    post:
+      summary: Run consumption forecasts across all facilities
+      operationId: runForecast
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                target_days:
+                  type: integer
+                  default: 14
+      responses:
+        '200':
+          description: Forecast execution summary
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, forecasts_generated]
+                properties:
+                  status:
+                    type: string
+                    example: completed
+                  forecasts_generated:
+                    type: integer
+                    example: 24
+
+  /forecast:
+    get:
+      summary: Query computed consumption forecasts
+      operationId: getForecast
+      parameters:
+        - name: facility
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: drug
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of forecasts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: './components.yaml#/components/schemas/Forecast'
+
+  /forecast/backtest:
+    get:
+      summary: Get backtest performance metrics (MAPE, RMSE)
+      operationId: getBacktest
+      parameters:
+        - name: facility
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: drug
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Backtest accuracy report
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [drug_code, facility_id, evaluation_window_days, mape_percent, rmse, model_used, baseline_mape_percent]
+                properties:
+                  drug_code:
+                    type: string
+                  facility_id:
+                    type: string
+                  evaluation_window_days:
+                    type: integer
+                  mape_percent:
+                    type: number
+                  rmse:
+                    type: number
+                  model_used:
+                    type: string
+                  baseline_mape_percent:
+                    type: number

@@ -1,0 +1,32 @@
+[
+  {
+    "id": 1,
+    "order_id": "DTA/BLR-U/2026/000101",
+    "actor": "pharmacist_h1",
+    "event_type": "DISPATCH",
+    "timestamp": "2026-11-01T09:00:00+05:30",
+    "location": "SIM-HOSP-H1 Main Cold Pharmacy",
+    "temperature_c": 4.2,
+    "notes": "Loaded 28 vials Insulin Regular in cold box CB-01"
+  },
+  {
+    "id": 2,
+    "order_id": "DTA/BLR-U/2026/000101",
+    "actor": "driver_rajesh",
+    "event_type": "HANDOVER",
+    "timestamp": "2026-11-01T09:15:00+05:30",
+    "location": "SIM-HOSP-H1 Logistics Bay",
+    "temperature_c": 4.5,
+    "notes": "Transferred to vehicle VEH-CC-01"
+  },
+  {
+    "id": 3,
+    "order_id": "DTA/BLR-U/2026/000101",
+    "actor": "pharmacist_h2",
+    "event_type": "RECEIVE",
+    "timestamp": "2026-11-01T10:15:00+05:30",
+    "location": "SIM-HOSP-H2 Cold Receiving Dock",
+    "temperature_c": 4.8,
+    "notes": "Verified 28 vials intact, temperature maintained, placed into ILR"
+  }
+]

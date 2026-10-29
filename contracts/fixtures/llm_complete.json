@@ -1,0 +1,16 @@
+{
+  "request_id": "llm-req-001",
+  "purpose": "extraction",
+  "prompt_id": "extract_stock",
+  "version": "v1",
+  "model": "claude-3-5-haiku-20241022",
+  "confidence": 0.96,
+  "output": {
+    "drug_code": "INS-REG",
+    "batch_no": "LOT-INS-H1-01",
+    "expiry": "2026-11-20",
+    "quantity": 50
+  },
+  "cached": false,
+  "execution_time_sec": 0.85
+}

@@ -1,0 +1,17 @@
+[
+  {
+    "id": "REV-0091",
+    "report_id": "REP-H2-20261101",
+    "facility_code": "H2",
+    "anomaly_type": "SUSPICIOUS_EXPIRY",
+    "raw_text": "Insulin Reg 100IU Batch# INS22 Exp: 01/24 Qty: 40",
+    "suggested_patch": {
+      "drug_code": "INS-REG",
+      "batch_no": "LOT-INS-H2-22",
+      "expiry": "2026-11-24",
+      "quantity": 40
+    },
+    "confidence": 0.88,
+    "status": "PENDING"
+  }
+]

@@ -1,0 +1,9 @@
+{
+  "status": "healthy",
+  "gateway": "genai-gateway",
+  "primary_provider": "anthropic",
+  "fast_model": "claude-3-5-haiku-20241022",
+  "smart_model": "claude-3-5-sonnet-20241022",
+  "cache_mode": "live",
+  "firewall_active": true
+}

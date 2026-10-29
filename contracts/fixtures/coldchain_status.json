@@ -1,0 +1,24 @@
+{
+  "monitored_vehicles_count": 2,
+  "monitored_facilities_count": 3,
+  "active_excursions_count": 0,
+  "system_status": "NORMAL",
+  "devices": [
+    {
+      "device_id": "DEV-VEH-01",
+      "assigned_to": "VEH-CC-01",
+      "latest_temp_c": 4.1,
+      "battery_percent": 94,
+      "last_ping": "2026-11-01T08:50:00+05:30",
+      "status": "OK"
+    },
+    {
+      "device_id": "DEV-H1-ILR",
+      "assigned_to": "H1",
+      "latest_temp_c": 3.6,
+      "battery_percent": 100,
+      "last_ping": "2026-11-01T08:52:00+05:30",
+      "status": "OK"
+    }
+  ]
+}

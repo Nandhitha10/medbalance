@@ -1,0 +1,30 @@
+[
+  {
+    "seq": 1,
+    "timestamp": "2026-11-01T08:35:15+05:30",
+    "actor": "optimizer",
+    "action": "PLAN_GENERATED",
+    "entity": "PlanRun",
+    "entity_id": "PLAN-20261101-01",
+    "payload": {
+      "orders_count": 6,
+      "units": 1428
+    },
+    "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+    "hash": "a4f89d34208a5b28d61483ce8bc1fbe9182312b91873117094b81c629813d100"
+  },
+  {
+    "seq": 2,
+    "timestamp": "2026-11-01T08:45:00+05:30",
+    "actor": "district_health_officer",
+    "action": "ORDER_APPROVED",
+    "entity": "TransferOrder",
+    "entity_id": "DTA/BLR-U/2026/000101",
+    "payload": {
+      "quantity": 28,
+      "drug_code": "INS-REG"
+    },
+    "prev_hash": "a4f89d34208a5b28d61483ce8bc1fbe9182312b91873117094b81c629813d100",
+    "hash": "b8e1467439fa34521074acdc88319e71ab43761219084201389cb4381794b611"
+  }
+]

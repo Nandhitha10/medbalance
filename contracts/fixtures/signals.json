@@ -1,0 +1,13 @@
+[
+  {
+    "id": "SIG-01",
+    "signal_type": "SURGE_DISEASE",
+    "district": "BLR-URBAN",
+    "taluk": "North",
+    "drug_code": "INS-REG",
+    "multiplier": 1.25,
+    "effective_from": "2026-11-01",
+    "effective_to": "2026-11-15",
+    "notes": "Seasonal endocrine clinic intake increase"
+  }
+]

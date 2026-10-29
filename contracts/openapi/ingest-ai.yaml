@@ -1,0 +1,153 @@
+openapi: 3.1.0
+info:
+  title: MedBalance Ingest-AI Service
+  version: 0.1.0
+  description: Hospital stock report ingestion, LLM extraction with grounding, and review queue.
+paths:
+  /ingest/{facility_code}:
+    post:
+      summary: Ingest document for facility
+      operationId: ingestReport
+      parameters:
+        - name: facility_code
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+          application/json:
+            schema:
+              type: object
+              required: [raw_content, source_type]
+              properties:
+                raw_content:
+                  type: string
+                source_type:
+                  type: string
+                  enum: [pdf, excel, csv, fhir]
+      responses:
+        '200':
+          description: Report ingestion status
+          content:
+            application/json:
+              schema:
+                $ref: './components.yaml#/components/schemas/StockReport'
+
+  /pull/run:
+    post:
+      summary: Trigger active polling of all hospital endpoints
+      operationId: triggerPull
+      responses:
+        '200':
+          description: Pull execution summary
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, facilities_polled, reports_ingested]
+                properties:
+                  status:
+                    type: string
+                    example: completed
+                  facilities_polled:
+                    type: integer
+                    example: 4
+                  reports_ingested:
+                    type: integer
+                    example: 4
+
+  /reports:
+    get:
+      summary: List all ingested reports
+      operationId: getReports
+      responses:
+        '200':
+          description: List of stock reports
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: './components.yaml#/components/schemas/StockReport'
+
+  /reviews:
+    get:
+      summary: List pending anomaly reviews
+      operationId: getReviews
+      responses:
+        '200':
+          description: List of pending review items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required: [id, report_id, facility_code, anomaly_type, raw_text, status]
+                  properties:
+                    id:
+                      type: string
+                    report_id:
+                      type: string
+                    facility_code:
+                      type: string
+                    anomaly_type:
+                      type: string
+                    raw_text:
+                      type: string
+                    suggested_patch:
+                      type: object
+                    confidence:
+                      type: number
+                    status:
+                      type: string
+                      enum: [PENDING, RESOLVED, REJECTED]
+
+  /reviews/{id}/resolve:
+    post:
+      summary: Resolve an anomaly review item
+      operationId: resolveReview
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action:
+                  type: string
+                  enum: [ACCEPT, REJECT, OVERRIDE]
+                override_data:
+                  type: object
+      responses:
+        '200':
+          description: Resolution confirmation
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, review_id]
+                properties:
+                  status:
+                    type: string
+                    example: resolved
+                  review_id:
+                    type: string
+                    example: REV-0091

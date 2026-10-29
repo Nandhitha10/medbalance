@@ -1,0 +1,86 @@
+openapi: 3.1.0
+info:
+  title: MedBalance ColdChain Service
+  version: 0.1.0
+  description: MQTT sensor consumption, temperature excursion monitoring, and vehicle telemetry.
+paths:
+  /status:
+    get:
+      summary: Get overall cold chain network health
+      operationId: getColdChainStatus
+      responses:
+        '200':
+          description: Cold chain network status
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [monitored_vehicles_count, monitored_facilities_count, active_excursions_count, system_status, devices]
+                properties:
+                  monitored_vehicles_count:
+                    type: integer
+                  monitored_facilities_count:
+                    type: integer
+                  active_excursions_count:
+                    type: integer
+                  system_status:
+                    type: string
+                    enum: [NORMAL, WARNING, CRITICAL]
+                  devices:
+                    type: array
+                    items:
+                      type: object
+                      required: [device_id, assigned_to, latest_temp_c, battery_percent, last_ping, status]
+                      properties:
+                        device_id:
+                          type: string
+                        assigned_to:
+                          type: string
+                        latest_temp_c:
+                          type: number
+                        battery_percent:
+                          type: integer
+                        last_ping:
+                          type: string
+                          format: date-time
+                        status:
+                          type: string
+
+  /devices/{id}/telemetry:
+    get:
+      summary: Retrieve device telemetry history
+      operationId: getDeviceTelemetry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: since
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Telemetry time series
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required: [device_id, timestamp, temperature_c, humidity_percent, battery_percent]
+                  properties:
+                    device_id:
+                      type: string
+                    timestamp:
+                      type: string
+                      format: date-time
+                    temperature_c:
+                      type: number
+                    humidity_percent:
+                      type: number
+                    battery_percent:
+                      type: integer

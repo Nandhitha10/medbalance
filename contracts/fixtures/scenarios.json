@@ -1,0 +1,17 @@
+[
+  {
+    "name": "baseline",
+    "description": "Normal steady-state consumption across all district facilities",
+    "active": true
+  },
+  {
+    "name": "monsoon_outbreak",
+    "description": "Surge in ORS and amoxicillin requirements in PHCs",
+    "active": false
+  },
+  {
+    "name": "cold_chain_failure",
+    "description": "Simulated failure of ILR at H3 triggering rapid cold stock evacuation",
+    "active": false
+  }
+]
