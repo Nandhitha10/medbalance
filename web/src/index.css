@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-100 text-slate-900;
+  }
+}
+
+/* Hide scrollbars for live ticker */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Custom leaflet marker styling */
+.custom-facility-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Custom shadows */
+.shadow-2xs {
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}

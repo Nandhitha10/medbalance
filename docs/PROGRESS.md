@@ -1,7 +1,7 @@
 # Project Progress Log
 
 ## Status Overview
-- Current Phase: Hospital Stock Report Ingestion, Grounding, Anomaly Gate & Pharmacist Review Queue (Ingest-AI) Complete
+- Current Phase: Frontend Web Dashboard (MedBalance-Q), Visual Read-Models & Projector Display Complete
 - Updated: 2026-10-29
 
 ## Completed Tasks
@@ -116,6 +116,20 @@
   - **Evals Golden Dataset**:
     - 40 realistic raw reports (10 FHIR, 10 CSV, 10 Chat, 10 Text) generated in `evals/golden/raw/` for benchmark verification.
   - **Docker Compose**: Updated `ingest-ai` with `USE_FIXTURES: "0"`, PostgreSQL connection, and Redis dependency.
+- [x] `web/` Frontend Dashboard (MedBalance-Q) fully implemented per CLAUDE.md §1 & §4:
+  - **Stack & Architecture**: React 18, Vite, TypeScript (strict), Tailwind CSS, TanStack Query, React Leaflet, Recharts, and Lucide icons. Robust fallback system (`USE_FIXTURES=1` / transparent offline resilience via `fetchWithFallback`) ensuring demo and projector presentations never fail.
+  - **App Shell & Projector-Ready Design**: Calm clinical palette (teal primary `#0d9488`, amber warnings `#d97706`, red stockout `#e11d48`), high contrast for projector legibility, and responsive layout.
+  - **Top Bar**: Live simulation clock display with play/pause/speed controls, connection status pill, and animated live event ticker showing the 5 most recent domain events (`clock.tick`, `inventory.updated`, `report.received`, `anomaly.flagged`, `plan.progress`, `plan.completed`, `coldchain.alert`, `order.status`).
+  - **District Map**: Leaflet interactive GIS map with custom HTML markers and stock-health rings (VEN-weighted shortage color: Red for Vital shortage, Amber for Warning/Surplus, Green for Healthy). Displays active transfer arcs for the latest plan and interactive legend. Automatic fallback to bundled high-contrast SVG district outline when tile providers are offline.
+  - **Facility Inspection Drawer**: Deep-linkable sliding drawer (`?page=map&facility=H3`) showing level, cold storage status, 4 KPI cards (On Hand, Effective, At-Risk, Shortage), per-drug positions read-model table with VEN categorization, and interactive FEFO lot expiry timeline bars.
+  - **Plan & DTA Orders View**: "Run Redistribution Plan" trigger with live animated solving progress bar, 4 large projector KPI metrics (Shortage Reduced, Expiry Avoided in ₹, Dispatched Trips, 0 Violations), auditable transfer orders table with DTA voucher numbering, temperature control flags, and instant pharmacist order approval.
+  - **Hospital Ingestion & Review Queue**: Inbound channel overview (H1 FHIR, H2 CSV, H3 Kannada WhatsApp, H4 Vision OCR) and pharmacist anomaly review queue with confidence scores, raw text inspection, suggested lot patches, and one-click accept/override actions.
+  - **Additional Control Screens**: Coldchain monitor (`/coldchain`), Baseline benchmark (`/benchmark`), Cumulative results (`/results`), AI gateway health & firewall (`/ai-health`), and Scenarios trigger panel (`/scenarios`).
+  - **Screenshots**: High-resolution screenshots captured and documented in `docs/screens/`:
+    - `docs/screens/01_district_map.png`: District Map with stock-health rings and transfer arcs
+    - `docs/screens/02_facility_drawer.png`: Facility Inspection Drawer with per-drug positions & FEFO expiry bars
+    - `docs/screens/03_plan_page.png`: Redistribution Plan view with KPI header and DTA orders
+    - `docs/screens/04_hospital_ingest.png`: Ingestion channels and Pharmacist Anomaly Review Queue
 - [x] Full monorepo test suite green: **109 passed out of 109 tests**.
 
 ## Table of Engineered Story Lots (For L2, L3, L4 Lanes)
