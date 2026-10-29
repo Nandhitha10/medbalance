@@ -80,3 +80,4 @@ def compute_positions_for_snapshot(snapshot: Dict[str, Any]) -> List[Dict[str, A
             })
 
     return results
+

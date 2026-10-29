@@ -69,3 +69,4 @@ def test_whynot_and_whatif_endpoints(client):
     assert resp_whatif.status_code == 200
     whatif_plan = resp_whatif.json()
     assert whatif_plan["mode"] == "whatif"
+

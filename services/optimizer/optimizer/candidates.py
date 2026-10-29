@@ -286,3 +286,4 @@ def generate_candidates(
                 infeasible_or_regret_candidates.append(r)
 
     return top_feasible_candidates, infeasible_or_regret_candidates
+

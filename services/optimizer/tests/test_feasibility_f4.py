@@ -203,3 +203,4 @@ def test_f6_controlled_substance_rule():
     passed, reason = check_f6_rule(drug_code="MOR-10", is_controlled=True)
     assert passed is False
     assert "controlled" in reason.lower()
+

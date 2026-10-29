@@ -142,3 +142,4 @@ def calculate_plan_metrics(
         "transport_cost_inr": round(total_transport_cost, 2),
         "net_benefit_inr": net_benefit_inr,
     }
+

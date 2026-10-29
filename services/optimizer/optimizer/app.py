@@ -25,3 +25,4 @@ def build_app(use_fixtures: Optional[bool] = None) -> FastAPI:
 
 
 app = build_app()
+

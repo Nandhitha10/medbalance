@@ -26,6 +26,6 @@ members = [
 medbal-common = { workspace = true }
 
 [tool.pytest.ini_options]
-pythonpath = [".", "services/core-api", "services/sim-control", "services/sim-hospital", "services/coldchain", "services/sensors", "services/genai"]
+pythonpath = [".", "services/core-api", "services/sim-control", "services/sim-hospital", "services/coldchain", "services/sensors", "services/genai", "services/optimizer", "services/ingest-ai"]
 asyncio_default_fixture_loop_scope = "function"
 

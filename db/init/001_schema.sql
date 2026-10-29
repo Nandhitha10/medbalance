@@ -104,7 +104,9 @@ CREATE TABLE extraction_item (
     quantity INT CHECK (quantity >= 0),
     confidence NUMERIC(4, 3),
     is_anomalous BOOLEAN DEFAULT false,
-    anomaly_reason TEXT
+    anomaly_reason TEXT,
+    review_status VARCHAR(32) DEFAULT 'PENDING',
+    suggested_patch JSONB DEFAULT '{}'::jsonb
 );
 
 -- 7. Consumption Daily (Historical daily consumption)

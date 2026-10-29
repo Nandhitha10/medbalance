@@ -115,3 +115,4 @@ class RegretEntry:
             "regret_inr": self.regret_inr,
             "reason": self.reason,
         }
+

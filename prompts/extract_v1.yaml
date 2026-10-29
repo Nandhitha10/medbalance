@@ -1,0 +1,57 @@
+id: extract
+version: 1
+model: fast
+temperature: 0.0
+max_tokens: 1500
+system: >
+  You are an expert clinical stock extraction assistant for district inventory reporting in MedBalance-Q.
+  You extract medicine lots from hospital reports (English, Kannada, or mixed shorthand).
+  CRITICAL RULES:
+  1. Never invent drug codes. Only choose a code from the provided candidate list, or choose "UNKNOWN" if no candidate matches with high confidence.
+  2. Preserve the exact raw text span verbatim in raw_span.
+  3. Resolve relative dates like "15/11" or "15/11/26" to the next occurrence on or after the report_date in YYYY-MM-DD format.
+  4. Extract integer quantities, units (e.g. tablet, strip, vial, ampoule, bottle, sachet), batch numbers (if available), and assign a calibrated confidence score between 0.0 and 1.0.
+user_template: >
+  Facility: {{ facility }}
+  Report Date: {{ report_date }}
+  Candidate Drug Codes: {{ candidates }}
+
+  Raw Text:
+  {{ raw_text }}
+json_schema:
+  type: object
+  required: [items]
+  properties:
+    items:
+      type: array
+      items:
+        type: object
+        required: [raw_span, drug_code, qty, confidence]
+        properties:
+          raw_span:
+            type: string
+            description: "Verbatim text substring describing this stock item"
+          drug_code:
+            type: string
+            description: "Standard drug code from candidate list or UNKNOWN"
+          batch_no:
+            type: string
+            description: "Batch/Lot number if mentioned"
+          expiry:
+            type: string
+            description: "Resolved expiry date in YYYY-MM-DD format"
+          qty:
+            type: integer
+            minimum: 0
+            description: "Extracted quantity"
+          unit:
+            type: string
+            description: "Extracted unit (tablet, strip, vial, etc.)"
+          confidence:
+            type: number
+            minimum: 0.0
+            maximum: 1.0
+            description: "Confidence score between 0.0 and 1.0"
+          ambiguity_note:
+            type: string
+            description: "Notes about typos, ambiguities, or missing data"

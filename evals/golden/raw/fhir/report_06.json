@@ -1,0 +1,160 @@
+{
+  "resourceType": "InventoryReport",
+  "id": "rep-h1-20261106",
+  "status": "completed",
+  "countType": "snapshot",
+  "reportedDateTime": "2026-11-06T08:00:00",
+  "reporter": {
+    "reference": "Location/SIM-H1",
+    "display": "SIM-DH Jayanagar"
+  },
+  "inventoryListing": [
+    {
+      "item": {
+        "concept": {
+          "coding": [
+            {
+              "system": "https://medbalance.mohfw.gov.in/drugs",
+              "code": "INS-REG",
+              "display": "Insulin Regular 100 IU/ml"
+            }
+          ]
+        }
+      },
+      "lot": "LOT-INS-H1-01",
+      "expiry": "2026-11-21",
+      "quantity": {
+        "value": 7,
+        "unit": "vial"
+      }
+    },
+    {
+      "item": {
+        "concept": {
+          "coding": [
+            {
+              "system": "https://medbalance.mohfw.gov.in/drugs",
+              "code": "OXY-10",
+              "display": "Oxytocin Injection 10 IU"
+            }
+          ]
+        }
+      },
+      "lot": "LOT-OXY-H1-01",
+      "expiry": "2026-11-23",
+      "quantity": {
+        "value": 8,
+        "unit": "ampoule"
+      }
+    },
+    {
+      "item": {
+        "concept": {
+          "coding": [
+            {
+              "system": "https://medbalance.mohfw.gov.in/drugs",
+              "code": "AMOX-500",
+              "display": "Amoxicillin 500mg"
+            }
+          ]
+        }
+      },
+      "lot": "LOT-AMX-H1-01",
+      "expiry": "2026-12-31",
+      "quantity": {
+        "value": 2010,
+        "unit": "tablet"
+      }
+    },
+    {
+      "item": {
+        "concept": {
+          "coding": [
+            {
+              "system": "https://medbalance.mohfw.gov.in/drugs",
+              "code": "PCM-500",
+              "display": "Paracetamol 500mg"
+            }
+          ]
+        }
+      },
+      "lot": "LOT-PCM-H1-01",
+      "expiry": "2027-01-30",
+      "quantity": {
+        "value": 5002,
+        "unit": "tablet"
+      }
+    },
+    {
+      "item": {
+        "concept": {
+          "coding": [
+            {
+              "system": "https://medbalance.mohfw.gov.in/drugs",
+              "code": "RL-500",
+              "display": "Ringer Lactate 500ml"
+            }
+          ]
+        }
+      },
+      "lot": "LOT-RL-H1-01",
+      "expiry": "2027-03-01",
+      "quantity": {
+        "value": 796,
+        "unit": "bottle"
+      }
+    }
+  ],
+  "item": [
+    {
+      "category": "medication",
+      "quantity": 7,
+      "item": {
+        "code": "INS-REG",
+        "display": "Insulin Regular 100 IU/ml",
+        "batch": "LOT-INS-H1-01",
+        "expiry": "2026-11-21"
+      }
+    },
+    {
+      "category": "medication",
+      "quantity": 8,
+      "item": {
+        "code": "OXY-10",
+        "display": "Oxytocin Injection 10 IU",
+        "batch": "LOT-OXY-H1-01",
+        "expiry": "2026-11-23"
+      }
+    },
+    {
+      "category": "medication",
+      "quantity": 2010,
+      "item": {
+        "code": "AMOX-500",
+        "display": "Amoxicillin 500mg",
+        "batch": "LOT-AMX-H1-01",
+        "expiry": "2026-12-31"
+      }
+    },
+    {
+      "category": "medication",
+      "quantity": 5002,
+      "item": {
+        "code": "PCM-500",
+        "display": "Paracetamol 500mg",
+        "batch": "LOT-PCM-H1-01",
+        "expiry": "2027-01-30"
+      }
+    },
+    {
+      "category": "medication",
+      "quantity": 796,
+      "item": {
+        "code": "RL-500",
+        "display": "Ringer Lactate 500ml",
+        "batch": "LOT-RL-H1-01",
+        "expiry": "2027-03-01"
+      }
+    }
+  ]
+}

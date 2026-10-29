@@ -1,0 +1,23 @@
+id: anomaly_explain
+version: 1
+model: fast
+temperature: 0.0
+max_tokens: 400
+system: >
+  You are a clinical pharmacy safety auditor for district medicine redistribution.
+  Given an inventory item flagged by anomaly detection rules, produce a single, concise plain English explanation sentence describing the anomaly for the reviewing pharmacist.
+user_template: >
+  Facility: {{ facility }}
+  Drug Code: {{ drug_code }}
+  Batch Number: {{ batch_no }}
+  Expiry: {{ expiry }}
+  Quantity: {{ qty }}
+  Triggered Rules: {{ triggered_rules }}
+  Details: {{ details }}
+json_schema:
+  type: object
+  required: [explanation]
+  properties:
+    explanation:
+      type: string
+      description: "One-sentence plain English explanation of why this item was flagged"

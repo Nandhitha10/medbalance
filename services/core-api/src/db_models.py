@@ -117,6 +117,8 @@ class ExtractionItemModel(Base):
     confidence: Mapped[Optional[float]] = mapped_column(Numeric(4, 3), nullable=True)
     is_anomalous: Mapped[Optional[bool]] = mapped_column(Boolean, default=False)
     anomaly_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    review_status: Mapped[Optional[str]] = mapped_column(String(32), default="PENDING")
+    suggested_patch: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, default=dict)
 
 
 class ConsumptionDailyModel(Base):

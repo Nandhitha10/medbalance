@@ -1,7 +1,7 @@
 # Project Progress Log
 
 ## Status Overview
-- Current Phase: Deterministic Planning Pipeline & Greedy Baselines (CP1 Safety Core) Complete
+- Current Phase: Hospital Stock Report Ingestion, Grounding, Anomaly Gate & Pharmacist Review Queue (Ingest-AI) Complete
 - Updated: 2026-10-29
 
 ## Completed Tasks
@@ -89,7 +89,34 @@
   - **Pipeline Orchestrator (`optimizer/solver.py`, `POST /plan/run`)**: Multi-stage progress tracking via Redis Streams `plan.progress`, plan persistence via `core-api POST /plans`, and publication of `plan.completed`.
   - **FastAPI Endpoints (`optimizer/routers/plan.py`)**: `POST /plan/run`, `GET /plan/{id}`, `GET /plan/{id}/benchmark`, `GET /plan/{id}/regret`, `GET /whynot`, `POST /whatif`, `POST /eval/replay`, `GET /eval/{id}`.
 - [x] Docker Compose updated: `optimizer` wired with `USE_FIXTURES: "0"`, `core-api`, and `redis` dependencies.
-- [x] Full monorepo test suite green: **87 passed out of 87 tests**.
+- [x] `services/ingest-ai` fully implemented:
+  - **Adapters (`ingest_ai/adapters/`)**:
+    - `FhirAdapter`: Parses FHIR R5/R4 `InventoryReport` resources from H1 (`http://sim-hospital-h1:8101/fhir/InventoryReport`).
+    - `CsvAdapter`: Parses e-Aushadhi CSV exports from H2 (`http://sim-hospital-h2:8102/export/stock.csv`), converting 10-pack strips to tablets and handling missing batch numbers.
+    - `ChatAdapter`: Parses informal Kannada + English chat from H3 (`POST /ingest/H3`), resolving relative short dates (e.g. `15/11`) to the next occurrence on or after the report date.
+    - `TextAdapter`: Parses messy handwritten physical register notes from H4 (`POST /ingest/H4`), grounding clerical typos (`inzulin`, `paracetmol`).
+  - **Grounding Engine (`ingest_ai/grounding.py`)**:
+    - RapidFuzz matching over drug codes, molecule names, and multilingual aliases (including Kannada script "ಇನ್ಸುಲಿನ್", "ಪ್ಯಾರಸಿಟಮಾಲ್", "ಒಆರ್‌ಎಸ್").
+    - Extracted candidates provide closed enum choices to the LLM (no invented codes).
+  - **Deterministic Utilities (`ingest_ai/date_utils.py`, `ingest_ai/unit_utils.py`)**:
+    - `MM/YYYY` parsed to last calendar day of the month (`calendar.monthrange`).
+    - Package units (`strip`, `pkt`) converted deterministically to base units (`tablet`, `sachet`).
+  - **Anomaly Gate (`ingest_ai/anomaly.py`)**:
+    - Evaluates 5 safety conditions: (1) `QUANTITY_SPIKE` (>10x typical 90-day on-hand), (2) `SUSPICIOUS_EXPIRY` (past or >5 years ahead), (3) `BATCH_EXPIRY_MISMATCH` (cross-facility batch expiry conflict), (4) `UNKNOWN_DRUG`, (5) `LOW_CONFIDENCE` (<0.85).
+    - Explanation requested from GenAI gateway (`prompts/anomaly_explain_v1.yaml`) with deterministic template fallback.
+    - Emits `anomaly.flagged` event on Redis Streams.
+  - **Pharmacist Review Queue (`ingest_ai/routers/reviews.py`)**:
+    - `GET /reviews`: Lists pending items requiring pharmacist verification.
+    - `POST /reviews/{id}/resolve`: Supports `ACCEPT`, `OVERRIDE`/`CORRECT`, and `REJECT`.
+    - Active learning on correction: inserts new alias into `drug_alias` (`alias=raw_span`, detected language) to improve grounding continuously.
+  - **Background Polling & Streams**:
+    - `POST /pull/run`: Actively polls H1 and H2.
+    - Lifespan Redis consumer on `clock.tick` stream triggers automated daily hospital inventory pulls.
+    - Emits `report.received` event on Redis Streams.
+  - **Evals Golden Dataset**:
+    - 40 realistic raw reports (10 FHIR, 10 CSV, 10 Chat, 10 Text) generated in `evals/golden/raw/` for benchmark verification.
+  - **Docker Compose**: Updated `ingest-ai` with `USE_FIXTURES: "0"`, PostgreSQL connection, and Redis dependency.
+- [x] Full monorepo test suite green: **109 passed out of 109 tests**.
 
 ## Table of Engineered Story Lots (For L2, L3, L4 Lanes)
 

@@ -179,3 +179,4 @@ def evaluate_feasibility(
 
     is_feasible = (len(failed_rules) == 0)
     return is_feasible, failed_rules, usable_qty
+
