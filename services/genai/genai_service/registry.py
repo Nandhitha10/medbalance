@@ -176,3 +176,4 @@ class PromptRegistry:
             }
             for p in self._prompts.values()
         ]
+

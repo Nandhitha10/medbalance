@@ -402,3 +402,4 @@ class LLMGateway:
                 session.add(entry)
         except Exception as e:
             logger.debug(f"Database logging skipped or failed: {e}")
+

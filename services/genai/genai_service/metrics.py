@@ -119,3 +119,4 @@ class MetricsTracker:
 
 # Global tracker instance
 metrics_tracker = MetricsTracker()
+

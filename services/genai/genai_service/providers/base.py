@@ -35,3 +35,4 @@ class LLMProvider(ABC):
     ) -> LLMResult:
         """Execute completion request and return unified LLMResult."""
         pass
+

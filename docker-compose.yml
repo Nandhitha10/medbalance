@@ -243,11 +243,14 @@ services:
       - .env.example
     environment:
       SERVICE_NAME: optimizer
+      CORE_API_URL: http://core-api:8001
       REDIS_URL: redis://redis:6379/0
-      USE_FIXTURES: "1"
+      USE_FIXTURES: "0"
     ports:
       - "8005:8005"
     depends_on:
+      core-api:
+        condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:

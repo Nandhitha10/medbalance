@@ -88,3 +88,4 @@ class OllamaProvider(LLMProvider):
             tokens=eval_count,
             latency_sec=elapsed,
         )
+

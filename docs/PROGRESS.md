@@ -1,7 +1,7 @@
 # Project Progress Log
 
 ## Status Overview
-- Current Phase: Central GenAI Gateway (POST /llm/complete & GET /ai/health) Complete
+- Current Phase: Deterministic Planning Pipeline & Greedy Baselines (CP1 Safety Core) Complete
 - Updated: 2026-10-29
 
 ## Completed Tasks
@@ -78,8 +78,18 @@
   - **Call Logging (`genai_service/db_models.py`)**: Logs all attempts to PostgreSQL table `llm_call` (`purpose`, `provider`, `model`, `prompt_id`, `version`, `input_hash`, `cached`, `execution_time_sec`, `tokens`, `ok`, `error`).
   - **Health & Metrics (`genai_service/metrics.py`, `GET /ai/health`)**: Reports provider info, fast/smart models, cache mode, firewall status, and 24-hour rolling metrics (`total_calls`, `cache_hits`, `cache_hit_rate`, `p50_latency_sec`, `p95_latency_sec`, `schema_failures`, `fallbacks`, `firewall_blocks`, and per-purpose breakdown).
   - **Concurrency & Timeouts**: 4-worker semaphore, 20s fast timeout, 45s smart timeout.
-- [x] Docker Compose updated: `genai` wired with `USE_FIXTURES: "0"`, PostgreSQL and Redis dependencies.
-- [x] Monorepo test suite green: **71 passed out of 71 tests**.
+- [x] `services/optimizer` CP1 deterministic planning pipeline fully implemented:
+  - **Feasibility Rules F1–F6 (`optimizer/feasibility.py`)**: Pure deterministic rule functions returning `(feasible: bool, failed_rules: List[Dict[str, str]], usable_qty: int)` for explainability and regret ledgers.
+  - **Candidates & Chunk Splitting (`optimizer/candidates.py`)**: Splits transferable quantities into $\le 3$ pack-rounded chunks (50/25/25%), computes sequential usable quantity across chunks, calculates economic rewards and trip cost shares, keeps top-3 feasible destinations per chunk, and retains all infeasible pairs for regret tracking.
+  - **Greedy Baselines (`optimizer/baselines.py`)**:
+    - `greedy_phone_call`: Simulates current manual hospital practice (checks F1–F3 only, ignores usable capacity, moves waste).
+    - `greedy_f4`: Safe greedy allocator with full F1–F6 enforcement, reserve protection, and usable quantity capping (guarantees zero waste moved).
+  - **Plan Metrics (`optimizer/metrics.py`)**: Evaluates FEFO-grounded shortage reduction, expiry avoided units and INR, waste moved units and INR, trips, total km, transport cost, and net benefit.
+  - **Snapshot & Positions (`optimizer/snapshot.py`, `optimizer/positions.py`)**: Indexing snapshot data with fallback to fixtures, and wrapping FEFO positions calculation.
+  - **Pipeline Orchestrator (`optimizer/solver.py`, `POST /plan/run`)**: Multi-stage progress tracking via Redis Streams `plan.progress`, plan persistence via `core-api POST /plans`, and publication of `plan.completed`.
+  - **FastAPI Endpoints (`optimizer/routers/plan.py`)**: `POST /plan/run`, `GET /plan/{id}`, `GET /plan/{id}/benchmark`, `GET /plan/{id}/regret`, `GET /whynot`, `POST /whatif`, `POST /eval/replay`, `GET /eval/{id}`.
+- [x] Docker Compose updated: `optimizer` wired with `USE_FIXTURES: "0"`, `core-api`, and `redis` dependencies.
+- [x] Full monorepo test suite green: **87 passed out of 87 tests**.
 
 ## Table of Engineered Story Lots (For L2, L3, L4 Lanes)
 
@@ -322,14 +332,49 @@ async def call_llm(purpose: str, prompt_id: str, version: int, input_vars: dict,
 - `GET /forecast/backtest`: Get backtest MAPE and RMSE accuracy reports
 
 ### 5. `optimizer` (Port 8005 / Gateway: `/api/optimizer/*`)
-- `POST /plan/run`: Run QUBO redistribution solver (`live`, `whatif`, `eval`)
-- `GET /plan/{id}`: Retrieve optimization plan (e.g. `/plan/demo`)
+- `POST /plan/run`: Run redistribution optimizer (`mode: live|whatif|eval`, provisional greedy_f4 solver, persisted via core-api)
+- `GET /plan/{id}`: Retrieve optimization plan (proxies to core-api or local plan store)
 - `GET /plan/{id}/benchmark`: Compare solver vs classical exact MILP gap
 - `GET /plan/{id}/regret?order_id=`: Inspect regret analysis and alternate destinations
 - `GET /whynot?facility=&drug=`: Explain non-allocation with F1–F6 rule breakdown
 - `POST /whatif`: Simulate allocation scenario without persistence
 - `POST /eval/replay`: Replay historical simulation days
 - `GET /eval/{id}`: Get evaluation run details
+
+#### Optimizer Public Functions & Modules Summary
+
+All mathematical computations are pure functions with zero I/O so they can be reused across QUBO solvers (P10), copilot explainability (P14), and historical evaluation replays (P19):
+
+1. **`optimizer.feasibility`** ([`optimizer/feasibility.py`](file:///services/optimizer/optimizer/feasibility.py)):
+   - `check_f1_rule(source_id: str, dest_id: str) -> (bool, Optional[str])`: Verifies that source and destination are distinct facilities.
+   - `check_f2_rule(route: Optional[dict]) -> (bool, Optional[str])`: Verifies that a valid transit route exists and its status is not marked `unsafe` or `closed`.
+   - `check_f3_rule(is_cold_drug, dest_has_cold_storage, route_is_cold, vehicles) -> (bool, Optional[str])`: Enforces cold chain requirements: destination cold storage availability, cold route compliance, and availability of at least one active cold vehicle operating within 2°C–8°C without temperature excursion.
+   - `check_f4_rule(lot_qty, lot_expiry, today, destination_daily_rate, transit_hours, min_residual_days, destination_stock_expiring_before, buffer_days=2) -> (bool, Optional[str], int)`: Validates that arrival residual shelf life $\ge \text{drug.min\_residual\_days}$, effective consumption window $> 0$, and calculates usable units subtracting destination stock expiring before the lot.
+   - `check_f5_rule(chunk_qty: int, transferable_qty: int) -> (bool, Optional[str])`: Verifies that transferred quantity does not violate the source facility's protected inventory reserve.
+   - `check_f6_rule(drug_code: str, is_controlled: bool) -> (bool, Optional[str])`: Prohibits automated transfers of Schedule X controlled narcotics (e.g., `MOR-10` morphine) without special drug-controller permits.
+   - `evaluate_feasibility(...) -> (bool, List[dict], int)`: Evaluates all rules F1–F6 simultaneously, accumulating all rule violations for regret analysis and copilot explainability.
+
+2. **`optimizer.candidates`** ([`optimizer/candidates.py`](file:///services/optimizer/optimizer/candidates.py)):
+   - `split_lot_into_chunks(total_qty: int, pack_size: int = 1, lot_meta: Optional[dict] = None) -> List[Chunk]`: Splits transferable lot quantity into $\le 3$ chunks (50%, 25%, 25%) rounded to pack size, dropping any non-positive chunks.
+   - `calculate_sequential_chunk_usable(chunk_qty: int, dest_capacity: int, allocated_so_far: int) -> int`: Sequentially bounds usable quantity for chunk $j$ as $\min(q_j, U_{ld} - \sum_{i < j} u_i)$.
+   - `generate_candidates(snapshot: dict, top_k_per_chunk: int = 3) -> (List[Candidate], List[Candidate])`: Evaluates all (chunk, destination) pairs against F1–F6, computes rewards $s = \text{usable} \times \text{unit\_cost}$ and trip cost share $c$, filters top-3 feasible destinations per chunk by $(s - c)$, and retains all infeasible pairs for regret tracking.
+
+3. **`optimizer.baselines`** ([`optimizer/baselines.py`](file:///services/optimizer/optimizer/baselines.py)):
+   - `greedy_phone_call(snapshot: dict) -> List[TransferOrder]`: Models current manual hospital practice; sorts shortages by VEN then size descending, matches nearest source with at-risk stock, validates F1–F3 only, and demonstrates the risk of moving waste.
+   - `greedy_f4(snapshot: dict) -> List[TransferOrder]`: Safe greedy allocator enforcing full F1–F6 validation, reserve protection, and usable quantity capping that guarantees zero waste moved.
+
+4. **`optimizer.metrics`** ([`optimizer/metrics.py`](file:///services/optimizer/optimizer/metrics.py)):
+   - `calculate_plan_metrics(orders: List[TransferOrder], snapshot: dict) -> dict`: Computes FEFO-grounded shortage reduction, expiry avoided units and INR, waste moved units and INR, unique trips, total km, transport cost, and net benefit.
+
+5. **`optimizer.snapshot`** ([`optimizer/snapshot.py`](file:///services/optimizer/optimizer/snapshot.py)):
+   - `fetch_snapshot(core_api_url: Optional[str] = None) -> dict`: Fetches district snapshot from `core-api /snapshot` with fast fallback to fixture.
+   - `SnapshotIndex`: Indexed in-memory data structure providing $O(1)$ lookups for facilities, drugs, routes, vehicles, lots, positions, and forecasts.
+
+6. **`optimizer.positions`** ([`optimizer/positions.py`](file:///services/optimizer/optimizer/positions.py)):
+   - `compute_positions_for_snapshot(snapshot: dict) -> List[dict]`: Computes FEFO stock positions, effective stock, at-risk units, and reserve protection across all facility × drug combinations.
+
+7. **`optimizer.solver`** ([`optimizer/solver.py`](file:///services/optimizer/optimizer/solver.py)):
+   - `run_planning_pipeline(mode="live", overrides=None, solver_choice="greedy_f4") -> dict`: Orchestrates the 6-stage planning pipeline, publishes `plan.progress` stage updates to Redis Streams, persists to `core-api POST /plans`, and emits `plan.completed`.
 
 ### 6. `coldchain` (Port 8006 / Gateway: `/api/coldchain/*`)
 - `GET /status`: Overall temperature sensor and excursion status

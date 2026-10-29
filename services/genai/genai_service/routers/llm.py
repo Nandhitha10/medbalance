@@ -129,3 +129,4 @@ async def copilot_chat(req: Dict[str, Any]):
         yield "event: done\ndata: {}\n\n"
 
     return StreamingResponse(sse_stream(), media_type="text/event-stream")
+

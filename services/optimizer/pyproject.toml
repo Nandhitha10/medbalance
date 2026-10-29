@@ -12,5 +12,5 @@ dependencies = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src"]
+packages = ["optimizer", "src"]
 
