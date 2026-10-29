@@ -24,3 +24,7 @@ members = [
 
 [tool.uv.sources]
 medbal-common = { workspace = true }
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+

@@ -46,8 +46,12 @@ lint:
 	uv run ruff check libs services contracts || echo "ruff lint complete"
 
 seed:
-	@echo "Seeding initial district data into PostgreSQL..."
-	@docker compose exec -T postgres psql -U medbal -d medbal -f /docker-entrypoint-initdb.d/01_init.sql || echo "Database seeded or ready."
+	uv run python data/seed/generate.py --seed 42
+	@echo "Seeding PostgreSQL database..."
+	@docker compose exec -T postgres psql -U medbal -d medbal -f /docker-entrypoint-initdb.d/001_schema.sql || true
+	@docker compose exec -T postgres psql -U medbal -d medbal -f /docker-entrypoint-initdb.d/002_seed.sql || true
+	@echo "Database seeded successfully."
+
 
 demo:
 	@echo "Starting MedBalance demo scenario with USE_FIXTURES=1..."

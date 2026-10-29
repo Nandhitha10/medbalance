@@ -1,7 +1,7 @@
 # Project Progress Log
 
 ## Status Overview
-- Current Phase: Foundation & API Contracts Complete
+- Current Phase: Database Schema & Deterministic District Seed Complete
 - Updated: 2026-10-29
 
 ## Completed Tasks
@@ -16,6 +16,26 @@
 - [x] `contracts/fixtures/`: Realistic JSON fixtures for all service responses, featuring cross-facility consistency (H1..H4, W0) and an optimization plan with 6 orders (including 28 vials of insulin usable from a 50-vial lot).
 - [x] `medbal_common.fixtures.serve(app, service_name)` implemented to mock all API endpoints when `USE_FIXTURES=1`.
 - [x] Contract validation tests (`contracts/test_contracts.py`) written and passing.
+- [x] `db/init/001_schema.sql` created containing all 21 tables (`facility`, `drug`, `drug_alias`, `lot`, `stock_report`, `extraction_item`, `consumption_daily`, `forecast`, `policy`, `route`, `vehicle`, `sensor_reading`, `plan_run`, `candidate`, `transfer_order`, `regret_entry`, `custody_event`, `credit_memo`, `audit_log`, `llm_call`, `chat_session`, `chat_message`) with proper FKs, indexes, check constraints (`qty >= 0`), and JSONB support.
+- [x] `data/seed/district.yaml` created: Bengaluru Urban district with H1 (DH), H2 (TH), H3 (CHC), H4 (PHC), W0 (WH), taluks, and 5 vehicles (ambient, cold vans with sensors, two-wheeler).
+- [x] `data/seed/drugs.yaml` created: 13 essential drugs with VEN classification, temperature specifications, unit costs in INR, pack sizes, and multilingual aliases (including English typos and Kannada script).
+- [x] `data/seed/generate.py` implemented with `--seed 42`: generates 90-day Poisson consumption history with weekly seasonality, 20 routes with haversine distance and transit times, per-facility inventory policies, and writes `db/init/002_seed.sql` + `data/seed/hospitals/h1..h4.json`.
+- [x] Seed invariant tests (`data/seed/test_seed.py`) passing.
+
+## Table of Engineered Story Lots (For L2, L3, L4 Lanes)
+
+| Facility | Drug Code | Batch No | Expiry | Qty | Story Context & Purpose |
+|---|---|---|---|---|---|
+| **H4** (SIM-PHC Hesaraghatta) | `INS-REG` | `LOT-INS-H4-01` | **2026-11-19** (18 days) | **50 vials** | **CORE STORY LOT**: Expiring in 18 days with tiny local usage (~0.3/day). H4's ILR is under repair (`cold_storage_ok = false`). Must be redistributed immediately to prevent total wastage. |
+| **H1** (SIM-DH Jayanagar) | `INS-REG` | `LOT-INS-H1-01` | 2026-11-20 (19 days) | **2 vials** | **CRITICAL SHORTAGE**: High-volume district hospital consumption (~22/day) with near-zero stock on hand. Prime destination for H4's surplus insulin! |
+| **H1** (SIM-DH Jayanagar) | `OXY-10` | `LOT-OXY-H1-01` | 2026-11-22 (21 days) | **3 ampoules** | **CRITICAL SHORTAGE**: Labour room essential with acute deficit. |
+| **H2** (SIM-TGH Anekal) | `IFA-W` | `LOT-IFA-H2-01` | 2026-11-25 (24 days) | **12,000 tabs** | **SURPLUS**: Massive overstock expiring in 24 days. Needs redistribution to PHCs/CHCs. |
+| **H2** (SIM-TGH Anekal) | `PCM-500` | `LOT-PCM-H2-01` | 2026-11-20 (19 days) | **8,000 tabs** | **SURPLUS**: Near-expiry paracetamol overstock. |
+| **H2** (SIM-TGH Anekal) | `AMOX-500` | `LOT-AMX-H2-01` | 2026-11-22 (21 days) | **3,500 tabs** | **SURPLUS**: Antibiotic surplus exceeding local 21-day target reserve. |
+| **H2** (SIM-TGH Anekal) | `MOR-10` | `LOT-MOR-H2-01` | 2026-12-15 (44 days) | **250 tabs** | **F6 FEASIBILITY DEMO**: Schedule X / controlled narcotic (`is_controlled = true`). Optimizer feasibility rule F6 must explicitly flag and reject automated transfer without special permits. |
+| **H3** (SIM-CHC Yelahanka) | `ORS-20` | `LOT-ORS-H3-01` | 2026-12-05 (35 days) | **15 sachets** | **PRE-OUTBREAK DEFICIT**: Near-empty stock before the monsoon dengue/diarrhea surge scenario triggers. |
+| **W0** (District Warehouse) | `INS-REG`, `OXY-10`, `ORS-20`, `CEFT-1000` | `LOT-*-W0-01` | 6–12 months | 500–10,000 units | **BUFFER RESERVE**: Central buffer with long shelf lives for normal replenishment. |
+
 
 ## How to Verify
 - **Contract tests**:

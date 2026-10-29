@@ -1,0 +1,260 @@
+# ==============================================================================
+# MedBalance-Q Formulary Drugs & Multilingual Aliases
+# ==============================================================================
+
+drugs:
+  - code: "INS-REG"
+    name: "Insulin Regular 100 IU/ml"
+    category: "V"
+    unit: "vial"
+    pack_size: 1
+    cold_chain: true
+    min_temp_c: 2.0
+    max_temp_c: 8.0
+    unit_cost_inr: 145.50
+    min_residual_days: 15
+    is_controlled: false
+    aliases:
+      - alias: "inzulin"
+        language: "en"
+        notes: "common misspelling"
+      - alias: "insuln"
+        language: "en"
+        notes: "phonetic typo"
+      - alias: "regular insulin"
+        language: "en"
+      - alias: "ಇನ್ಸುಲಿನ್"
+        language: "kn"
+        notes: "Kannada script"
+
+  - code: "OXY-10"
+    name: "Oxytocin Injection 10 IU/ml"
+    category: "V"
+    unit: "ampoule"
+    pack_size: 5
+    cold_chain: true
+    min_temp_c: 2.0
+    max_temp_c: 8.0
+    unit_cost_inr: 28.00
+    min_residual_days: 30
+    is_controlled: false
+    aliases:
+      - alias: "oxytocn"
+        language: "en"
+      - alias: "pitocin"
+        language: "en"
+        notes: "brand name"
+      - alias: "ಆಕ್ಸಿಟೋಸಿನ್"
+        language: "kn"
+
+  - code: "ASV-10"
+    name: "Anti-Snake Venom Polyvalent"
+    category: "V"
+    unit: "vial"
+    pack_size: 1
+    cold_chain: true
+    min_temp_c: 2.0
+    max_temp_c: 8.0
+    unit_cost_inr: 550.00
+    min_residual_days: 60
+    is_controlled: false
+    aliases:
+      - alias: "asv"
+        language: "en"
+      - alias: "anti snake venom"
+        language: "en"
+      - alias: "ಹಾವು ಕಡಿತದ ಔಷಧ"
+        language: "kn"
+
+  - code: "TD-VAC"
+    name: "Tetanus-Diphtheria Vaccine"
+    category: "V"
+    unit: "vial"
+    pack_size: 10
+    cold_chain: true
+    min_temp_c: 2.0
+    max_temp_c: 8.0
+    unit_cost_inr: 35.00
+    min_residual_days: 45
+    is_controlled: false
+    aliases:
+      - alias: "td vaccine"
+        language: "en"
+      - alias: "tetanus toxoid"
+        language: "en"
+      - alias: "ಧನುರ್ವಾಯು ಲಸಿಕೆ"
+        language: "kn"
+
+  - code: "CEFT-1000"
+    name: "Ceftriaxone Injection 1g"
+    category: "E"
+    unit: "vial"
+    pack_size: 1
+    cold_chain: false
+    min_temp_c: 15.0
+    max_temp_c: 25.0
+    unit_cost_inr: 45.00
+    min_residual_days: 60
+    is_controlled: false
+    aliases:
+      - alias: "ceftriaxon"
+        language: "en"
+      - alias: "mono-cef"
+        language: "en"
+        notes: "brand name"
+      - alias: "ಸೆಫ್ಟ್ರಿಯಾಕ್ಸೋನ್"
+        language: "kn"
+
+  - code: "RL-500"
+    name: "Ringer's Lactate Solution 500ml"
+    category: "E"
+    unit: "bottle"
+    pack_size: 1
+    cold_chain: false
+    min_temp_c: 15.0
+    max_temp_c: 30.0
+    unit_cost_inr: 32.00
+    min_residual_days: 90
+    is_controlled: false
+    aliases:
+      - alias: "rl iv"
+        language: "en"
+      - alias: "ringers lactate"
+        language: "en"
+      - alias: "ಆರ್‌ಎಲ್ ದ್ರಾವಣ"
+        language: "kn"
+
+  - code: "ORS-20"
+    name: "Oral Rehydration Salts 20.5g"
+    category: "E"
+    unit: "sachet"
+    pack_size: 1
+    cold_chain: false
+    min_temp_c: 15.0
+    max_temp_c: 30.0
+    unit_cost_inr: 8.50
+    min_residual_days: 60
+    is_controlled: false
+    aliases:
+      - alias: "ors pkt"
+        language: "en"
+        notes: "clinical abbreviation"
+      - alias: "electral"
+        language: "en"
+        notes: "common brand"
+      - alias: "ಒಆರ್‌ಎಸ್"
+        language: "kn"
+        notes: "Kannada phonetic"
+
+  - code: "PCM-500"
+    name: "Paracetamol 500mg"
+    category: "N"
+    unit: "tablet"
+    pack_size: 10
+    cold_chain: false
+    min_temp_c: 15.0
+    max_temp_c: 30.0
+    unit_cost_inr: 1.20
+    min_residual_days: 30
+    is_controlled: false
+    aliases:
+      - alias: "pcm"
+        language: "en"
+        notes: "universal clinic shorthand"
+      - alias: "dolo"
+        language: "en"
+        notes: "regional brand reference"
+      - alias: "crocin"
+        language: "en"
+      - alias: "ಪ್ಯಾರಸಿಟಮಾಲ್"
+        language: "kn"
+
+  - code: "AMOX-500"
+    name: "Amoxicillin 500mg"
+    category: "E"
+    unit: "tablet"
+    pack_size: 10
+    cold_chain: false
+    min_temp_c: 15.0
+    max_temp_c: 25.0
+    unit_cost_inr: 4.25
+    min_residual_days: 30
+    is_controlled: false
+    aliases:
+      - alias: "amoxy"
+        language: "en"
+        notes: "common shorthand"
+      - alias: "amoxil"
+        language: "en"
+      - alias: "ಅಮಾಕ್ಸಿಸಿಲಿನ್"
+        language: "kn"
+
+  - code: "MET-500"
+    name: "Metformin 500mg"
+    category: "E"
+    unit: "tablet"
+    pack_size: 10
+    cold_chain: false
+    min_temp_c: 15.0
+    max_temp_c: 30.0
+    unit_cost_inr: 2.10
+    min_residual_days: 45
+    is_controlled: false
+    aliases:
+      - alias: "glyciphage"
+        language: "en"
+      - alias: "ಮೆಟ್‌ಫಾರ್ಮಿನ್"
+        language: "kn"
+
+  - code: "AML-5"
+    name: "Amlodipine 5mg"
+    category: "E"
+    unit: "tablet"
+    pack_size: 10
+    cold_chain: false
+    min_temp_c: 15.0
+    max_temp_c: 30.0
+    unit_cost_inr: 1.80
+    min_residual_days: 45
+    is_controlled: false
+    aliases:
+      - alias: "amlo 5"
+        language: "en"
+      - alias: "ಆಮ್ಲೋಡಿಪಿನ್"
+        language: "kn"
+
+  - code: "IFA-W"
+    name: "Iron & Folic Acid Tablets"
+    category: "E"
+    unit: "tablet"
+    pack_size: 100
+    cold_chain: false
+    min_temp_c: 15.0
+    max_temp_c: 30.0
+    unit_cost_inr: 0.85
+    min_residual_days: 60
+    is_controlled: false
+    aliases:
+      - alias: "ifa red"
+        language: "en"
+      - alias: "iron folic"
+        language: "en"
+      - alias: "ಕಬ್ಬಿಣದ ಮಾತ್ರೆಗಳು"
+        language: "kn"
+
+  - code: "MOR-10"
+    name: "Morphine Sulfate 10mg"
+    category: "V"
+    unit: "tablet"
+    pack_size: 10
+    cold_chain: false
+    min_temp_c: 15.0
+    max_temp_c: 25.0
+    unit_cost_inr: 15.00
+    min_residual_days: 60
+    is_controlled: true
+    aliases:
+      - alias: "morphine"
+        language: "en"
+      - alias: "ಮಾರ್ಫಿನ್"
+        language: "kn"

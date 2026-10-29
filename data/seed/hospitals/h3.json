@@ -1,0 +1,37 @@
+{
+  "hospital_id": "H3",
+  "code": "SIM-HOSP-H3",
+  "name": "SIM-CHC Yelahanka",
+  "level": "CHC",
+  "adapter_type": "chat",
+  "language": "kn+en",
+  "cold_storage_ok": true,
+  "cold_storage_note": "Small ILR operational",
+  "stock_items_count": 4,
+  "inventory": [
+    {
+      "drug_code": "ORS-20",
+      "batch_no": "LOT-ORS-H3-01",
+      "expiry": "2026-12-06",
+      "quantity": 15
+    },
+    {
+      "drug_code": "PCM-500",
+      "batch_no": "LOT-PCM-H3-01",
+      "expiry": "2026-12-21",
+      "quantity": 1500
+    },
+    {
+      "drug_code": "AMOX-500",
+      "batch_no": "LOT-AMX-H3-01",
+      "expiry": "2026-12-11",
+      "quantity": 600
+    },
+    {
+      "drug_code": "MET-500",
+      "batch_no": "LOT-MET-H3-01",
+      "expiry": "2027-01-30",
+      "quantity": 1200
+    }
+  ]
+}

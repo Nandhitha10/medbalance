@@ -1,0 +1,31 @@
+{
+  "hospital_id": "H4",
+  "code": "SIM-HOSP-H4",
+  "name": "SIM-PHC Hesaraghatta",
+  "level": "PHC",
+  "adapter_type": "text",
+  "language": "en",
+  "cold_storage_ok": false,
+  "cold_storage_note": "ILR under repair",
+  "stock_items_count": 3,
+  "inventory": [
+    {
+      "drug_code": "INS-REG",
+      "batch_no": "LOT-INS-H4-01",
+      "expiry": "2026-11-19",
+      "quantity": 50
+    },
+    {
+      "drug_code": "PCM-500",
+      "batch_no": "LOT-PCM-H4-01",
+      "expiry": "2026-12-16",
+      "quantity": 300
+    },
+    {
+      "drug_code": "ORS-20",
+      "batch_no": "LOT-ORS-H4-01",
+      "expiry": "2027-01-30",
+      "quantity": 150
+    }
+  ]
+}

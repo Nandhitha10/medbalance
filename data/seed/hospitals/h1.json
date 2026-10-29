@@ -1,0 +1,43 @@
+{
+  "hospital_id": "H1",
+  "code": "SIM-HOSP-H1",
+  "name": "SIM-DH Jayanagar",
+  "level": "DH",
+  "adapter_type": "fhir",
+  "language": "en",
+  "cold_storage_ok": true,
+  "cold_storage_note": "Dual ILR + deep freezer functional",
+  "stock_items_count": 5,
+  "inventory": [
+    {
+      "drug_code": "INS-REG",
+      "batch_no": "LOT-INS-H1-01",
+      "expiry": "2026-11-21",
+      "quantity": 2
+    },
+    {
+      "drug_code": "OXY-10",
+      "batch_no": "LOT-OXY-H1-01",
+      "expiry": "2026-11-23",
+      "quantity": 3
+    },
+    {
+      "drug_code": "AMOX-500",
+      "batch_no": "LOT-AMX-H1-01",
+      "expiry": "2026-12-31",
+      "quantity": 2000
+    },
+    {
+      "drug_code": "PCM-500",
+      "batch_no": "LOT-PCM-H1-01",
+      "expiry": "2027-01-30",
+      "quantity": 5000
+    },
+    {
+      "drug_code": "RL-500",
+      "batch_no": "LOT-RL-H1-01",
+      "expiry": "2027-03-01",
+      "quantity": 800
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "hospital_id": "H2",
+  "code": "SIM-HOSP-H2",
+  "name": "SIM-TGH Anekal",
+  "level": "TH",
+  "adapter_type": "csv",
+  "language": "en",
+  "cold_storage_ok": true,
+  "cold_storage_note": "Standard ILR unit operational",
+  "stock_items_count": 5,
+  "inventory": [
+    {
+      "drug_code": "IFA-W",
+      "batch_no": "LOT-IFA-H2-01",
+      "expiry": "2026-11-26",
+      "quantity": 12000
+    },
+    {
+      "drug_code": "PCM-500",
+      "batch_no": "LOT-PCM-H2-01",
+      "expiry": "2026-11-21",
+      "quantity": 8000
+    },
+    {
+      "drug_code": "AMOX-500",
+      "batch_no": "LOT-AMX-H2-01",
+      "expiry": "2026-11-23",
+      "quantity": 3500
+    },
+    {
+      "drug_code": "MOR-10",
+      "batch_no": "LOT-MOR-H2-01",
+      "expiry": "2026-12-16",
+      "quantity": 250
+    },
+    {
+      "drug_code": "ASV-10",
+      "batch_no": "LOT-ASV-H2-01",
+      "expiry": "2026-12-31",
+      "quantity": 40
+    }
+  ]
+}
