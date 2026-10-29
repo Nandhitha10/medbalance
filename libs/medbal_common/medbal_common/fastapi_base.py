@@ -80,13 +80,17 @@ def create_app(
             },
         )
 
-    # Base healthcheck endpoint
+    # Base healthcheck endpoint (supports direct, prefixed, and gateway routing)
+    short_name = name.replace("-api", "")
     @app.get("/health")
+    @app.get(f"/api/{name}/health")
+    @app.get(f"/api/{short_name}/health")
     async def healthcheck():
         return {
             "status": "ok",
             "service": name,
             "timestamp": sim_now().isoformat(),
         }
+
 
     return app

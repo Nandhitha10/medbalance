@@ -46,52 +46,64 @@ def serve(app: FastAPI, service_name: str) -> None:
     # Common / Shared
     if service_name in ("core-api", "core"):
         @app.get("/facilities")
+        @app.get("/api/core/facilities")
         async def get_facilities():
             return load_fixture("facilities.json")
 
         @app.get("/drugs")
+        @app.get("/api/core/drugs")
         async def get_drugs():
             return load_fixture("drugs.json")
 
         @app.get("/routes")
+        @app.get("/api/core/routes")
         async def get_routes():
             return load_fixture("routes.json")
 
         @app.get("/vehicles")
+        @app.get("/api/core/vehicles")
         async def get_vehicles():
             return load_fixture("vehicles.json")
 
         @app.get("/lots")
+        @app.get("/api/core/lots")
         async def get_lots():
             return load_fixture("lots.json")
 
         @app.post("/lots/upsert-batch")
+        @app.post("/api/core/lots/upsert-batch")
         async def upsert_lots():
             return {"status": "ok", "upserted_count": 2}
 
         @app.get("/positions")
+        @app.get("/api/core/positions")
         async def get_positions():
             return load_fixture("positions.json")
 
         @app.get("/snapshot")
+        @app.get("/api/core/snapshot")
         async def get_snapshot():
             return load_fixture("snapshot.json")
 
         @app.post("/plans")
+        @app.post("/api/core/plans")
         async def persist_plan():
             return {"status": "created", "plan_id": "PLAN-20261101-01"}
 
         @app.get("/orders")
+        @app.get("/api/core/orders")
         async def get_orders():
             return load_fixture("orders.json")
 
         @app.get("/orders/{id}")
+        @app.get("/api/core/orders/{id}")
         async def get_order_by_id(id: str):
             order = load_fixture("order_single.json")
             order["id"] = id
             return order
 
         @app.post("/orders/{id}/approve")
+        @app.post("/api/core/orders/{id}/approve")
         async def approve_order(id: str):
             order = load_fixture("order_single.json")
             order["id"] = id
@@ -99,6 +111,7 @@ def serve(app: FastAPI, service_name: str) -> None:
             return order
 
         @app.post("/orders/{id}/reject")
+        @app.post("/api/core/orders/{id}/reject")
         async def reject_order(id: str):
             order = load_fixture("order_single.json")
             order["id"] = id
@@ -106,22 +119,27 @@ def serve(app: FastAPI, service_name: str) -> None:
             return order
 
         @app.post("/custody/scan")
+        @app.post("/api/core/custody/scan")
         async def custody_scan():
             return {"status": "recorded", "event_id": 1}
 
         @app.get("/custody/{order_id}")
+        @app.get("/api/core/custody/{order_id}")
         async def get_custody(order_id: str):
             return load_fixture("custody_events.json")
 
         @app.get("/audit/verify")
+        @app.get("/api/core/audit/verify")
         async def audit_verify():
             return load_fixture("audit_verify.json")
 
         @app.get("/audit")
+        @app.get("/api/core/audit")
         async def audit_entries():
             return load_fixture("audit_entries.json")
 
         @app.get("/provenance/{order_id}")
+        @app.get("/api/core/provenance/{order_id}")
         async def get_provenance(order_id: str):
             prov = load_fixture("provenance.json")
             prov["order_id"] = order_id
@@ -129,18 +147,20 @@ def serve(app: FastAPI, service_name: str) -> None:
 
     elif service_name == "optimizer":
         @app.post("/plan/run")
+        @app.post("/api/optimizer/plan/run")
         async def plan_run():
             return load_fixture("plan.json")
 
         @app.get("/plan/{id}")
+        @app.get("/api/optimizer/plan/{id}")
         async def get_plan(id: str):
             plan = load_fixture("plan.json")
             if id != "demo":
                 plan["id"] = id
             return plan
 
-
         @app.get("/plan/{id}/benchmark")
+        @app.get("/api/optimizer/plan/{id}/benchmark")
         async def get_benchmark(id: str):
             return {
                 "plan_id": id,
@@ -153,11 +173,54 @@ def serve(app: FastAPI, service_name: str) -> None:
             }
 
         @app.get("/plan/{id}/regret")
+        @app.get("/api/optimizer/plan/{id}/regret")
         async def get_regret(id: str):
             plan = load_fixture("plan.json")
             return plan.get("regret", [])
 
         @app.get("/whynot")
+        @app.get("/api/optimizer/whynot")
+        async def whynot():
+            return {
+                "facility_id": "H1",
+                "drug_code": "INS-REG",
+                "candidates_evaluated": 4,
+                "feasible_candidates": 1,
+                "reasons": [
+                    "F3 cold chain: destination H3 lacks cold storage",
+                    "F5 reserve: 10 units protected at H1",
+                ],
+            }
+
+        @app.post("/whatif")
+        @app.post("/api/optimizer/whatif")
+        async def whatif():
+            plan = load_fixture("plan.json")
+            plan["mode"] = "whatif"
+            return plan
+
+        @app.post("/eval/replay")
+        @app.post("/api/optimizer/eval/replay")
+        async def eval_replay():
+            return {
+                "eval_id": "EVAL-001",
+                "status": "completed",
+                "days_replayed": 14,
+                "total_stockout_reduction": 1350,
+                "total_expiry_avoided": 1428,
+            }
+
+        @app.get("/eval/{id}")
+        @app.get("/api/optimizer/eval/{id}")
+        async def get_eval(id: str):
+            return {
+                "eval_id": id,
+                "status": "completed",
+                "days_replayed": 14,
+                "total_stockout_reduction": 1350,
+                "total_expiry_avoided": 1428,
+            }
+
         async def whynot():
             return {
                 "facility_id": "H1",

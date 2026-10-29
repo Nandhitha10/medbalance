@@ -173,3 +173,4 @@ paths:
                     type: string
                   firewall_active:
                     type: boolean
+

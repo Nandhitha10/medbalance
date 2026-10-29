@@ -84,3 +84,4 @@ paths:
                       type: number
                     battery_percent:
                       type: integer
+

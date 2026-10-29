@@ -163,3 +163,4 @@ paths:
                     type: string
                   remaining_stock:
                     type: integer
+

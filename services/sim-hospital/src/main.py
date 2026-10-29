@@ -10,3 +10,4 @@ app = create_app(
     title=f"MedBalance Simulated Hospital {hospital_id}",
 )
 fixtures.serve(app, "sim-hospital")
+

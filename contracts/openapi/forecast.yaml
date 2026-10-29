@@ -97,3 +97,4 @@ paths:
                     type: string
                   baseline_mape_percent:
                     type: number
+

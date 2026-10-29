@@ -12,3 +12,4 @@ async def telemetry():
         "active_sensors": 4,
         "protocol": "mqtt",
     }
+

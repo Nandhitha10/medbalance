@@ -70,3 +70,4 @@ async def test_core_api_serves_fixtures(monkeypatch):
         assert "facilities" in data
         assert "drugs" in data
         assert "lots" in data
+

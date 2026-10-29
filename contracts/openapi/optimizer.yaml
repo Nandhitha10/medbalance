@@ -237,3 +237,4 @@ paths:
                     type: integer
                   total_expiry_avoided:
                     type: integer
+

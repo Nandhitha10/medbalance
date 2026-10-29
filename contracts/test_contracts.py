@@ -167,3 +167,4 @@ def test_forecast_fixture(components):
         forecasts = json.load(f)
     array_schema = {"type": "array", "items": components["Forecast"]}
     _validate_with_components(forecasts, array_schema, components)
+
