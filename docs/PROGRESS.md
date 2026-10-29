@@ -1,7 +1,7 @@
 # Project Progress Log
 
 ## Status Overview
-- Current Phase: Core API & FEFO Read-Model Implementation Complete
+- Current Phase: Sim-Control & Sim-Hospital (4-Style District Twin) Implementation Complete
 - Updated: 2026-10-29
 
 ## Completed Tasks
@@ -33,7 +33,24 @@
   - Provenance: `GET /provenance/{order_id}` delivering full DAG nodes and edges (`stock_report -> extraction_item -> lot -> candidate -> order -> custody_event`) with feasibility proofs and audit sequence numbers.
   - Audit chain: `GET /audit/verify` and `GET /audit?entity=&id=`, verified for integrity and cryptographic tamper detection.
   - Real-time events: `GET /events` Server-Sent Events (SSE) streaming Redis Streams with 15-second heartbeats.
-- [x] Unit and integration tests in `services/core-api/tests/test_core_api.py` and `libs/medbal_common/tests/test_fefo.py` passing (42 total tests passing across monorepo).
+- [x] `services/sim-control` fully implemented:
+  - Simulation clock: configurable day length (`SIM_DAY_SECONDS=30` default), start/pause/speed control, advances virtual datetime starting at `SIM_START_DATE`.
+  - Publishes `clock.tick` event to Redis Streams on each new sim day turnover.
+  - 7 deterministic scenarios (`baseline`, `dengue_outbreak`, `fridge_failure`, `bad_data`, `ilr_repaired`, `road_closure`, `td_campaign`) setting facility×drug demand multipliers, route closures, and publishing refrigeration excursions to Redis key `sensors:faults`.
+  - IDSP-style signal feed: `GET /signals` exposing active epidemiological and infrastructure shocks.
+  - Cluster reset: `POST /reset?seed=` resets clock, scenarios, and broadcasts reset notifications concurrently to all hospital nodes.
+- [x] `services/sim-hospital` fully implemented (single Docker image configured by `HOSPITAL_ID=H1..H4`):
+  - Private SQLite stock inventory (`hospital_stock`, `dispense_history`, `transfer_events`) per node.
+  - Reactive `clock.tick` Redis consumer: draws Poisson demand ($\lambda \times \text{multiplier}$), dispenses FEFO, logs stockouts, and expires lots at end of day.
+  - Stock transfer endpoints: `POST /transfers/inbound` adds received stock, `POST /transfers/outbound` decrements dispatched stock.
+  - Ground truth introspection: `GET /state` returns internal inventory for verification.
+  - 4 diverse real-world reporting styles:
+    - **H1 (FHIR)**: `GET /fhir/InventoryReport` returning FHIR R5/R4 `InventoryReport` resource with nested `inventoryListing` items.
+    - **H2 (CSV)**: `GET /export/stock.csv` returning e-Aushadhi export with 10-pack strip conversions and missing batch number clerical defects.
+    - **H3 (Chat)**: Daily bilingual Kannada + English informal chat report with 15 template variants pushed to `ingest-ai /ingest/H3`.
+    - **H4 (Handwritten/Text)**: Messy physical stock register note with common clerical typos (`inzulin`, `paracetmol`); when `bad_data` is active, outputs anomalous quantity (10000) and corrupted year (1999) pushed to `ingest-ai /ingest/H4`.
+- [x] Docker Compose configured with `sim-control` (port 8100) and 4 `sim-hospital` instances (`sim-hospital-h1`..`h4` on ports 8101..8104).
+- [x] Comprehensive test suites passing (51 total tests passing across monorepo).
 
 ## Table of Engineered Story Lots (For L2, L3, L4 Lanes)
 
@@ -48,6 +65,88 @@
 | **H2** (SIM-TGH Anekal) | `MOR-10` | `LOT-MOR-H2-01` | 2026-12-15 (44 days) | **250 tabs** | **F6 FEASIBILITY DEMO**: Schedule X / controlled narcotic (`is_controlled = true`). Optimizer feasibility rule F6 must explicitly flag and reject automated transfer without special permits. |
 | **H3** (SIM-CHC Yelahanka) | `ORS-20` | `LOT-ORS-H3-01` | 2026-12-05 (35 days) | **15 sachets** | **PRE-OUTBREAK DEFICIT**: Near-empty stock before the monsoon dengue/diarrhea surge scenario triggers. |
 | **W0** (District Warehouse) | `INS-REG`, `OXY-10`, `ORS-20`, `CEFT-1000` | `LOT-*-W0-01` | 6–12 months | 500–10,000 units | **BUFFER RESERVE**: Central buffer with long shelf lives for normal replenishment. |
+
+## Sample Hospital Reporting Outputs
+
+### 1. H1 (SIM-DH Jayanagar) - FHIR R5/R4 InventoryReport (`GET /fhir/InventoryReport`)
+```json
+{
+  "resourceType": "InventoryReport",
+  "id": "rpt-H1-20261101-080000",
+  "status": "completed",
+  "countType": "snapshot",
+  "reportedDateTime": "2026-11-01T08:00:00+05:30",
+  "reporter": {
+    "reference": "Location/H1",
+    "display": "SIM-DH Jayanagar"
+  },
+  "inventoryListing": [
+    {
+      "item": {
+        "concept": {
+          "coding": [
+            {
+              "system": "https://nhm.gov.in/drugs",
+              "code": "INS-REG",
+              "display": "Insulin Regular 100 IU/ml"
+            }
+          ]
+        }
+      },
+      "lot": "LOT-INS-H1-01",
+      "expiry": "2026-11-20",
+      "quantity": {
+        "value": 2,
+        "unit": "vial"
+      }
+    }
+  ]
+}
+```
+
+### 2. H2 (SIM-TGH Anekal) - e-Aushadhi CSV Export (`GET /export/stock.csv`)
+*(Includes 10-pack strip unit conversions and missing batch number clerical defects)*
+```csv
+Drug Name,Batch No,Exp Date,Qty,Unit
+Paracetamol Tablets IP 500mg,LOT-PCM-H2-01,11/2026,800,strip
+Amoxicillin Capsules IP 500mg,,11/2026,350,strip
+Inj. Insulin Regular 100 IU/ml,LOT-INS-H2-01,12/2026,50,vial
+Iron and Folic Acid Tablets (WIFS Blue),LOT-IFA-H2-01,11/2026,1200,strip
+```
+
+### 3. H3 (SIM-CHC Yelahanka) - Kannada + English Informal Chat Report
+*(Pushed daily to `ingest-ai /ingest/H3` from 15 bilingual template variants)*
+```text
+ನಮಸ್ಕಾರ / Hello sir, Yelahanka CHC stock update for 01/11: ORS 15 sachets (exp 05/12), Paracetamol 1500 tabs (exp 16/12). ಇನ್ಸುಲಿನ್ ಇಲ್ಲ (no insulin in stock). Please arrange emergency supply.
+```
+
+### 4. H4 (SIM-PHC Hesaraghatta) - Handwritten Register Physical Count
+*(Pushed daily to `ingest-ai /ingest/H4` with clerical typos; triggers OCR anomaly during `bad_data` scenario)*
+
+**Normal messy register note:**
+```text
+DAILY STOCK REGISTER - HESARAGHATTA PHC
+Date: 01/11/2026
+Physical count taken at ILR & ambient rack:
+- 50 vials inzulin (reg 100iu) batch LOT-INS-H4-01 exp 19/11/2026
+- 300 tabs paracetmol batch LOT-PCM-H4-01 exp 16/12/2026
+- 150 ors sachets batch LOT-ORS-H4-01 exp 30/01/2027
+Remarks: Fridge repair pending technician visit.
+Signed, Pharmacist Hesaraghatta PHC
+```
+
+**Anomalous `bad_data` scenario note (corrupted quantity & invalid year):**
+```text
+DAILY STOCK REGISTER - HESARAGHATTA PHC
+Date: 01/11/2026
+Physical count taken at ILR & ambient rack:
+- 10000 inzulin batch LOT-INS-H4-01 exp 19/11/1999
+- 300 tabs paracetmol batch LOT-PCM-H4-01 exp 16/12/2026
+- 150 ors sachets batch LOT-ORS-H4-01 exp 30/01/2027
+Remarks: Fridge repair pending technician visit.
+Signed, Pharmacist Hesaraghatta PHC
+```
+
 
 
 ## How to Verify

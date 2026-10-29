@@ -159,3 +159,4 @@ def calculate_usable_quantity(
     dest_consumption_capacity = math.floor(destination_daily_rate * effective_days)
     net_usable = max(0, dest_consumption_capacity - destination_stock_expiring_before_lot)
     return min(source_lot_qty, net_usable)
+

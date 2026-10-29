@@ -124,3 +124,4 @@ def test_calculate_usable_quantity_rule_f4():
     )
 
     assert usable == 24
+

@@ -23,3 +23,8 @@ def create_sync_http_client(
     transport = httpx.HTTPTransport(retries=max_retries)
     client_timeout = httpx.Timeout(timeout)
     return httpx.Client(transport=transport, timeout=client_timeout, **kwargs)
+
+
+# Convenience alias
+create_client = create_http_client
+

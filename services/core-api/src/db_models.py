@@ -304,3 +304,4 @@ class CreditMemoModel(Base):
     total_credit_inr: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False)
     issue_date: Mapped[date] = mapped_column(Date, nullable=False)
     authorized_by: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+
