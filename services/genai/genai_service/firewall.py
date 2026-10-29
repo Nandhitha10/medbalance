@@ -36,6 +36,8 @@ ENTITY_MASK_PATTERNS = [
     re.compile(r"\bPLAN-[A-Z0-9\-_]+\b", re.IGNORECASE),       # PLAN-...
     re.compile(r"\bCM/[A-Z0-9\-_/]+\b", re.IGNORECASE),        # CM/...
     re.compile(r"\bCOVID-19\b", re.IGNORECASE),                # COVID-19
+    re.compile(r"\b(?:Rule|Policy|Stage|Step|Tier|Zone)\s*(?:F\d+|\d+)\b", re.IGNORECASE), # Rule F1..F6, Zone 0..1
+    re.compile(r"\b\d+(?:\.\d+)?\s*(?:IU(?:/ml)?|mg|mcg|ml|g)\b", re.IGNORECASE),         # Drug strength e.g. 100 IU/ml, 500mg, 20.5g
 ]
 
 # Currency patterns: ₹ 4,074.00, Rs. 145.50, INR 4074
@@ -121,7 +123,7 @@ def extract_facts_numbers(facts: Dict[str, Any]) -> Tuple[Set[float], Set[float]
                 pass
         elif isinstance(val, dict):
             for k, v in val.items():
-                _walk(v, k.lower())
+                _walk(v, str(k).lower())
         elif isinstance(val, (list, tuple, set)):
             for item in val:
                 _walk(item, key_hint)

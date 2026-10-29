@@ -13,6 +13,7 @@ from genai_service.events import handle_plan_event
 from genai_service.routers.llm import router as llm_router
 from genai_service.routers.narrate import router as narrate_router
 from genai_service.routers.documents import router as documents_router
+from genai_service.routers.copilot import router as copilot_router
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +59,7 @@ def build_app(use_fixtures: Optional[bool] = None) -> FastAPI:
     if should_use_fixtures:
         fixtures.serve(app, "genai")
     else:
-        for r in (llm_router, narrate_router, documents_router):
+        for r in (llm_router, narrate_router, documents_router, copilot_router):
             app.include_router(r)
             app.include_router(r, prefix="/api/genai")
 

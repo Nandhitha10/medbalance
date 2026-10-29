@@ -74,16 +74,3 @@ async def ai_health() -> Dict[str, Any]:
     }
 
 
-# =====================================================================
-# Additional Endpoints
-# =====================================================================
-
-@router.post("/copilot/chat")
-async def copilot_chat(req: Dict[str, Any]):
-    """Interactive district copilot chat stream."""
-    async def sse_stream():
-        yield "event: message\ndata: {\"token\": \"MedBalance-Q Copilot initialized.\"}\n\n"
-        yield "event: done\ndata: {}\n\n"
-
-    return StreamingResponse(sse_stream(), media_type="text/event-stream")
-

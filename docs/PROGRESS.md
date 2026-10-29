@@ -1,7 +1,7 @@
 # Project Progress Log
 
 ## Status Overview
-- Current Phase: P15 Grounded Narrations, Numeric Firewall & Official PDF Documents Complete
+- Current Phase: P16 Streaming Copilot Tool-Using Agent with Numeric Firewall & Chat History Complete
 - Updated: 2026-10-30
 
 ## Completed Tasks
@@ -278,6 +278,62 @@
       - Cold-chain log and credit memo PDFs render cleanly.
       - All REST endpoints return 200 OK.
     - Monorepo test suite green: **13/13 P15 tests + 31 regression tests passing**.
+- [x] **P16 Streaming Copilot Tool-Using Agent with Numeric Firewall & Chat History (`services/genai/`, `prompts/copilot_v1.yaml`, `evals/golden/copilot.json`)**:
+  - **Tool Definitions & Microservice Integrations (`services/genai/genai_service/tools.py`)**:
+    - 8 operational tools fully implemented with OpenAPI-compliant schemas, parameter normalisation (facility aliases e.g. "hesaraghatta" $\to$ "H4", drug aliases e.g. "insulin" $\to$ "INS-REG"), and resilient HTTP calls with fallback to database/fixtures:
+      1. `get_district_overview()`: District facility count, active transfer orders, cold chain network status.
+      2. `get_stock_position(facility, drug)`: Current FEFO stock, effective stock, at-risk units, reserve buffer, shortage, daily consumption rate.
+      3. `explain_order(order_id)`: Transfer order details, clinical justification, and top alternative destinations with regret $\Delta H$ values.
+      4. `why_not(facility, drug)`: Unserved shortage breakdown, evaluated candidate source lots, and failed feasibility rules (F1–F6).
+      5. `what_if(overrides)`: Counterfactual simulation sandbox (e.g. `repair_cold_storage="H4"`, route closures, reserve adjustments) with diff (`orders_added`, `orders_removed`, `orders_changed`) and KPI deltas.
+      6. `get_coldchain_status()`: Real-time telemetry status across cold vans and facility ILRs, active excursions, compromised routes.
+      7. `get_audit_trail(order_id)`: Chronological audit events with cryptographic SHA-256 hash chain verification.
+      8. `compare_policies()`: 5-policy comparative benchmark table (`no-transfer`, `greedy`, `greedy_f4`, `qubo`, `milp`) and QUBO optimality gap.
+  - **System Prompt (`prompts/copilot_v1.yaml`)**:
+    - Grounded role definition for District Drug Officer (DDO).
+    - Read-only & simulation authorization (never approves orders or alters live records).
+    - Strict zero-hallucination constraint: all figures must come directly from tool outputs in current turn.
+    - Facility naming standard: Official Name + Code (e.g. `Bengaluru District Hospital 1 (H1)`, `Hesaraghatta Primary Health Centre (H4)`).
+    - Bilingual support: natural, fluent responses in English or Kannada (ಕನ್ನಡ).
+  - **Agent Execution Loop & SSE Streaming (`services/genai/genai_service/agent.py`)**:
+    - Multi-round execution loop (up to 5 rounds).
+    - Streams Server-Sent Events (SSE):
+      - `tool_call`: `{type: "tool_call", name, args, id}`
+      - `tool_result`: `{type: "tool_result", name, summary, result, id}`
+      - `token`: `{type: "token", token}`
+      - `done`: `{type: "done", session_id, verified}`
+  - **Numeric Grounding Firewall Post-Check**:
+    - Extracts union of facts from all tool results across rounds.
+    - Verifies final answer using P15 `verify_grounding()`.
+    - If unverified numbers detected: appends `*Note: some figures could not be verified against tool records.*`, logs firewall block (`metrics_tracker.record(firewall_block=True)`), and sets `verified=False`.
+  - **Chat History & Persistence (`services/genai/genai_service/db_models.py`)**:
+    - SQLAlchemy models `ChatSessionModel` (`chat_session`) and `ChatMessageModel` (`chat_message` with `tool_calls` JSONB).
+    - Auto-persists user messages, tool calls, tool results, and final assistant syntheses.
+  - **DEMO_MODE Replay Cache**:
+    - Scripted questions served deterministically from cache or `evals/golden/copilot.json` without external network dependency.
+  - **Golden Evaluation Questions (`evals/golden/copilot.json`)**:
+    - 12 realistic evaluation questions covering all 8 tools, Kannada queries, why-not, and what-if.
+  - **FastAPI Endpoints (`services/genai/genai_service/routers/copilot.py`, `app.py`)**:
+    - `POST /copilot/chat`: Streaming SSE endpoint returning `text/event-stream`.
+    - `GET /copilot/history/{session_id}`: Inspects persisted session messages.
+  - **Automated Verification (`tests/test_copilot.py`)**:
+    - 16 comprehensive unit & routing tests passing (100% green):
+      - `test_copilot_prompt_definition`: Parses YAML with smart model and 8 tools.
+      - `test_tool_definitions_schemas`: Validates input schemas.
+      - `test_alias_normalization`: Validates facility and drug alias resolution.
+      - `test_tool_get_district_overview`: Returns facility counts $\ge 4$ and coldchain status.
+      - `test_tool_get_stock_position`: Returns FEFO metrics.
+      - `test_tool_why_not_h4_insulin`: Reports Rule F3 cold storage failure for H4 insulin.
+      - `test_tool_what_if_repair_cold_storage`: Returns diff with added orders to H4.
+      - `test_tool_get_coldchain_status`: Returns device telemetry statuses.
+      - `test_tool_get_audit_trail`: Returns SHA-256 protected entries.
+      - `test_tool_compare_policies`: Returns 5 policies table and optimality gap.
+      - `test_copilot_why_not_hesaraghatta_insulin_routing`: "Why didn't Hesaraghatta get insulin?" routes to `why_not` and answers with Rule F3.
+      - `test_copilot_what_if_repair_fridge_routing`: "What if we repair its fridge?" routes to `what_if` and reports the diff.
+      - `test_copilot_numeric_firewall_catches_ungrounded_numbers`: Injected fake figures trigger firewall block and append verification disclaimer.
+      - `test_copilot_kannada_query`: Responds in Kannada with Rule F3 explanation.
+      - `test_copilot_golden_questions_json_coverage`: Validates all 12 test cases in `evals/golden/copilot.json`.
+      - `test_copilot_fastapi_endpoint_streaming`: Validates live SSE event stream over HTTP.
 
 ### QpiAI Run Evidence Excerpt (`evidence/qpiai_runs/20261029_174952_fd9adf47.json`)
 

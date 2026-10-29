@@ -75,7 +75,22 @@ class FakeProvider(LLMProvider):
             next_resp = self.responses.pop(0)
             if isinstance(next_resp, Exception):
                 raise next_resp
+            if isinstance(next_resp, LLMResult):
+                return next_resp
             if isinstance(next_resp, dict):
+                resolved_model = self.resolve_model(model_tier, model_name)
+                tool_calls = next_resp.get("tool_calls")
+                if tool_calls is not None:
+                    raw_text = next_resp.get("content") or next_resp.get("raw_text")
+                    return LLMResult(
+                        model=resolved_model,
+                        provider="fake",
+                        raw_text=raw_text,
+                        structured_output=next_resp.get("structured_output"),
+                        tool_calls=tool_calls,
+                        tokens=42,
+                        latency_sec=self.simulated_latency,
+                    )
                 structured = next_resp
                 raw = json.dumps(next_resp)
             else:

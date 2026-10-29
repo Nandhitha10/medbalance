@@ -48,3 +48,48 @@ class LlmCallModel(Base):
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
+
+class ChatSessionModel(Base):
+    """Copilot interactive chat session."""
+    __tablename__ = "chat_session"
+    __table_args__ = {"extend_existing": True}
+
+    id = Column(String(64), primary_key=True)
+    user_id = Column(String(64), nullable=True)
+    facility_id = Column(String(64), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "facility_id": self.facility_id,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class ChatMessageModel(Base):
+    """Copilot message with tool calls and structured outputs."""
+    __tablename__ = "chat_message"
+    __table_args__ = {"extend_existing": True}
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    session_id = Column(String(64), nullable=False, index=True)
+    role = Column(String(32), nullable=False)
+    content = Column(Text, nullable=False)
+    tool_calls = Column(JSON, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "session_id": self.session_id,
+            "role": self.role,
+            "content": self.content,
+            "tool_calls": self.tool_calls,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+

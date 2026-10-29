@@ -1,0 +1,179 @@
+{
+  "version": "1.0",
+  "generated_at": "2026-10-30T03:30:00Z",
+  "purpose": "Evaluation test cases and golden standard responses for MedBalance interactive district copilot",
+  "test_cases": [
+    {
+      "id": "q01_whynot_hesaraghatta_insulin",
+      "query": "Why didn't Hesaraghatta get insulin?",
+      "expected_tool": "why_not",
+      "expected_args": {
+        "facility": "H4",
+        "drug": "INS-REG"
+      },
+      "expected_rule": "F3",
+      "golden_answer": "Hesaraghatta Primary Health Centre (H4) did not receive Insulin Regular 100 IU/ml (INS-REG) because of Rule F3: the destination cold storage unit (DEV-ILR-H4) is currently offline and under repair.",
+      "key_facts": [
+        "Rule F3",
+        "cold storage",
+        "Hesaraghatta Primary Health Centre (H4)",
+        "Insulin Regular 100 IU/ml (INS-REG)"
+      ]
+    },
+    {
+      "id": "q02_whatif_repair_fridge",
+      "query": "What if we repair its fridge?",
+      "expected_tool": "what_if",
+      "expected_args": {
+        "overrides": {
+          "repair_cold_storage": "H4"
+        }
+      },
+      "golden_answer": "In the counterfactual simulation where cold storage at Hesaraghatta Primary Health Centre (H4) is repaired, 1 order is added to the plan transferring cold-chain stock to H4, reducing shortage by 10 units.",
+      "key_facts": [
+        "Hesaraghatta Primary Health Centre (H4)",
+        "1 order",
+        "10 units"
+      ]
+    },
+    {
+      "id": "q03_district_overview",
+      "query": "Can you give me an overview of the district health network and active redistribution orders?",
+      "expected_tool": "get_district_overview",
+      "expected_args": {},
+      "golden_answer": "The district network monitors 5 health facilities (Bengaluru District Hospital 1 (H1), Yelahanka Taluk Hospital (H2), Anekal Community Health Centre (H3), Hesaraghatta Primary Health Centre (H4), and Central District Warehouse (W0)). The cold chain status is OPERATIONAL.",
+      "key_facts": [
+        "5 health facilities",
+        "OPERATIONAL"
+      ]
+    },
+    {
+      "id": "q04_stock_position_h2_pcm",
+      "query": "What is the stock position of Paracetamol 500mg at Yelahanka Taluk Hospital (H2)?",
+      "expected_tool": "get_stock_position",
+      "expected_args": {
+        "facility": "H2",
+        "drug": "PCM-500"
+      },
+      "golden_answer": "At Yelahanka Taluk Hospital (H2), Paracetamol 500mg (PCM-500) has a stock on hand of 8000 units with a daily consumption rate of 2.0 units per day.",
+      "key_facts": [
+        "Yelahanka Taluk Hospital (H2)",
+        "Paracetamol 500mg (PCM-500)"
+      ]
+    },
+    {
+      "id": "q05_explain_order_dta001",
+      "query": "Why was transfer order DTA/BLR-U/2026/000001 created?",
+      "expected_tool": "explain_order",
+      "expected_args": {
+        "order_id": "DTA/BLR-U/2026/000001"
+      },
+      "golden_answer": "Transfer order DTA/BLR-U/2026/000001 reallocates 28 units of Insulin Regular 100 IU/ml (INS-REG) from Hesaraghatta Primary Health Centre (H4) to Bengaluru District Hospital 1 (H1) to avoid imminent expiration and reduce high-priority shortage.",
+      "key_facts": [
+        "28 units",
+        "Hesaraghatta Primary Health Centre (H4)",
+        "Bengaluru District Hospital 1 (H1)"
+      ]
+    },
+    {
+      "id": "q06_coldchain_status",
+      "query": "Is the cold chain network currently safe and operational?",
+      "expected_tool": "get_coldchain_status",
+      "expected_args": {},
+      "golden_answer": "The district cold chain network is OPERATIONAL with 7 monitored devices and 0 active excursions. Note that DEV-ILR-H4 at Hesaraghatta Primary Health Centre (H4) remains OFFLINE pending compressor maintenance.",
+      "key_facts": [
+        "OPERATIONAL",
+        "7 monitored devices",
+        "0 active excursions",
+        "DEV-ILR-H4",
+        "OFFLINE"
+      ]
+    },
+    {
+      "id": "q07_audit_trail_ord001",
+      "query": "Show me the cryptographic audit trail for order ORD-001.",
+      "expected_tool": "get_audit_trail",
+      "expected_args": {
+        "order_id": "ORD-001"
+      },
+      "golden_answer": "The audit trail for order ORD-001 contains 2 verified events: ORDER_CREATED by system:optimizer and ORDER_APPROVED by pharmacist:H1, protected by a tamper-evident SHA-256 hash chain.",
+      "key_facts": [
+        "ORD-001",
+        "2 verified events",
+        "SHA-256"
+      ]
+    },
+    {
+      "id": "q08_compare_policies",
+      "query": "How does our QUBO allocation compare against the classical MILP exact optimum?",
+      "expected_tool": "compare_policies",
+      "expected_args": {},
+      "golden_answer": "The benchmark analysis demonstrates that the QUBO allocation achieves an exact 0.0% optimality gap compared to the classical MILP optimum, while eliminating all 18 units of wasted stock moved by manual greedy reallocation.",
+      "key_facts": [
+        "0.0%",
+        "MILP",
+        "QUBO"
+      ]
+    },
+    {
+      "id": "q09_whatif_close_route",
+      "query": "What if route H1 to H2 is closed due to flash flooding?",
+      "expected_tool": "what_if",
+      "expected_args": {
+        "overrides": {
+          "close_route": [
+            "H1-H2"
+          ]
+        }
+      },
+      "golden_answer": "In the counterfactual simulation where route H1-H2 is closed, transit routes are redirected through alternative safe paths without increasing stockout penalties.",
+      "key_facts": [
+        "H1-H2"
+      ]
+    },
+    {
+      "id": "q10_whynot_h3_ors",
+      "query": "Why didn't Anekal Community Health Centre (H3) get more ORS sachets?",
+      "expected_tool": "why_not",
+      "expected_args": {
+        "facility": "H3",
+        "drug": "ORS-20"
+      },
+      "golden_answer": "At Anekal Community Health Centre (H3), Oral Rehydration Salts 20.5g (ORS-20) has zero residual shortage because projected demand is satisfied by the current allocation plan.",
+      "key_facts": [
+        "Anekal Community Health Centre (H3)",
+        "Oral Rehydration Salts 20.5g (ORS-20)"
+      ]
+    },
+    {
+      "id": "q11_kannada_hesaraghatta_insulin",
+      "query": "ಹೆಸರಘಟ್ಟ ಪ್ರಾಥಮಿಕ ಆರೋಗ್ಯ ಕೇಂದ್ರಕ್ಕೆ ಇನ್ಸುಲಿನ್ ಏಕೆ ಸಿಗಲಿಲ್ಲ?",
+      "expected_tool": "why_not",
+      "expected_args": {
+        "facility": "H4",
+        "drug": "INS-REG"
+      },
+      "golden_answer": "ಹೆಸರಘಟ್ಟ ಪ್ರಾಥಮಿಕ ಆರೋಗ್ಯ ಕೇಂದ್ರಕ್ಕೆ (H4) ಇನ್ಸುಲಿನ್ (INS-REG) ನಿಯಮ F3 (Rule F3) ರ ಕಾರಣದಿಂದಾಗಿ ಸಿಗಲಿಲ್ಲ, ಏಕೆಂದರೆ ಅಲ್ಲಿನ ಶೈತ್ಯಾಗಾರ (DEV-ILR-H4) ದುರಸ್ತಿಯಲ್ಲಿದೆ ಮತ್ತು ಪ್ರಸ್ತುತ ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿದೆ.",
+      "key_facts": [
+        "H4",
+        "INS-REG",
+        "Rule F3",
+        "ಶೈತ್ಯಾಗಾರ"
+      ]
+    },
+    {
+      "id": "q12_stock_position_h1_insulin",
+      "query": "What is the current stock and shortage of Insulin at Bengaluru District Hospital 1 (H1)?",
+      "expected_tool": "get_stock_position",
+      "expected_args": {
+        "facility": "H1",
+        "drug": "INS-REG"
+      },
+      "golden_answer": "At Bengaluru District Hospital 1 (H1), Insulin Regular 100 IU/ml (INS-REG) has a daily consumption rate of 2.0 units per day with high clinical priority.",
+      "key_facts": [
+        "Bengaluru District Hospital 1 (H1)",
+        "Insulin Regular 100 IU/ml (INS-REG)"
+      ]
+    }
+  ]
+}
