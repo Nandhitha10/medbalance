@@ -79,3 +79,4 @@ def evaluate_backtest(
         historical_points=total_len,
         comparison=comparison_points,
     )
+

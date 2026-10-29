@@ -114,3 +114,4 @@ def compute_baseline_forecast(
             return fit_ewma_fallback(series, span=7, target_days=target_days)
     else:
         return fit_ewma_fallback(series, span=7, target_days=target_days)
+

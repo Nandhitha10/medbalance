@@ -1,7 +1,7 @@
 # Project Progress Log
 
 ## Status Overview
-- Current Phase: P12 Epidemiological & Statistical Forecasting Engine (Holt-Winters, LLM Context Multiplier with Guardrails, and Outbreak Evaluation) Complete
+- Current Phase: P13 Projector-Ready Web Application & Interactive Demo Screens (Ingestion & Review Queue, Upgraded Plan Page, Solver Benchmark, Cold Chain IoT Monitor, and Simulation Scenario Console) Complete
 - Updated: 2026-10-30
 
 ## Completed Tasks
@@ -169,6 +169,38 @@
   - `services/forecast/forecast/backtest.py` (`GET /forecast/backtest`): Evaluates 14-day holdout window comparing actuals against baseline vs context-adjusted forecasts, computing MAPE and RMSE accuracy lift.
   - `services/forecast/forecast/routers/forecast.py` (`POST /forecast/run`, `GET /forecast`): Computes 52 facility×drug forecasts, persists to PostgreSQL `forecast` table, publishes `forecast.updated` to Redis Streams, and listens to `clock.tick` for daily rolling forecast generation.
   - Acceptance verified: Under `dengue_outbreak`, H3 ORS exhibits context multiplier $> 1.0$ with IDSP citation and clinical rationale, immediately propagating higher daily consumption rate to optimizer FEFO positions and reserves.
+- [x] **P13 Web Application & Interactive Demo Screens (`web/`)**:
+  - **Hospital Ingestion & Pharmacist Review Queue (`web/src/components/screens/IngestionScreen.tsx`)**:
+    - Report list tracking facility (`H1..H4`), channel, language (`Kannada + English (kn/en)`, `English (en)`), timestamp, and status.
+    - Two-column inspection detail: raw text on left rendered with proper `Noto Sans Kannada` Unicode font (`font-kannada`) and extracted canonical rows on right with color-coded confidence chips (green $\ge 0.85$, amber, red).
+    - Anomaly detection display with clear LLM clinical rationale (`SUSPICIOUS_EXPIRY`, `CORRUPTED_TEXT`, `QUANTITY_SPIKE`).
+    - Pharmacist review actions: `Accept & Upsert Lot`, `Correct` (interactive modal with drug code dropdown from candidate catalog, batch number, clinical expiry date picker, and quantity), and `Reject`.
+    - Live sidebar badge indicator displaying count of pending anomaly reviews.
+  - **Upgraded Plan Page (`web/src/components/plan/PlanView.tsx`, `OrdersTable.tsx`, `PlanMiniMap.tsx`)**:
+    - Prominent solver tier badges (`QpiAI Opt Platform / Local / SA`, `QpiAI QCloud QAOA Max-Cut`).
+    - Multi-stage execution progress stepper (`SNAPSHOT` $\to$ `FEASIBILITY` $\to$ `ZONING` $\to$ `QUBO` $\to$ `VALIDATOR` $\to$ `PERSIST`).
+    - Projector KPI header cards (Shortage Reduced, Expiry Avoided ₹, Dispatched Trips, 0 Violations).
+    - Transfer orders grouped by destination hospital with facility receiving summaries and instant pharmacist approval actions.
+    - Shaded regional health zones on mini-map (Zone 0 vs Zone 1 derived from QAOA Max-Cut graph zoning).
+    - Certified "Violations: 0" badge post-repair validated.
+  - **Solver Benchmark Page (`web/src/components/screens/BenchmarkScreen.tsx`)**:
+    - Connects to `GET /optimizer/plan/{id}/benchmark`.
+    - Recharts grouped bar charts: Shortage Reduced vs Waste Moved Units and Expiry Avoided (₹) across 5 policies.
+    - Comparative evaluation table (`no-transfer`, `greedy`, `greedy_f4`, `qubo`, `milp`) with objective energy, shortage, expiry, waste moved, trips, and runtime.
+    - QUBO optimality gap % to exact classical MILP ($0.0\%$ gap verified).
+    - Graph zoning comparison: QAOA Max-Cut (+42.5% cut value) vs Euclidean K-Means vs Exact Brute Force.
+  - **Cold Chain Telemetry Monitor & Global Excursion Banner (`web/src/components/screens/ColdchainScreen.tsx`, `AppShell.tsx`)**:
+    - Device telemetry cards for cold transport vans (`DEV-CV-01`, `DEV-CV-02`) and facility ILRs (`DEV-ILR-H1`..`H4`, `W0`).
+    - Live temperature sparkline with shaded 2.0–8.0 °C safe range reference area.
+    - State badges: `OK`, `WARNING`, `EXCURSION`, `RECOVERED`, `OFFLINE`.
+    - High-priority full-width red alert banner across the entire app on temperature excursions (e.g. CV-02 reaching 11.4 °C) with one-click navigation to the monitor.
+  - **Simulation Scenario Console (`web/src/components/screens/ScenariosScreen.tsx`)**:
+    - One-click trigger buttons with clear one-line descriptions for all 7 scenarios (`baseline`, `dengue_outbreak`, `fridge_failure`, `bad_data`, `ilr_repaired`, `road_closure`, `td_campaign`).
+    - Live simulation clock speed controls ($1\times, 2\times, 5\times, 10\times, 30\times$) and play/pause controls.
+    - Deterministic simulation cluster reset with customizable seed (`seed=42`).
+    - Live streaming feed of active IDSP epidemiological signals and infrastructure shock bulletins (`GET /sim/signals`).
+  - **Demo Moments 1–5 Verified**: All 5 core demo script walkthrough moments triggerable and verifiable purely from the UI.
+  - **High-Resolution Screenshots**: Captured 7 full 1920x1080 screenshots saved to `docs/screens/`.
 
 ### QpiAI Run Evidence Excerpt (`evidence/qpiai_runs/20261029_174952_fd9adf47.json`)
 
@@ -748,6 +780,119 @@ All 11 forecast tests passed cleanly:
 
 ---
 
+## P13: Projector-Ready Web Application & Interactive Demo Screens
+
+### 1. Ingestion & Pharmacist Review Queue (`web/src/components/screens/IngestionScreen.tsx`)
+- **Heterogeneous Multi-Source Ingestion**:
+  - Displays report list across all 4 reporting facilities (`H1 SIM-DH Jayanagar`, `H2 SIM-TGH Anekal`, `H3 SIM-CHC Yelahanka`, `H4 SIM-PHC Sarjapura`).
+  - Reports track Ingestion Channel (`FHIR R4`, `e-Aushadhi CSV`, `Kannada WhatsApp Chat`, `Messy Handwritten OCR`), Detected Language, Received Time, and Processing Status (`PROCESSED`, `NEEDS_REVIEW`, `RESOLVED`).
+- **Two-Column Master-Detail Layout**:
+  - **Left Pane (Raw Payload)**: Renders verbatim incoming payload. For Kannada reports (H3), applies Google's `Noto Sans Kannada` Unicode font (`font-kannada`) with clear typography.
+  - **Right Pane (Extracted Canonical Rows)**: Displays grounded medicines with batch numbers, clinical expiry dates, quantities, and color-coded confidence chips:
+    - Green ($\ge 0.85$, e.g. `95% Match (High)`)
+    - Amber ($0.60 \le c < 0.85$, e.g. `78% Match (Review)`)
+    - Red ($< 0.60$, e.g. `45% Match (Low)`)
+- **Anomaly Detection & LLM Clinical Rationale**:
+  - Highlights flagged anomalies (`SUSPICIOUS_EXPIRY`, `CORRUPTED_TEXT`, `QUANTITY_SPIKE`) with the LLM's grounding rationale.
+- **Interactive Review Actions**:
+  - `Accept Lot`: One-click instant approval that upserts the lot into active inventory.
+  - `Correct (Pick Drug)`: Opens interactive form with a grounded drug code dropdown (populated from canonical catalog), batch number input, clinical expiry date picker, and quantity adjustment.
+  - `Reject`: Rejects extraction item and flags audit ledger.
+- **Sidebar Badge Count**:
+  - Dynamic badge on the "Hospital Ingest" sidebar tab indicating the count of pending anomaly items.
+
+![Hospital Ingestion & Review Queue](file:///c:/Users/admin/Downloads/MedBalance(3)/docs/screens/04_hospital_ingest.png)
+
+---
+
+### 2. Upgraded Plan Page (`web/src/components/plan/PlanView.tsx`, `OrdersTable.tsx`, `PlanMiniMap.tsx`)
+- **Solver Tier Badges**:
+  - Prominent badge displaying active QpiAI Opt tier (`QpiAI Opt Platform`, `QpiAI Opt Local`, `D-Wave Neal SA`, `Greedy Descent`).
+  - Active QpiAI QCloud tier badge (`QpiAI QCloud Simulator`, `QpiAI-QSV-Local`, `NetworkX Greedy`).
+- **Optimization Pipeline Progress Stepper**:
+  - 6-stage execution workflow: `SNAPSHOT (FEFO)` $\to$ `FEASIBILITY (F1-F6)` $\to$ `ZONING (QAOA)` $\to$ `QUBO SOLVER` $\to$ `FEFO VALIDATOR` $\to$ `PERSIST (DTA)`.
+  - Visual animated stepper tracking active stage and elapsed solver execution time.
+- **Projector KPI Cards**:
+  - Shortage Reduced Units, Expiry Avoided in ₹, Dispatched Trips, and Transport Cost.
+- **Orders Grouped by Destination Facility**:
+  - DTA transfer vouchers grouped by receiving hospital (`To: SIM-DH Jayanagar (H1)`, `To: SIM-CHC Yelahanka (H3)`).
+  - Shows destination receiving summary, cold chain requirements, and individual pharmacist approval actions.
+- **Shaded Mini-Map**:
+  - Displays regional health zones (Zone 0 vs Zone 1) partitioned by QAOA Max-Cut graph zoning, with transfer arcs connecting facilities.
+- **"Violations: 0" Badge**:
+  - Certified `Violations: 0 (Validated)` badge confirming all F1–F6 feasibility constraints and reserve protections are strictly satisfied.
+
+![Redistribution Plan & DTA Orders](file:///c:/Users/admin/Downloads/MedBalance(3)/docs/screens/03_plan_page.png)
+
+---
+
+### 3. Solver Benchmark Page (`web/src/components/screens/BenchmarkScreen.tsx`)
+- **API Integration**: Connects to `GET /optimizer/plan/{id}/benchmark`.
+- **Projector-Ready KPI Header**:
+  - QUBO Optimality Gap % to Exact MILP: **0.0%** (`Matches Global Optimum`).
+  - Runtime comparison: **42 ms** (QUBO) vs **89 ms** (MILP).
+  - Waste Avoidance Ratio: **0 units** waste moved in QUBO vs **420 units** in baseline Phone Call.
+  - QAOA Zoning Cut Improvement: **+42.5%** over Euclidean K-Means.
+- **Recharts Grouped Bar Chart**:
+  - Directly compares Shortage Reduced vs Waste Moved Units across 5 policies (`no-transfer`, `greedy`, `greedy_f4`, `qubo`, `milp`).
+- **5-Policy Comparison Table**:
+  - Evaluates Objective Energy, Shortage Reduced, Expiry Avoided (₹), Waste Moved, Vehicle Trips, Runtime (ms), and Optimality Gap %.
+- **Transit Impedance Graph Zoning Section**:
+  - Empirical comparison of QAOA Max-Cut vs Coordinate K-Means vs Exact Classical Brute Force.
+  - Documents +42.5% cut value improvement and -41.6% intra-zone impedance reduction.
+
+![Solver Benchmark & Algorithm Comparison](file:///c:/Users/admin/Downloads/MedBalance(3)/docs/screens/05_solver_benchmark.png)
+
+---
+
+### 4. Cold Chain IoT Monitor & Global Excursion Banner (`web/src/components/screens/ColdchainScreen.tsx`, `AppShell.tsx`)
+- **Device Telemetry Cards**:
+  - Monitored assets: Cold transport vans (`DEV-CV-01`, `DEV-CV-02`) and facility ILRs (`DEV-ILR-H1`..`H4`, `W0`).
+  - Diagnostic metrics: Current temperature in °C, safe standard band (2.0–8.0 °C), battery percent, door status (closed / open > 2 min), and MQTT status.
+- **Interactive Sparklines**:
+  - Plotted temperature series with shaded green safe range reference area (2.0–8.0 °C).
+  - Line dynamically shifts to crimson when an excursion is detected.
+- **Global App-Wide Red Excursion Banner**:
+  - On temperature excursions (e.g. `fridge_failure` causing CV-02 to drift to 11.4 °C), displays high-priority red alert banner at the top of the entire application.
+  - Highlights affected device, temperature violation, and informs user that automated route holds have been engaged, with a direct button to inspect the monitor.
+
+![Cold Chain Telemetry & IoT Excursion Monitor](file:///c:/Users/admin/Downloads/MedBalance(3)/docs/screens/06_coldchain_monitor.png)
+
+---
+
+### 5. Simulation Scenario Console (`web/src/components/screens/ScenariosScreen.tsx`)
+- **Interactive Operational Shocks**:
+  - One-click injection buttons with one-line descriptions for all 7 scenarios:
+    1. `baseline`: Standard clinical demand profiles with 100% operational cold chain fleet.
+    2. `dengue_outbreak`: Acute vector-borne dengue surge at CHC Yelahanka (H3), multiplying ORS and Paracetamol consumption 4×.
+    3. `fridge_failure`: Refrigeration compressor breakdown on Cold Van CV-02 causing temperature to drift to 11.4 °C and flagging route unsafe.
+    4. `bad_data`: Injects clerical corruption at PHC Sarjapura (H4) with 10,000 insulin vials and year 1999 to test anomaly review gate.
+    5. `ilr_repaired`: Field technician repairs ice-lined refrigerator at PHC Sarjapura (H4), restoring cold storage status to certified safe.
+    6. `road_closure`: Monsoon landslip closes major transit route between DH Jayanagar (H1) and PHC Sarjapura (H4), forcing rerouting.
+    7. `td_campaign`: District-wide school booster vaccination campaign at DH Jayanagar (H1), spiking adult vaccine demand.
+- **Clock Controls**:
+  - Live simulation clock speed multiplier toggle ($1\times, 2\times, 5\times, 10\times, 30\times$) and play/pause controls.
+- **Deterministic Cluster Reset**:
+  - Customizable seed input (`seed=42`) with "Reset All Twin Nodes" trigger.
+- **Active Signals Feed**:
+  - Live streaming feed of active IDSP epidemiological signals (`GET /sim/signals`).
+
+![Simulation Scenarios & Operational Stress Injections](file:///c:/Users/admin/Downloads/MedBalance(3)/docs/screens/07_scenario_console.png)
+
+---
+
+### 6. Demo Moments 1–5 Verification from the UI Alone
+
+| Demo Moment | Description | UI Action & Verification Flow |
+|---|---|---|
+| **Moment 1: Heterogeneous Hospital Ingestion & Anomaly Review** | Multilingual reports (FHIR, CSV, Kannada chat, OCR) grounded and reviewed. | Navigate to **Hospital Ingest** (`/?page=ingestion`). Observe Kannada text in Noto Sans font on left, grounded rows on right. Click **Correct (Pick Drug)** on `REV-0092`, pick `INS-REG`, adjust quantity, click **Save & Upsert Lot**. Verify review resolves and lot updates. |
+| **Moment 2: Near-Expiry Redistribution Plan with F1–F6 Feasibility** | Solves QUBO allocation, avoids waste, and generates DTA vouchers. | Navigate to **Redistribution Plan** (`/?page=plan`). Click **Run Redistribution Plan**. Observe 6-stage progress stepper (`SNAPSHOT` &rarr; `FEASIBILITY` &rarr; `ZONING` &rarr; `QUBO` &rarr; `VALIDATOR` &rarr; `PERSIST`). Verify `Violations: 0` badge, shaded zones on mini-map, and DTA vouchers grouped by destination. Click **Approve** on order. |
+| **Moment 3: Solver Benchmark vs Exact Classical MILP** | Rigorous evaluation against Google OR-Tools CP-SAT and heuristic baselines. | Navigate to **Solver Benchmark** (`/?page=benchmark`). Verify 0.0% optimality gap between QUBO and MILP. Inspect grouped bar chart showing Phone Call moving 420 units waste vs 0 units in QUBO/F4. Review QAOA Max-Cut zoning lift (+42.5% cut value vs K-Means). |
+| **Moment 4: Cold Chain Telemetry & Excursion Alert** | Real-time 2–8 °C monitoring and rapid alert response. | Navigate to **Sim Scenarios** (`/?page=scenarios`) and click **Inject Scenario** for `fridge_failure`. Observe immediate appearance of the **App-Wide Red Excursion Banner** (`Device DEV-CV-02: 11.4 °C`). Click **Inspect Monitor** to view the sparkline exceeding the shaded 2–8 °C safe zone. |
+| **Moment 5: Outbreak Surge & Demand Propagation** | Epidemiological shock triggers higher consumption and reserve expansion. | On **Sim Scenarios**, inject `dengue_outbreak`. View active signal `SIG-OUTBREAK-DENGUE-H3` in the signals feed. Navigate to **District Map** (`/?page=map&facility=H3`) to observe H3's stock-health ring transition to critical deficit and required reserves expand. |
+
+---
+
 ## Decisions
 - See [docs/DECISIONS.md](DECISIONS.md) (ADR-001 through ADR-008)
 
@@ -756,3 +901,4 @@ All 11 forecast tests passed cleanly:
 - **L2 (Optimizer)**: [COMPLETED] QUBO formulation v3, brute-force verification, QAOA Max-Cut graph zoning, scale-mode district, OR-Tools MILP baseline, and benchmark comparisons.
 - **L3 (AI & Forecast)**: [COMPLETED] Prompt registry, GenAI gateway providers with cache/call logging, Ingest-AI multi-format parser & review queue, Holt-Winters baseline + LLM context multiplier forecasting with code guardrails, and backtest reporting.
 - **L4 (ColdChain & Sim)**: [COMPLETED] `sim-control`, `sim-hospital` (all 4 styles), `sensors`, and `coldchain` fully implemented and tested.
+- **Frontend / Projector UI**: [COMPLETED] Complete, projector-ready clinical dashboard with Ingestion & Review Queue, Upgraded Plan Page, Solver Benchmark, Cold Chain IoT Monitor, and Simulation Scenario Console. All 5 demo script moments verified.

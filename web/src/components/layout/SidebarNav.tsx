@@ -1,4 +1,5 @@
 import React from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Map,
   FileSpreadsheet,
@@ -8,21 +9,69 @@ import {
   TrendingUp,
   Cpu,
   Sliders,
+  AlertCircle,
 } from "lucide-react";
 import { NavPage } from "../../types";
+import { api } from "../../lib/api";
 
 interface SidebarNavProps {
   activePage: NavPage;
   onSelectPage: (page: NavPage) => void;
+  anomalyCount?: number;
 }
 
-export const SidebarNav: React.FC<SidebarNavProps> = ({ activePage, onSelectPage }) => {
-  const navItems: { id: NavPage; label: string; icon: React.ReactNode; badge?: string }[] = [
+export const SidebarNav: React.FC<SidebarNavProps> = ({
+  activePage,
+  onSelectPage,
+  anomalyCount: externalAnomalyCount,
+}) => {
+  const { data: reviews = [] } = useQuery({
+    queryKey: ["reviews"],
+    queryFn: () => api.getReviews(),
+    refetchInterval: 5000,
+  });
+
+  const pendingAnomaliesCount =
+    externalAnomalyCount !== undefined
+      ? externalAnomalyCount
+      : reviews.filter((r: any) => r.status === "PENDING" || !r.status).length;
+
+  const navItems: {
+    id: NavPage;
+    label: string;
+    icon: React.ReactNode;
+    badge?: string;
+    badgeVariant?: "teal" | "amber" | "rose" | "purple";
+  }[] = [
     { id: "map", label: "District Map", icon: <Map className="w-5 h-5" /> },
-    { id: "plan", label: "Redistribution Plan", icon: <GitCommit className="w-5 h-5" />, badge: "CP1" },
-    { id: "ingestion", label: "Hospital Ingest", icon: <FileSpreadsheet className="w-5 h-5" /> },
-    { id: "coldchain", label: "Cold Chain IoT", icon: <ThermometerSnowflake className="w-5 h-5" /> },
-    { id: "benchmark", label: "Solver Benchmark", icon: <Scale className="w-5 h-5" />, badge: "QUBO" },
+    {
+      id: "plan",
+      label: "Redistribution Plan",
+      icon: <GitCommit className="w-5 h-5" />,
+      badge: "CP1",
+      badgeVariant: "teal",
+    },
+    {
+      id: "ingestion",
+      label: "Hospital Ingest",
+      icon: <FileSpreadsheet className="w-5 h-5" />,
+      badge: pendingAnomaliesCount > 0 ? `${pendingAnomaliesCount} Review` : undefined,
+      badgeVariant: "amber",
+    },
+    {
+      id: "coldchain",
+      label: "Cold Chain IoT",
+      icon: <ThermometerSnowflake className="w-5 h-5" />,
+      badge: "2-8°C",
+      badgeVariant: "teal",
+    },
+    {
+      id: "benchmark",
+      label: "Solver Benchmark",
+      icon: <Scale className="w-5 h-5" />,
+      badge: "QUBO",
+      badgeVariant: "purple",
+    },
     { id: "results", label: "Impact Results", icon: <TrendingUp className="w-5 h-5" /> },
     { id: "ai-health", label: "GenAI Gateway", icon: <Cpu className="w-5 h-5" /> },
     { id: "scenarios", label: "Sim Scenarios", icon: <Sliders className="w-5 h-5" /> },
@@ -58,13 +107,20 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ activePage, onSelectPage
                 </div>
                 {item.badge && (
                   <span
-                    className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${
-                      isActive
+                    className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center space-x-1 ${
+                      item.badgeVariant === "amber"
+                        ? "bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse"
+                        : item.badgeVariant === "purple"
+                        ? "bg-purple-900/60 text-purple-300 border border-purple-700/50"
+                        : isActive
                         ? "bg-teal-800 text-teal-200"
                         : "bg-slate-800 text-slate-400"
                     }`}
                   >
-                    {item.badge}
+                    {item.badgeVariant === "amber" && (
+                      <AlertCircle className="w-3 h-3 text-amber-400 mr-0.5" />
+                    )}
+                    <span>{item.badge}</span>
                   </span>
                 )}
               </button>

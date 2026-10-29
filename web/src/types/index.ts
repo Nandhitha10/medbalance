@@ -24,6 +24,7 @@ export interface Drug {
   max_temp_c?: number | null;
   unit_cost_inr: number;
   min_residual_days: number;
+  is_controlled?: boolean;
 }
 
 export interface Lot {
@@ -80,6 +81,9 @@ export interface PlanRun {
   waste_moved_units?: number;
   trips?: number;
   violations_count?: number;
+  qcloud_tier?: string;
+  solver_meta?: Record<string, any>;
+  summary?: Record<string, any>;
 }
 
 export interface ClockState {
@@ -106,3 +110,120 @@ export type NavPage =
   | "results"
   | "ai-health"
   | "scenarios";
+
+export interface ExtractionItem {
+  id: string;
+  report_id: string;
+  raw_text: string;
+  drug_code?: string;
+  batch_no?: string;
+  expiry?: string;
+  quantity?: number;
+  confidence?: number;
+  is_anomalous?: boolean;
+  anomaly_reason?: string;
+  anomaly_type?: string;
+  review_status?: string;
+  suggested_patch?: {
+    drug_code?: string;
+    batch_no?: string;
+    expiry?: string;
+    quantity?: number;
+  };
+}
+
+export interface StockReport {
+  id: string;
+  facility_code: string;
+  received_at: string;
+  status: "RECEIVED" | "PROCESSING" | "PROCESSED" | "NEEDS_REVIEW" | "RESOLVED" | string;
+  source_type: "fhir" | "csv" | "excel" | "chat" | "text" | "pdf" | string;
+  language?: string;
+  extracted_items_count: number;
+  anomalies_detected: number;
+  raw_content?: string;
+  items?: ExtractionItem[];
+}
+
+export interface PolicyBenchmarkRow {
+  policy: string;
+  objective_value: number;
+  shortage_reduction: number;
+  expiry_avoided_inr: number;
+  waste_moved: number;
+  trips: number;
+  runtime_sec: number;
+}
+
+export interface ZoningBenchmark {
+  num_nodes: number;
+  num_edges: number;
+  maxcut: {
+    cut_value: number;
+    intra_zone_weight: number;
+    tier: string;
+    runtime_sec: number;
+  };
+  kmeans: {
+    cut_value: number;
+    intra_zone_weight: number;
+    runtime_sec: number;
+  };
+  exact_cut_value?: number;
+  improvement_percent: number;
+  partition: Record<string, number>;
+}
+
+export interface BenchmarkData {
+  plan_id: string;
+  solver_tier: string;
+  milp_optimal_energy: number;
+  solver_energy: number;
+  optimality_gap_percent: number;
+  solver_time_sec: number;
+  milp_time_sec: number;
+  comparison_table: PolicyBenchmarkRow[];
+  zoning?: ZoningBenchmark;
+}
+
+export interface ColdchainDevice {
+  device_id: string;
+  assigned_to: string;
+  name?: string;
+  type?: "vehicle" | "facility";
+  latest_temp_c: number;
+  battery_percent: number;
+  last_ping: string;
+  status: "OK" | "WARNING" | "EXCURSION" | "RECOVERED" | "OFFLINE" | string;
+  door_open?: boolean;
+  target_name?: string;
+  min_allowed_c?: number;
+  max_allowed_c?: number;
+  telemetry?: {
+    timestamp: string;
+    temperature_c: number;
+  }[];
+}
+
+export interface ScenarioItem {
+  id: string;
+  name: string;
+  title?: string;
+  desc: string;
+  active: boolean;
+  fault_active?: boolean;
+}
+
+export interface SignalItem {
+  id: string;
+  type: string;
+  title: string;
+  facility_id?: string;
+  drug_code?: string;
+  multiplier?: number;
+  start_date?: string;
+  end_date?: string;
+  status: string;
+  timestamp?: string;
+  reason?: string;
+}

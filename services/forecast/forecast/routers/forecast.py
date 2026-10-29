@@ -51,3 +51,4 @@ async def get_backtest(
 ) -> BacktestResponse:
     """Evaluate historical backtest accuracy comparing baseline vs adjusted predictions."""
     return run_backtest_report(facility=facility, drug=drug, window_days=window_days)
+

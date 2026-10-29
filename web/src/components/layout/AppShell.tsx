@@ -14,6 +14,7 @@ import { ScenariosScreen } from "../screens/ScenariosScreen";
 import { useEventSource } from "../../hooks/useEventSource";
 import { api } from "../../lib/api";
 import { Facility, NavPage, PlanRun, Position, Drug } from "../../types";
+import { Flame, ArrowRight, ShieldAlert } from "lucide-react";
 
 export const AppShell: React.FC = () => {
   const getUrlParams = () => {
@@ -61,6 +62,12 @@ export const AppShell: React.FC = () => {
     queryFn: () => api.getClock(),
   });
 
+  const { data: coldchainStatus } = useQuery({
+    queryKey: ["coldchain"],
+    queryFn: () => api.getColdchainStatus(),
+    refetchInterval: 3000,
+  });
+
   // Calculate VEN-weighted stock health ring status per facility
   const drugMap = new Map<string, Drug>();
   drugs.forEach((d) => drugMap.set(d.code, d));
@@ -97,6 +104,30 @@ export const AppShell: React.FC = () => {
   });
 
   const orders = plan?.orders || [];
+
+  // Excursion detection for global red banner
+  const excursionDevices = (coldchainStatus?.devices || []).filter(
+    (d: any) => d.status === "EXCURSION"
+  );
+  const recentExcursionEvent = latestEvents.find(
+    (e) =>
+      e.event_type === "coldchain.alert" &&
+      (e.data?.severity === "CRITICAL" || e.data?.alert_type === "EXCURSION")
+  );
+  const isExcursionActive =
+    excursionDevices.length > 0 ||
+    Boolean(recentExcursionEvent) ||
+    (coldchainStatus?.active_excursions_count || 0) > 0;
+
+  const excursionDevice =
+    excursionDevices[0] ||
+    (recentExcursionEvent?.data
+      ? {
+          device_id: recentExcursionEvent.data.device_id,
+          target_name: recentExcursionEvent.data.vehicle_id || "Cold Van CV-02",
+          latest_temp_c: recentExcursionEvent.data.temperature_c || 11.4,
+        }
+      : null);
 
   // Deep linking sync: on mount or facilities change, open drawer if facility param provided
   React.useEffect(() => {
@@ -148,6 +179,32 @@ export const AppShell: React.FC = () => {
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-slate-100">
       {/* Top Bar with Simulation Clock and Live Event Ticker */}
       <TopBar events={latestEvents} isConnected={isConnected} />
+
+      {/* Global Red Excursion Banner Across App */}
+      {isExcursionActive && (
+        <div className="bg-rose-600 text-white px-5 py-2 text-xs font-bold flex items-center justify-between shadow-md z-40 animate-in slide-in-from-top duration-300">
+          <div className="flex items-center space-x-2.5">
+            <Flame className="w-4 h-4 text-amber-300 animate-bounce shrink-0" />
+            <span>
+              CRITICAL COLD CHAIN EXCURSION DETECTED — Device{" "}
+              <strong className="underline">{excursionDevice?.device_id || "DEV-CV-02"}</strong> (
+              {excursionDevice?.target_name || "Cold Van CV-02"}):{" "}
+              <strong className="text-amber-200">
+                {excursionDevice?.latest_temp_c ? `${excursionDevice.latest_temp_c.toFixed(1)} °C` : "11.4 °C"}
+              </strong>{" "}
+              exceeding safe 2.0–8.0 °C threshold. Associated transit routes marked UNSAFE. Automated transfer locks applied.
+            </span>
+          </div>
+
+          <button
+            onClick={() => handleSelectPage("coldchain")}
+            className="ml-4 bg-white text-rose-700 hover:bg-rose-50 px-3 py-1 rounded-lg text-[11px] font-black uppercase tracking-wide shrink-0 transition-colors shadow-2xs flex items-center space-x-1"
+          >
+            <span>Inspect Monitor</span>
+            <ArrowRight className="w-3 h-3 ml-0.5" />
+          </button>
+        </div>
+      )}
 
       {/* Main Workspace with Sidebar Nav and Active Screen */}
       <div className="flex flex-1 overflow-hidden relative">

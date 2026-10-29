@@ -32,12 +32,19 @@ export default {
       },
       fontFamily: {
         sans: [
+          "Inter",
           "-apple-system",
           "BlinkMacSystemFont",
           "Segoe UI",
           "Roboto",
           "Helvetica Neue",
           "Arial",
+          "sans-serif",
+        ],
+        kannada: [
+          '"Noto Sans Kannada"',
+          "-apple-system",
+          "BlinkMacSystemFont",
           "sans-serif",
         ],
       },

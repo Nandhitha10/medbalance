@@ -58,3 +58,4 @@ def test_backtest_endpoint(client):
     assert "baseline_mape_percent" in report
     assert "rmse" in report
     assert "model_used" in report
+

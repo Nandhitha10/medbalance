@@ -47,3 +47,4 @@ class BacktestResponse(BaseModel):
     baseline_rmse: Optional[float] = None
     historical_points: Optional[int] = None
     comparison: Optional[List[Dict[str, Any]]] = None
+

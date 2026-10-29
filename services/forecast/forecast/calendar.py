@@ -71,3 +71,4 @@ def get_calendar_signals(current_date: date) -> List[Dict[str, Any]]:
             active_signals.append(sig)
 
     return active_signals
+
