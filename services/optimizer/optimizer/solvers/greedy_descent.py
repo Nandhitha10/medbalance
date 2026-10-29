@@ -78,3 +78,4 @@ class GreedyDescent(SolverPort):
             result.append(Sample(x=sol_dict, energy=round(e_val, 6)))
 
         return result
+

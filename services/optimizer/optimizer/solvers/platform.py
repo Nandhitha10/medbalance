@@ -70,3 +70,4 @@ class QpiAIOptPlatform(SolverPort):
             e_val = energy(Q, offset, sol_vec)
 
         return [Sample(x=sol_vec, energy=float(e_val))]
+

@@ -58,3 +58,4 @@ class NealSA(SolverPort):
                 break
 
         return unique_samples
+

@@ -1,8 +1,8 @@
 # Project Progress Log
 
 ## Status Overview
-- Current Phase: P10 QUBO Optimization Engine & QpiAI Opt Solver Integration Complete
-- Updated: 2026-10-29
+- Current Phase: P11 QAOA Max-Cut Graph Zoning, Scale Mode Decomposition, Exact Classical MILP Baseline, and Solver Benchmarking Complete
+- Updated: 2026-10-30
 
 ## Completed Tasks
 - [x] Monorepo directory layout established per CLAUDE.md §4.
@@ -571,8 +571,91 @@ All mathematical computations are pure functions with zero I/O so they can be re
 
 ---
 
+---
+
+## P11: QAOA Max-Cut Zoning, Exact MILP Baseline, Scale-Mode District, & Solver Benchmarks
+
+### 1. Quantum Architecture & QpiAI SDK Introspection
+- **SDK Version**: `qpiai_quantum==0.7.5`.
+- **Introspection Reference**: `docs/QPIAI_QCLOUD_NOTES.md`.
+- **API Guard**: Introspected `QpiAIQuantumAuth.login()` and `verify_api_key()`. When `QPIAI_QUANTUM_API_KEY` is unset or invalid, the solver transparently logs the error and falls back to local simulation without crashing.
+- **Circuit Gate Signatures**:
+  - $R_{ZZ}(\theta)$: `qc.rzz(qubit1: int, qubit2: int, theta: float)` strictly takes qubit indices first, angle second.
+  - $R_X(\theta)$: `qc.rx(qubit: int, theta: float)` takes qubit index first, angle second.
+- **Bitstring Convention**: `StatevectorSimulator.run(qc).get_counts()` returns little-endian bitstrings where qubit $i$ corresponds to `bitstring[-(i + 1)]`.
+- **MaxCutPort & Solver Hierarchy** (`services/optimizer/optimizer/qaoa/`):
+  1. `QCloudSimulatorMaxCut`: Remote execution on QpiAI QCloud (guarded by API key).
+  2. `QSVLocalMaxCut`: Local `StatevectorSimulator` with COBYLA variational optimization over $(\gamma, \beta)$ parameters.
+  3. `ExactBruteForceMaxCut`: Global optimum enumeration for $n \le 16$.
+  4. `NetworkXGreedyMaxCut`: Classical 1-flip greedy local search heuristic.
+- **Evidence Persistence**: Every run records an immutable JSON audit log to `evidence/qcloud_runs/<ts>_<hash>.json`.
+
+### 2. Graph Zoning: QAOA Max-Cut vs Euclidean K-Means
+- **Graph Construction** (`services/optimizer/optimizer/zoning.py`):
+  - **Live Mode**: 5 facilities as nodes ($n=5$). Edge weight $w_{uv} = \text{distance\_km} \times \text{transit\_hours}$, representing transit impedance. Heavy edges denote travel bottlenecks or terrain barriers.
+  - **Scale Mode**: 5 taluk super-nodes (`Anekal`, `Bengaluru East`, `Bengaluru North`, `Bengaluru South`, `Yelahanka`), aggregating inter-taluk route transit costs.
+- **Max-Cut Separation**:
+  - By maximizing cut value, Max-Cut places facilities separated by large transit impedance or closed routes into different zones, keeping tightly connected facilities within the same zone.
+- **Empirical Comparison against Coordinate K-Means ($k=2$)**:
+  - **QAOA Cut Value**: **3.8660** vs **K-Means**: **2.7123** (**+42.5% cut improvement**).
+  - **Intra-Zone Transit Impedance**: **1.6198** for QAOA vs **2.7735** for K-Means (**-41.6% reduction in internal transit impedance**).
+
+### 3. Scale-Mode Synthetic District (40 Facilities, In-Memory)
+- **Generator** (`services/optimizer/optimizer/scale_mode.py`):
+  - 40 health facilities across 5 taluks (8 facilities per taluk: 1 District/General Hospital, 2 Taluk Hospitals, 3 CHCs, 2 PHCs).
+  - 90 transit routes with realistic intra-taluk and inter-taluk transit times and distances.
+  - 13 canonical drugs matching seed data.
+  - 79 at-risk medicine lots, 520 position records, and 520 forecast series.
+  - Strictly in-memory: enables testing large-scale allocation pipelines without a PostgreSQL or Redis database.
+- **API Wiring**: `POST /plan/run` with payload `{"mode": "eval", "scale": 40}` triggers the scale mode pipeline.
+
+### 4. Zone Decomposition Pipeline
+- **Decomposition Engine** (`services/optimizer/optimizer/decomposition.py`):
+  1. Partition candidates into **Zone 0** (internal to zone 0), **Zone 1** (internal to zone 1), and **Boundary** (cross-zone).
+  2. Solve Zone 0 QUBO independently using active solver tier.
+  3. Solve Zone 1 QUBO independently using active solver tier.
+  4. Compute residual shortages and remaining transferable lot stock.
+  5. Formulate and solve Boundary QUBO on residual candidates.
+  6. Merge orders, assign sequential DTA order IDs, and execute post-decomposition FEFO validator repair.
+
+### 5. Exact Classical MILP Baseline (Google OR-Tools CP-SAT)
+- **Engine** (`services/optimizer/optimizer/milp.py`):
+  - Models redistribution as an exact integer programming problem.
+  - Binary decision variable $x_i \in \{0, 1\}$ per candidate chunk.
+  - Exact quadratic product linearization: $z_{ij} = x_i \cdot x_j$ via `model.add_multiplication_equality(z_{ij}, [x_i, x_j])`.
+  - Integer scaling ($\times 10^6$) of float matrix coefficients $Q_{ij}$ and offset.
+  - 20-second timeout with 4 parallel worker threads.
+- **Verification**: Verified that CP-SAT matches the global minimum of brute-force exhaustive enumeration across all 8 test instances with zero gap ($0.0\%$).
+
+### 6. Benchmark Endpoint (`GET /plan/{id}/benchmark`)
+- **API Contract Compliance**: Fully implements the OpenAPI schema `[plan_id, solver_tier, milp_optimal_energy, solver_energy, optimality_gap_percent, solver_time_sec, milp_time_sec]`.
+- **Policy Comparison Table**: Evaluates 5 policies on the identical snapshot:
+  1. `no-transfer`: 0 orders, zero transport cost, baseline shortage/expiry.
+  2. `greedy`: Phone-call heuristic (F1–F3 only, ignores shelf life, moves waste).
+  3. `greedy_f4`: Safe greedy allocator (full F1–F6, zero waste moved).
+  4. `qubo`: Active solver tier (QpiAI Opt Platform / Neal SA / Greedy Descent).
+  5. `milp`: Global exact optimum via OR-Tools CP-SAT.
+- **Metrics Evaluated**: Policy name, objective value (energy), shortage reduction, expiry avoided ₹, waste moved units, vehicle trips, and solve time in seconds.
+- **Optimality Gap**:
+  $$\text{gap} = \frac{|E_{\text{solver}} - E_{\text{milp}}^*|}{|E_{\text{milp}}^*|} \times 100\%$$
+- **Zoning Report**: Embedded comparison of QAOA Max-Cut vs K-Means clustering.
+
+---
+
+### Verification & Test Suite Summary
+
+All 40 tests passed cleanly across the entire optimizer test suite:
+- `tests/test_maxcut_small_graphs.py`: **14 passed** (Exact Max-Cut on Triangle, 4-Cycle, Path P4, K4; QAOA QSVLocal on Triangle and 4-Cycle; NetworkX baseline; MILP exact match on all 8 tiny instances).
+- `tests/test_qubo_bruteforce.py`: **8 passed** (All 8 QUBO v3 formulation instances).
+- `tests/test_validator_hypothesis.py`: **1 passed** (Hypothesis stateful invariant validation).
+- `services/optimizer/tests/test_api.py`: **4 passed** (Plan run, retrieve, benchmark, regret, whynot, whatif, scale mode 40 facilities, and benchmark table).
+- `services/optimizer/tests/test_feasibility_f4.py`: **9 passed** (All F1–F6 feasibility invariants).
+- `services/optimizer/tests/test_optimizer.py`: **4 passed** (Chunk splitting, sequential usable quantity, controlled drug exclusion, greedy comparison).
+
+---
+
 ## Decisions
-- See [docs/DECISIONS.md](DECISIONS.md) (ADR-001 through ADR-004)
+- See [docs/DECISIONS.md](DECISIONS.md) (ADR-001 through ADR-008)
 
 ## Requests & Next Steps for Lanes
 - **L1 (Core)**: Added `POST /vehicles/{id}/status` and `/internal/coldchain/vehicle-status` to `contracts/openapi/core-api.yaml` and implemented in `services/core-api/src/routers/master.py` to allow coldchain status updates to mark vehicles and routes safe/unsafe with audit tracking.

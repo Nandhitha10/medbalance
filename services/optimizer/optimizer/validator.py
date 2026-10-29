@@ -173,7 +173,9 @@ def validate_and_simulate_fefo(
 
             if ord_obj.vehicle_id and ord_obj.vehicle_id in vehicles:
                 veh = vehicles[ord_obj.vehicle_id]
-                if not veh.get("has_cold_storage") or veh.get("cold_ok") is False:
+                has_cold = bool(veh.get("has_cold_storage", veh.get("cold_chain_capable", False)))
+                cold_ok = bool(veh.get("cold_ok", True))
+                if not has_cold or not cold_ok:
                     violations.append(
                         ValidationViolation(
                             rule="F3_COLD_VEHICLE_INVALID",

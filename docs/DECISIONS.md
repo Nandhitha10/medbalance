@@ -41,3 +41,50 @@
   - $P_2 = 3.0$: Shortage reduction degrades to 449.4 units as conflicting high-penalty terms induce local optima traps and higher repair burden (33.40 pre-repair violations).
 - **Consequences**: $P_2 = 1.5$ provides maximum clinical utility (highest VEN shortage reduction) and economic benefit (highest expiry avoided) while maintaining numerical stability and low validator intervention.
 
+## ADR-006: Local Simulation vs Remote Cloud Execution Tiers for Quantum and Optimization Solvers
+- **Date**: 2026-10-29
+- **Status**: Accepted
+- **Context**: MedBalance incorporates QpiAI Quantum (`qpiai_quantum` v0.7.5) and QpiAI Opt for QAOA graph zoning and combinatorial optimization. However, development, CI/CD, and offline deployment environments may not have live QCloud API credentials (`QPIAI_QUANTUM_API_KEY` / `QPIAI_API_KEY`) or network access. The system must remain deterministic, self-contained, and completely functional without failing silently.
+- **Decision**: Implement a strict multi-tier execution failover chain for both quantum circuits and QUBO optimization:
+  1. **Quantum QAOA Max-Cut Tier Chain** (`services/optimizer/optimizer/qaoa/chain.py`):
+     - Tier 1: `qpiai_qcloud_simulator` (remote QpiAI QCloud API, env-guarded by `QPIAI_QUANTUM_API_KEY`).
+     - Tier 2: `qsv_local` (local `qpiai_quantum.simulator.StatevectorSimulator`, fully offline, parameterized $R_{ZZ}$ and $R_X$ gates with COBYLA optimization).
+     - Tier 3: `exact_bruteforce` (exact combinatorial enumeration for small graphs $n \le 16$, guarantees global optimum for benchmarking).
+     - Tier 4: `networkx_greedy` (classical 1-flip greedy heuristic baseline).
+  2. **QUBO Solver Tier Chain** (`services/optimizer/optimizer/solvers/chain.py`):
+     - Tier 1: `qpiai_opt_platform` (remote QpiAI Opt SaaS platform).
+     - Tier 2: `qpiai_opt_local` (QpiAI LocalProvider).
+     - Tier 3: `dwave_neal_sa` (D-Wave Simulated Annealing library `neal`).
+     - Tier 4: `greedy_descent` (local deterministic 1-flip local search).
+  Every invocation generates an immutable execution telemetry record saved to `evidence/qcloud_runs/` or `evidence/qpiai_runs/` logging the attempted tiers, timings, bitstrings, and errors.
+- **Consequences**: Zero test flakiness in offline/CI environments, transparent logging of remote service status, and complete reproducibility across developer laptops and production servers.
+
+## ADR-007: Graph-Theoretic QAOA Max-Cut Zoning vs Euclidean K-Means for Logistics Partitioning
+- **Date**: 2026-10-29
+- **Status**: Accepted
+- **Context**: Scaling redistribution optimization across a large healthcare district ($n=40$ facilities) requires decomposing the problem into smaller, independently solvable zones. Classical logistics often applies spatial clustering ($k$-means) on GPS coordinates. However, healthcare logistics depends on road network topography, actual transit times, barrier bottlenecks, and dynamic road closures rather than Euclidean straight-line distance.
+- **Decision**: Formulate district decomposition as a weighted Max-Cut problem solved via QAOA on the road network transit graph:
+  - Vertices $V$ are health facilities (in live 5-node mode) or taluk super-nodes (in 40-facility scale mode).
+  - Edge weights $w_{uv} = \text{distance\_km} \times \text{transit\_hours}$ represent normalized transit impedance. Heavy edges denote high transit impedance or physical barriers.
+  - Max-Cut objective $\max \sum_{(u,v) \in E} w_{uv} \frac{1 - z_u z_v}{2}$ cuts the heaviest edges, placing facilities separated by bottlenecks into different zones while preserving tightly connected clusters within the same zone.
+- **Results**:
+  - QAOA Max-Cut cut value: **3.866** vs Coordinate K-Means: **2.712** (+42.5% cut improvement).
+  - Intra-zone transit impedance: **1.620** for QAOA vs **2.774** for K-Means (-41.6% reduction in internal transit barriers).
+  - QAOA respects route closures and terrain bottlenecks that Euclidean $k$-means ignores.
+- **Consequences**: Subproblems solved inside each zone experience shorter transit delays and fewer cross-taluk vehicle dispatches, while residual cross-zone shortages are cleanly addressed by a small boundary QUBO.
+
+## ADR-008: Exact Classical MILP Baseline with Google OR-Tools CP-SAT for Honest Optimality Benchmarking
+- **Date**: 2026-10-29
+- **Status**: Accepted
+- **Context**: Quantum-inspired heuristics and simulated annealing must be objectively benchmarked against exact ground truth. In clinical logistics, making false claims of "quantum advantage" without measuring the true optimality gap is irresponsible. We need an exact classical baseline that formulates the exact same objective and constraints.
+- **Decision**: Formulate and solve the redistribution decision problem to global optimality using Google OR-Tools CP-SAT (`services/optimizer/optimizer/milp.py`):
+  - Binary decision variable $x_i \in \{0, 1\}$ for each candidate chunk.
+  - Integer scaling ($\times 10^6$) over continuous float coefficients.
+  - Exact quadratic product linearization via `model.add_multiplication_equality(z_{ij}, [x_i, x_j])`.
+  - 20-second timeout limit.
+  - Return exact optimal energy $E^*(x)$ and report `optimality_gap_percent` on `GET /plan/{id}/benchmark`:
+    $$\text{optimality\_gap} = \frac{|E_{\text{solver}} - E_{\text{milp}}^*|}{|E_{\text{milp}}^*|} \times 100\%$$
+- **Verification**: Verified that CP-SAT matches the global minimum of brute-force exhaustive enumeration across all 8 test instances with zero gap ($0.0\%$).
+- **Consequences**: Establishes MedBalance as an honest, scientifically grounded system that reports verified optimality gaps against global mathematical baselines.
+
+

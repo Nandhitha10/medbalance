@@ -104,3 +104,4 @@ Every solver execution outputs a JSON record to `evidence/qpiai_runs/<ts>_<hash>
 - `error`: Error string if a higher tier failed before fallback
 - `sample`: Selected binary assignment vector
 - `term_breakdown`: Decomposed energy contributions
+

@@ -383,6 +383,7 @@ async def run_planning_pipeline(
         "regret": [r.to_dict() for r in regret_entries],
         "metrics": metrics,
         "solve_time_sec": solve_duration,
+        "snapshot": snapshot,
     }
 
     _plans_store[persisted_plan_id] = plan_dict

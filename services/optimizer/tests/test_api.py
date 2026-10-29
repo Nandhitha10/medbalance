@@ -70,3 +70,44 @@ def test_whynot_and_whatif_endpoints(client):
     whatif_plan = resp_whatif.json()
     assert whatif_plan["mode"] == "whatif"
 
+
+def test_scale_mode_and_benchmark_report(client):
+    """Test scale mode execution (40 facilities) and comprehensive benchmark report."""
+    resp = client.post("/plan/run", json={"mode": "eval", "scale": 40})
+    assert resp.status_code == 200
+    plan = resp.json()
+    assert plan["scale"] == 40
+    assert plan["status"] == "COMPLETED"
+    plan_id = plan["id"]
+    assert "decomposition_meta" in plan or "solver_meta" in plan
+
+    # Verify GET /plan/{id}/benchmark returns full comparison report
+    resp_bm = client.get(f"/plan/{plan_id}/benchmark")
+    assert resp_bm.status_code == 200
+    bm = resp_bm.json()
+    assert bm["plan_id"] == plan_id
+    assert "milp_optimal_energy" in bm
+    assert "solver_energy" in bm
+    assert "optimality_gap_percent" in bm
+    assert "solver_time_sec" in bm
+    assert "milp_time_sec" in bm
+
+    # Table contains all 5 required policies
+    table = bm.get("comparison_table") or bm.get("table", [])
+    assert len(table) == 5
+    policies = [r["policy"] for r in table]
+    assert "no-transfer" in policies
+    assert "greedy" in policies
+    assert "greedy_f4" in policies
+    assert "qubo" in policies
+    assert "milp" in policies
+
+    # Check zoning report
+    assert "zoning_comparison" in bm
+    z_comp = bm["zoning_comparison"]
+    assert "qaoa" in z_comp
+    assert "kmeans" in z_comp
+    assert "comparison" in z_comp
+    assert "qaoa_cut_advantage" in z_comp["comparison"]
+
+

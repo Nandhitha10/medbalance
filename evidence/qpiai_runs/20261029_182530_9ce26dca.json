@@ -1,0 +1,70 @@
+{
+  "timestamp": "2026-10-29T18:25:30.579305+00:00",
+  "tier": "dwave_neal_sa",
+  "time_ms": 23.87,
+  "energy": 9.337233,
+  "n_vars": 15,
+  "variable_names": [
+    "cand-LOT-INS-REG-AK-0045_c0-FAC-AK-TH1",
+    "cand-LOT-INS-REG-AK-0045_c1-FAC-AK-TH1",
+    "cand-LOT-INS-REG-AK-0045_c2-FAC-AK-TH1",
+    "cand-LOT-INS-REG-AK-0047_c0-FAC-AK-TH1",
+    "cand-LOT-INS-REG-AK-0047_c1-FAC-AK-TH1",
+    "cand-LOT-INS-REG-AK-0047_c2-FAC-AK-TH1",
+    "cand-LOT-AML-5-AK-0055_c0-FAC-AK-TH1",
+    "cand-LOT-AML-5-AK-0055_c1-FAC-AK-TH1",
+    "cand-LOT-AML-5-AK-0055_c2-FAC-AK-TH1",
+    "cand-LOT-OXY-10-BE-0072_c0-FAC-BE-CHC3",
+    "cand-LOT-OXY-10-BE-0072_c0-FAC-BE-PHC7",
+    "cand-LOT-OXY-10-BE-0072_c0-FAC-BE-PHC8",
+    "cand-LOT-OXY-10-BE-0074_c0-FAC-BE-TH1",
+    "cand-LOT-OXY-10-BE-0074_c1-FAC-BE-TH1",
+    "cand-LOT-OXY-10-BE-0074_c2-FAC-BE-TH1"
+  ],
+  "top_k_count": 2,
+  "best_sample": {
+    "0": 1,
+    "1": 1,
+    "2": 1,
+    "3": 1,
+    "4": 1,
+    "5": 1,
+    "6": 1,
+    "7": 1,
+    "8": 1,
+    "9": 0,
+    "10": 0,
+    "11": 1,
+    "12": 1,
+    "13": 1,
+    "14": 1
+  },
+  "top_k_energies": [
+    9.337233,
+    9.355349
+  ],
+  "prior_tier_errors": [
+    "qpiai_opt_platform failed: QPIAI_API_KEY is not configured or dummy credential",
+    "qpiai_opt_local failed: QPIAI_API_KEY is not configured for LocalProvider"
+  ],
+  "tier_attempts": [
+    {
+      "tier": "qpiai_opt_platform",
+      "time_ms": 0.0,
+      "status": "error",
+      "error": "QPIAI_API_KEY is not configured or dummy credential"
+    },
+    {
+      "tier": "qpiai_opt_local",
+      "time_ms": 0.0,
+      "status": "error",
+      "error": "QPIAI_API_KEY is not configured for LocalProvider"
+    },
+    {
+      "tier": "dwave_neal_sa",
+      "time_ms": 23.87,
+      "status": "success",
+      "samples_count": 2
+    }
+  ]
+}

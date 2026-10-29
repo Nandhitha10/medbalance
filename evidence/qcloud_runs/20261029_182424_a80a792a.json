@@ -1,0 +1,36 @@
+{
+  "timestamp": "2026-10-29T18:24:24.458033+00:00",
+  "tier": "qsv_local",
+  "depth": 1,
+  "shots": 256,
+  "n_nodes": 5,
+  "n_edges": 10,
+  "cut_value": 3.866,
+  "exact_cut_value": 3.866,
+  "approximation_ratio": 1.0,
+  "time_ms": 2087.39,
+  "partition": {
+    "H1": 1,
+    "H2": 0,
+    "H3": 0,
+    "H4": 1,
+    "W0": 0
+  },
+  "prior_tier_errors": [
+    "qpiai_qcloud_simulator failed: QPIAI_QUANTUM_API_KEY is not configured or dummy credential"
+  ],
+  "tier_attempts": [
+    {
+      "tier": "qpiai_qcloud_simulator",
+      "time_ms": 0.01,
+      "status": "error",
+      "error": "QPIAI_QUANTUM_API_KEY is not configured or dummy credential"
+    },
+    {
+      "tier": "qsv_local",
+      "time_ms": 2087.39,
+      "status": "success",
+      "cut_value": 3.866
+    }
+  ]
+}

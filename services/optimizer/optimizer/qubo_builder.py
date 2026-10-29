@@ -406,3 +406,4 @@ def term_breakdown(
         "formula_energy": round(total_calc, 6),
         "per_variable_reward": per_var_reward,
     }
+

@@ -149,3 +149,4 @@ def test_hypothesis_validator_invariants(data):
         assert ord_obj.usable_quantity > 0, "Repaired order must have positive usable quantity"
         assert ord_obj.drug_code not in CONTROLLED_DRUG_CODES, "Controlled drug must never survive repair"
         assert ord_obj.source_facility_id != ord_obj.destination_facility_id, "Source and destination must differ"
+
