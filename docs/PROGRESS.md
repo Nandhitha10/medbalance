@@ -1,7 +1,7 @@
 # Project Progress Log
 
 ## Status Overview
-- Current Phase: Database Schema & Deterministic District Seed Complete
+- Current Phase: Core API & FEFO Read-Model Implementation Complete
 - Updated: 2026-10-29
 
 ## Completed Tasks
@@ -21,6 +21,19 @@
 - [x] `data/seed/drugs.yaml` created: 13 essential drugs with VEN classification, temperature specifications, unit costs in INR, pack sizes, and multilingual aliases (including English typos and Kannada script).
 - [x] `data/seed/generate.py` implemented with `--seed 42`: generates 90-day Poisson consumption history with weekly seasonality, 20 routes with haversine distance and transit times, per-facility inventory policies, and writes `db/init/002_seed.sql` + `data/seed/hospitals/h1..h4.json`.
 - [x] Seed invariant tests (`data/seed/test_seed.py`) passing.
+- [x] Shared FEFO mathematics module created in `libs/medbal_common/medbal_common/fefo.py`: worked example verified (50 vials, 2/day, 14 days -> 28 effective, 22 at risk), reserve protection from longest-dated lots, shortage calculation, and Rule F4 usable quantity logic.
+- [x] `services/core-api` fully implemented against PostgreSQL/SQLAlchemy:
+  - Master data: `GET /facilities`, `GET /drugs`, `GET /routes`, `GET /vehicles` (with dual routing `/api/core/*`).
+  - Lots: Idempotent batch upsert `POST /lots/upsert-batch` with audit entries and Redis stream `inventory.updated` emission.
+  - Positions: `GET /positions` computed via FEFO with per-lot detail; rate dynamically selected from latest forecast or 28-day consumption history.
+  - Optimizer snapshot: `GET /snapshot` with deterministic SHA-256 `snapshot_hash` over canonical JSON.
+  - Plans: `POST /plans` persisting PlanRun, candidates, transfer orders with sequential `DTA/BLR-U/2026/NNNNNN` numbering, HMAC-SHA256 QR tokens, regret entries, and `plan.completed` emission.
+  - Orders: `GET /orders`, `GET /orders/{id}`, `POST /orders/{id}/approve`, `POST /orders/{id}/reject` with audit log tracking and `order.status` stream publication.
+  - Custody: `POST /custody/scan` returning 501 Not Implemented per milestone rules; `GET /custody/{order_id}` returning custody history.
+  - Provenance: `GET /provenance/{order_id}` delivering full DAG nodes and edges (`stock_report -> extraction_item -> lot -> candidate -> order -> custody_event`) with feasibility proofs and audit sequence numbers.
+  - Audit chain: `GET /audit/verify` and `GET /audit?entity=&id=`, verified for integrity and cryptographic tamper detection.
+  - Real-time events: `GET /events` Server-Sent Events (SSE) streaming Redis Streams with 15-second heartbeats.
+- [x] Unit and integration tests in `services/core-api/tests/test_core_api.py` and `libs/medbal_common/tests/test_fefo.py` passing (42 total tests passing across monorepo).
 
 ## Table of Engineered Story Lots (For L2, L3, L4 Lanes)
 

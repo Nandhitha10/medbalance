@@ -88,7 +88,7 @@ services:
       SERVICE_NAME: core-api
       DATABASE_URL: postgresql+psycopg://medbal:medbal_secret_pw@postgres:5432/medbal
       REDIS_URL: redis://redis:6379/0
-      USE_FIXTURES: "1"
+      USE_FIXTURES: "0"
     ports:
       - "8001:8001"
     depends_on:

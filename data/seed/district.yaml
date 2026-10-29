@@ -117,3 +117,4 @@ vehicles:
     cold_capable: false
     cost_per_km_inr: 8.00
     is_active: true
+

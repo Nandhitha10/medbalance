@@ -335,3 +335,4 @@ CREATE INDEX idx_credit_memo_order ON credit_memo(order_id);
 CREATE INDEX idx_audit_log_seq ON audit_log(seq);
 CREATE INDEX idx_audit_log_entity ON audit_log(entity, entity_id);
 CREATE INDEX idx_chat_message_session ON chat_message(session_id);
+
