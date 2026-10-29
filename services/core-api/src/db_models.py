@@ -227,6 +227,7 @@ class PlanRunModel(Base):
     shortage_reduction: Mapped[int] = mapped_column(Integer, default=0)
     expiry_avoided: Mapped[int] = mapped_column(Integer, default=0)
     total_savings_inr: Mapped[Optional[float]] = mapped_column(Numeric(12, 2), default=0.00)
+    solver_meta: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, default=dict)
     summary: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, default=dict)
 
 
@@ -261,6 +262,7 @@ class TransferOrderModel(Base):
     status: Mapped[str] = mapped_column(String(32), default="DRAFT")  # DRAFT, APPROVED, IN_TRANSIT, DELIVERED, CANCELLED
     temperature_controlled: Mapped[bool] = mapped_column(Boolean, default=False)
     savings_inr: Mapped[Optional[float]] = mapped_column(Numeric(10, 2), default=0.00)
+    term_breakdown: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 

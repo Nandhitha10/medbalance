@@ -1,0 +1,20 @@
+{
+  "timestamp": "2026-10-29T17:05:55.037516+00:00",
+  "tier": "dwave_neal_sa",
+  "time_ms": 1469.32,
+  "energy": 4.0,
+  "n_vars": 2,
+  "top_k_count": 2,
+  "best_sample": {
+    "0": 0,
+    "1": 1
+  },
+  "top_k_energies": [
+    4.0,
+    4.0
+  ],
+  "prior_tier_errors": [
+    "qpiai_opt_platform failed: QPIAI_API_KEY is not configured or dummy credential",
+    "qpiai_opt_local failed: QPIAI_API_KEY is not configured for LocalProvider"
+  ]
+}

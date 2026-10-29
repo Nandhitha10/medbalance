@@ -95,6 +95,7 @@ async def persist_plan(payload: Dict[str, Any]) -> PlanCreateResponse:
             shortage_reduction=int(payload.get("shortage_reduction", 0)),
             expiry_avoided=int(payload.get("expiry_avoided", 0)),
             total_savings_inr=float(payload.get("total_savings_inr", 0.0)),
+            solver_meta=payload.get("solver_meta", {}),
             summary=payload.get("summary", {}),
         )
         session.add(plan_run)
@@ -125,6 +126,7 @@ async def persist_plan(payload: Dict[str, Any]) -> PlanCreateResponse:
                 status=o.get("status", "DRAFT"),
                 temperature_controlled=bool(o.get("temperature_controlled", False)),
                 savings_inr=float(o.get("savings_inr", 0.0)),
+                term_breakdown=o.get("term_breakdown", {}),
                 created_at=current_time,
                 updated_at=current_time,
             )

@@ -195,6 +195,7 @@ CREATE TABLE plan_run (
     shortage_reduction INT NOT NULL DEFAULT 0,
     expiry_avoided INT NOT NULL DEFAULT 0,
     total_savings_inr NUMERIC(12, 2) DEFAULT 0.00,
+    solver_meta JSONB DEFAULT '{}'::jsonb,
     summary JSONB DEFAULT '{}'::jsonb
 );
 
@@ -227,6 +228,7 @@ CREATE TABLE transfer_order (
     status VARCHAR(32) NOT NULL DEFAULT 'DRAFT', -- DRAFT, APPROVED, IN_TRANSIT, DELIVERED, CANCELLED
     temperature_controlled BOOLEAN NOT NULL DEFAULT false,
     savings_inr NUMERIC(10, 2) DEFAULT 0.00,
+    term_breakdown JSONB DEFAULT '{}'::jsonb,
     created_at TIMESTAMPTZ NOT NULL,
     updated_at TIMESTAMPTZ
 );

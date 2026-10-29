@@ -79,6 +79,9 @@ class TransferOrder:
     vehicle_id: Optional[str] = None
     route_id: Optional[str] = None
     status: str = "PROPOSED"
+    usable_quantity: int = 0
+    term_breakdown: Optional[Dict[str, Any]] = None
+    candidate_id: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -90,6 +93,7 @@ class TransferOrder:
             "batch_no": self.batch_no,
             "expiry": self.expiry.isoformat() if isinstance(self.expiry, date) else str(self.expiry),
             "quantity": self.quantity,
+            "usable_quantity": self.usable_quantity if self.usable_quantity > 0 else self.quantity,
             "unit_cost_inr": self.unit_cost_inr,
             "total_cost_inr": self.total_cost_inr,
             "shortage_reduction": self.shortage_reduction,
@@ -97,6 +101,8 @@ class TransferOrder:
             "vehicle_id": self.vehicle_id,
             "route_id": self.route_id,
             "status": self.status,
+            "term_breakdown": self.term_breakdown or {},
+            "candidate_id": self.candidate_id,
         }
 
 

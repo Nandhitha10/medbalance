@@ -1,7 +1,7 @@
 # Project Progress Log
 
 ## Status Overview
-- Current Phase: Frontend Web Dashboard (MedBalance-Q), Visual Read-Models & Projector Display Complete
+- Current Phase: P10 QUBO Optimization Engine & QpiAI Opt Solver Integration Complete
 - Updated: 2026-10-29
 
 ## Completed Tasks
@@ -131,6 +131,85 @@
     - `docs/screens/03_plan_page.png`: Redistribution Plan view with KPI header and DTA orders
     - `docs/screens/04_hospital_ingest.png`: Ingestion channels and Pharmacist Anomaly Review Queue
 - [x] Full monorepo test suite green: **109 passed out of 109 tests**.
+- [x] **P10 QUBO (v3) Formulation, Verification by Enumeration & QpiAI Opt Engine**:
+  - `services/optimizer/optimizer/qubo_builder.py`: Closed-form expansion of $H$ (v3) matching CLAUDE.md §6. Returns upper-triangular dict $Q[(i, j)]$ ($i \le j$) and scalar offset from candidates. Integrates normalized reward, $P_1$ one-place conflict pairs, $P_2$ shortage square (diagonal $\pi(u^2/n^2 - 2u/n)$, off-diagonal $2\pi u_i u_j/n^2$, offset $\pi$), $P_3$ chunk ordering ($+P_3$ on $x_j$, $-P_3$ on $x_j x_{j-1}$), $-\gamma$ shared trip bonuses, and zero-demand guards ($n=0$). Exposes `energy(Q, offset, x)` and `term_breakdown(candidates, snapshot, x)`.
+  - `tests/test_qubo_bruteforce.py`: 8 exhaustive brute-force test instances (3 lots $\times$ 2 facilities, $\le 12$ variables) covering: one-place conflict, two lots competing for one shortage, overfill penalty, zero-demand guard, cold-chain infeasible pair absent, shared-trip bonus tie-breaker, chunk order precedence, and VEN priority. In all 8 cases, $\operatorname{argmin} E(x)$ matches the exact best plan found by enumerating all feasible allocations.
+  - `docs/QPIAI_OPT_NOTES.md`: Comprehensive introspection and API guide for `qpiai_opt` (`opt_modeller.Binary`, `opt_modeller.Model`, `opt_solvers.client.Client`, `opt_solvers.local.LocalProvider`, `QUBOProblem`, `QUBOSolveResult`), parameter formatting (`matrix_format="upper"`, integer tuple keys `(i, j)` where $i \le j$, `variable_names`), and API key requirements.
+  - `services/optimizer/optimizer/solvers/`: Tiered solver architecture under `SolverPort` protocol:
+    - `QpiAIOptPlatform`: Remote platform solver client via QpiAI API.
+    - `QpiAIOptLocal`: Fast local quantum/classical simulator via `LocalProvider`.
+    - `NealSA`: Simulated annealing solver fallback using `dwave-neal`.
+    - `GreedyDescent`: Deterministic 1-bit-flip local descent baseline.
+    - `solve_chain`: Cascading tiered failover with 20s platform timeout, telemetry recording, and automated JSON run artifact persistence in `evidence/qpiai_runs/<ts>_<hash>.json`.
+  - `services/optimizer/optimizer/validator.py`: Post-solver exact FEFO simulation and invariant validation:
+    - Strictly enforces 7 invariants: no negative stock, no double shipping, reserve protected from longest-dated lots, cold chain compliance (destination cold storage, route safe, cold van), realised usable quantity $> 0$ (trims order to realised usable), destination overfill ceiling (45-day consumption), no controlled substances.
+    - `repair()`: Drops lowest-benefit conflicting orders, trims quantities, and supports `resolve_callback` to re-solve with $P_1 \times 2$ (up to 3 attempts) upon detecting solver one-place violations. Guarantees 0 violations in output.
+  - `tests/test_validator_hypothesis.py`: Hypothesis property tests proving validator `repair()` output always satisfies all invariants across randomized snapshots and proposed order sets.
+  - Default solver integration in `services/optimizer/optimizer/solver.py` and `services/optimizer/optimizer/routers/plan.py`:
+    - Default solver in `POST /plan/run` set to `"qubo"` with graceful fallbacks (`"greedy_f4"`, `"greedy"`).
+    - Persists `top_k` samples summary and term breakdown per order (`transfer_order.term_breakdown`).
+    - Exposes solver tier, execution timings, penalty parameters, and evidence artifact path in `plan_run.solver_meta` and `summary`.
+  - `scripts/sweep_p2.py`: Swept $P_2 \in \{0.5, 1.0, 1.5, 2.0, 3.0\}$ across 5 random seeds (42..46). Documented findings in `docs/DECISIONS.md` (ADR-005): $P_2 = 1.5$ achieves maximum shortage reduction (496.4 units) and expiry avoidance (Rs. 45,628.00) with minimum pre-repair constraint violations (32.20) and 0 post-repair violations.
+  - Evidence file written and verified: `evidence/qpiai_runs/20261029_174952_fd9adf47.json`.
+  - Monorepo test suite green: **All 31 automated tests passing** across brute-force, property tests, optimizer, and core-api.
+
+### QpiAI Run Evidence Excerpt (`evidence/qpiai_runs/20261029_174952_fd9adf47.json`)
+
+```json
+{
+  "timestamp": "2026-10-29T17:49:52.472285+00:00",
+  "tier": "dwave_neal_sa",
+  "time_ms": 474.47,
+  "energy": -1.508823,
+  "n_vars": 6,
+  "variable_names": [
+    "cand-LOT-INS-H1-01_c0-H2",
+    "cand-LOT-INS-H1-01_c1-H2",
+    "cand-LOT-INS-H1-01_c2-H2",
+    "cand-LOT-PAR-H3-01_c0-H4",
+    "cand-LOT-PAR-H3-01_c1-H4",
+    "cand-LOT-PAR-H3-01_c2-H4"
+  ],
+  "top_k_count": 3,
+  "best_sample": {
+    "0": 1,
+    "1": 1,
+    "2": 1,
+    "3": 0,
+    "4": 1,
+    "5": 1
+  },
+  "top_k_energies": [
+    -1.508823,
+    -1.502768,
+    -1.409491
+  ],
+  "prior_tier_errors": [
+    "qpiai_opt_platform failed: QPIAI_API_KEY is not configured or dummy credential",
+    "qpiai_opt_local failed: QPIAI_API_KEY is not configured for LocalProvider"
+  ],
+  "tier_attempts": [
+    {
+      "tier": "qpiai_opt_platform",
+      "time_ms": 0.01,
+      "status": "error",
+      "error": "QPIAI_API_KEY is not configured or dummy credential"
+    },
+    {
+      "tier": "qpiai_opt_local",
+      "time_ms": 0.01,
+      "status": "error",
+      "error": "QPIAI_API_KEY is not configured for LocalProvider"
+    },
+    {
+      "tier": "dwave_neal_sa",
+      "time_ms": 474.47,
+      "status": "success",
+      "samples_count": 3
+    }
+  ]
+}
+```
 
 ## Table of Engineered Story Lots (For L2, L3, L4 Lanes)
 

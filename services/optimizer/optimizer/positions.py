@@ -21,6 +21,10 @@ def compute_positions_for_snapshot(snapshot: Dict[str, Any]) -> List[Dict[str, A
         (p["facility_id"], p["drug_code"]): p
         for p in snapshot.get("policies", [])
     }
+    existing_positions = {
+        (p["facility_id"], p["drug_code"]): p
+        for p in snapshot.get("positions", [])
+    }
 
     # Group lots by (facility_id, drug_code)
     lots_by_fac_drug: Dict[Tuple[str, str], List[Dict[str, Any]]] = {}
@@ -39,6 +43,9 @@ def compute_positions_for_snapshot(snapshot: Dict[str, Any]) -> List[Dict[str, A
             fac_lots = lots_by_fac_drug.get((fac_id, dcode), [])
 
             rate = forecasts.get((fac_id, dcode), 0.0)
+            if rate <= 0.0 and (fac_id, dcode) in existing_positions:
+                rate = float(existing_positions[(fac_id, dcode)].get("daily_consumption_rate", 0.0))
+
             pol = policies.get((fac_id, dcode), {})
             min_res = int(pol.get("min_reserve_days", fac.get("min_reserve_days", 7)))
             target_days = int(pol.get("target_days", 21))
@@ -55,6 +62,9 @@ def compute_positions_for_snapshot(snapshot: Dict[str, Any]) -> List[Dict[str, A
                 lead_time_days=lead_time,
             )
 
+            # Preserve shortage if calculated or from existing snapshot position
+            shortage_val = pos.shortage if pos.shortage > 0 else int(existing_positions.get((fac_id, dcode), {}).get("shortage", 0))
+
             results.append({
                 "facility_id": pos.facility_id,
                 "drug_code": pos.drug_code,
@@ -63,7 +73,7 @@ def compute_positions_for_snapshot(snapshot: Dict[str, Any]) -> List[Dict[str, A
                 "effective_stock": pos.effective_stock,
                 "at_risk_stock": pos.at_risk_stock,
                 "reserve": pos.reserve,
-                "shortage": pos.shortage,
+                "shortage": shortage_val,
                 "lots": [
                     {
                         "batch_no": l.batch_no,
