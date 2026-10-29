@@ -9,7 +9,7 @@ from medbal_common.bus import start_stream_consumer_task, stop_stream_consumer_t
 from medbal_common.fastapi_base import create_app
 from medbal_common.settings import get_settings
 from medbal_common import fixtures
-from genai_service.events import handle_plan_event
+from genai_service.events import handle_order_status_event, handle_plan_event
 from genai_service.routers.llm import router as llm_router
 from genai_service.routers.narrate import router as narrate_router
 from genai_service.routers.documents import router as documents_router
@@ -36,7 +36,17 @@ async def lifespan(app: FastAPI):
                 )
                 consumer_tasks.append(task)
                 stop_events.append(stop_event)
-            logger.info("GenAI batch narration stream listeners started")
+
+            # Listener for order.status to auto-generate DTA voucher and credit memo on approval
+            task_ord, stop_event_ord = start_stream_consumer_task(
+                stream="order.status",
+                group="genai-order-docs",
+                consumer=f"genai-ord-{uuid4().hex[:4]}",
+                handler=handle_order_status_event,
+            )
+            consumer_tasks.append(task_ord)
+            stop_events.append(stop_event_ord)
+            logger.info("GenAI batch narration and order docs stream listeners started")
         except Exception as exc:
             logger.debug(f"GenAI Redis stream consumer could not be started: {exc}")
 

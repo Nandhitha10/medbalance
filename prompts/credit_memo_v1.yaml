@@ -39,3 +39,4 @@ json_schema:
     recommended_credit_inr:
       type: number
       description: "Recommended credit value in INR matching total_credit_inr"
+

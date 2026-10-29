@@ -78,3 +78,4 @@ async def get_session_history(session_id: str) -> Dict[str, Any]:
         "message_count": len(history),
         "messages": history,
     }
+

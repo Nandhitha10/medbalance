@@ -346,3 +346,4 @@ async def batch_narrate_plan_orders(plan_id: str) -> List[Dict[str, Any]]:
 
     logger.info(f"Batch narrated {len(results)}/{len(order_ids)} orders for plan {plan_id}")
     return results
+

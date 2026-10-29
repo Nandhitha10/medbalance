@@ -102,17 +102,58 @@ async def _clock_tick_consumer(stop_event: asyncio.Event) -> None:
         logger.debug(f"Consumer loop ended: {exc}")
 
 
+async def _order_status_consumer(stop_event: asyncio.Event) -> None:
+    """Listen to order.status events and auto-scan approved orders if AUTO_SCAN flag is enabled."""
+    auto_scan_enabled = os.getenv("AUTO_SCAN", "0").lower() in ("1", "true", "yes")
+    if not auto_scan_enabled:
+        return
+
+    try:
+        redis_client = get_redis_client()
+        await asyncio.wait_for(redis_client.ping(), timeout=0.2)
+    except Exception:
+        return
+
+    async def handle_order_status(msg_id: str, payload: Dict[str, Any]) -> None:
+        try:
+            data = payload.get("data", payload)
+            new_status = data.get("new_status")
+            order_id = data.get("order_id")
+            src_fac = data.get("source_facility_id")
+
+            if new_status == "APPROVED" and order_id and src_fac == hospital_id:
+                core_api_url = os.getenv("CORE_API_URL", "http://core-api:8001")
+                async with create_client(timeout=3.0) as client:
+                    await client.post(f"{core_api_url}/custody/auto-scan/{order_id}")
+        except Exception as exc:
+            logger.debug(f"Auto-scan error on order.status for {hospital_id}: {exc}")
+
+    try:
+        await consume(
+            stream="order.status",
+            group=f"hospital-autoscan-{hospital_id.lower()}",
+            consumer=f"autoscan-{hospital_id.lower()}",
+            handler=handle_order_status,
+            redis_client=redis_client,
+            stop_event=stop_event,
+        )
+    except Exception as exc:
+        logger.debug(f"Order status consumer loop ended for {hospital_id}: {exc}")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Start background tick listener on startup."""
+    """Start background tick and auto-scan listeners on startup."""
     stop_event = asyncio.Event()
-    task = asyncio.create_task(_clock_tick_consumer(stop_event))
+    task_tick = asyncio.create_task(_clock_tick_consumer(stop_event))
+    task_scan = asyncio.create_task(_order_status_consumer(stop_event))
     yield
     stop_event.set()
-    task.cancel()
+    task_tick.cancel()
+    task_scan.cancel()
     try:
-        await task
-    except asyncio.CancelledError:
+        await asyncio.gather(task_tick, task_scan, return_exceptions=True)
+    except Exception:
         pass
 
 

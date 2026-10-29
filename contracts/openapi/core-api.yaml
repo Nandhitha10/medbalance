@@ -352,7 +352,30 @@ paths:
         content:
           application/json:
             schema:
-              $ref: './components.yaml#/components/schemas/CustodyEvent'
+              type: object
+              required: [token, event, qty, actor]
+              properties:
+                token:
+                  type: string
+                  description: HMAC-SHA256 signature token
+                event:
+                  type: string
+                  enum: [dispatch, receive, consume, DISPATCH, RECEIVE, CONSUME]
+                qty:
+                  type: integer
+                  minimum: 1
+                actor:
+                  type: string
+                location:
+                  type: [string, "null"]
+                temperature_c:
+                  type: [number, "null"]
+                order_id:
+                  type: [string, "null"]
+                timestamp:
+                  type: [string, "null"]
+                notes:
+                  type: [string, "null"]
       responses:
         '200':
           description: Scan recorded successfully
@@ -360,7 +383,7 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [status, event_id]
+                required: [status, event_id, order_id, order_status, event_type]
                 properties:
                   status:
                     type: string
@@ -368,6 +391,48 @@ paths:
                   event_id:
                     type: integer
                     example: 1
+                  order_id:
+                    type: string
+                  order_status:
+                    type: string
+                  event_type:
+                    type: string
+                  deviation:
+                    type: [object, "null"]
+                  notes:
+                    type: [string, "null"]
+        '400':
+          description: Invalid transition or bad request
+        '401':
+          description: Invalid HMAC custody token
+
+  /custody/auto-scan/{order_id}:
+    post:
+      summary: Auto-scan an approved order through dispatch, transit, and receive
+      operationId: autoScanOrder
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Auto-scan completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, order_id]
+                properties:
+                  status:
+                    type: string
+                  order_id:
+                    type: string
+                  dispatch_event_id:
+                    type: integer
+                  receive_event_id:
+                    type: integer
 
   /custody/{order_id}:
     get:
@@ -446,6 +511,56 @@ paths:
                       type: string
                     hash:
                       type: string
+
+  /admin/tamper-demo:
+    post:
+      summary: Tamper with audit log payload to demonstrate hash-chain verification failure
+      operationId: tamperAuditDemo
+      parameters:
+        - name: seq
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Audit log tampered
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, tampered_seq, verification]
+                properties:
+                  status:
+                    type: string
+                  tampered_seq:
+                    type: integer
+                  verification:
+                    $ref: './components.yaml#/components/schemas/AuditVerify'
+
+  /admin/restore-demo:
+    post:
+      summary: Restore original audit log payload and restore hash-chain verification
+      operationId: restoreAuditDemo
+      parameters:
+        - name: seq
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Audit log restored
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, verification]
+                properties:
+                  status:
+                    type: string
+                  verification:
+                    $ref: './components.yaml#/components/schemas/AuditVerify'
 
   /events:
     get:

@@ -85,6 +85,7 @@ class LotModel(Base):
     batch_no: Mapped[str] = mapped_column(String(128), nullable=False)
     expiry: Mapped[date] = mapped_column(Date, nullable=False)
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[Optional[str]] = mapped_column(String(32), default="active", nullable=True)  # active, in_transit, quarantined
     created_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
@@ -302,6 +303,7 @@ class CustodyEventModel(Base):
     temperature_c: Mapped[Optional[float]] = mapped_column(Numeric(5, 2), nullable=True)
     signature_hash: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    deviation: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
 
 
 class CreditMemoModel(Base):

@@ -644,3 +644,4 @@ def generate_credit_memo_pdf(data: Dict[str, Any]) -> bytes:
     except Exception as exc:
         logger.info(f"WeasyPrint unavailable ({exc}); falling back to ReportLab Credit Memo builder")
         return build_credit_memo_pdf_reportlab(data)
+

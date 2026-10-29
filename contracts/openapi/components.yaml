@@ -426,7 +426,7 @@ components:
           example: pharmacist_h1
         event_type:
           type: string
-          enum: [DISPATCH, HANDOVER, RECEIVE]
+          enum: [DISPATCH, HANDOVER, RECEIVE, CONSUME]
           example: DISPATCH
         timestamp:
           type: string
@@ -439,6 +439,8 @@ components:
           example: 4.2
         notes:
           type: [string, "null"]
+        deviation:
+          type: [object, "null"]
 
     AuditVerify:
       type: object

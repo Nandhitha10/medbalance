@@ -127,6 +127,7 @@ async def persist_plan(payload: Dict[str, Any]) -> PlanCreateResponse:
                 temperature_controlled=bool(o.get("temperature_controlled", False)),
                 savings_inr=float(o.get("savings_inr", 0.0)),
                 term_breakdown=o.get("term_breakdown", {}),
+                qr_token=qr_token,
                 created_at=current_time,
                 updated_at=current_time,
             )

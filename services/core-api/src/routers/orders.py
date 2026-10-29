@@ -2,6 +2,7 @@
 
 import hashlib
 import logging
+import os
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 from fastapi import APIRouter, HTTPException, Query, status
@@ -13,10 +14,47 @@ from medbal_common.bus import publish
 from medbal_common.clock import now as sim_now
 from medbal_common.db import session_scope
 from src.db_models import LotModel, TransferOrderModel
+from src.routers.plans import generate_qr_token
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Orders"])
+
+_genai_offline_until: float = 0.0
+
+
+async def _trigger_genai_docs(order_id: str) -> None:
+    """Asynchronously trigger GenAI DTA voucher and credit memo generation on order approval."""
+    global _genai_offline_until
+    import time
+    now_t = time.time()
+    if now_t < _genai_offline_until:
+        return
+
+    genai_url = os.getenv("GENAI_URL", "http://genai:8003")
+    try:
+        from medbal_common.http import create_client
+        async with create_client(timeout=0.3) as client:
+            try:
+                await client.post(f"{genai_url}/docs/dta/{order_id}")
+            except Exception as e:
+                logger.debug(f"Async DTA generation triggered: {e}")
+            try:
+                await client.post(f"{genai_url}/docs/credit-memo/{order_id}")
+            except Exception as e:
+                logger.debug(f"Async credit memo generation triggered: {e}")
+    except Exception as exc:
+        _genai_offline_until = now_t + 30.0
+        logger.debug(f"Could not trigger GenAI docs for order {order_id}: {exc}")
+
+
+async def _trigger_auto_scan(order_id: str) -> None:
+    """Automatically execute custody dispatch and receive after transit time."""
+    try:
+        from src.routers.custody import execute_auto_scan
+        await execute_auto_scan(order_id)
+    except Exception as exc:
+        logger.warning(f"Auto-scan failed for order {order_id}: {exc}")
 
 
 class RejectOrderPayload(BaseModel):
@@ -103,9 +141,16 @@ def get_order_by_id(id: str) -> Dict[str, Any]:
 
 
 @router.post("/orders/{id:path}/approve", response_model=Dict[str, Any])
-async def approve_order(id: str, actor: str = "district_officer") -> Dict[str, Any]:
+async def approve_order(
+    id: str,
+    actor: str = "district_officer",
+    auto_scan: bool = Query(False, description="Automatically dispatch and receive order after transit time"),
+) -> Dict[str, Any]:
     """Approve a transfer order for physical execution with audit log and event bus emission."""
+    import asyncio
     current_time = sim_now()
+    src_facility = ""
+    dst_facility = ""
     with session_scope() as session:
         order = session.get(TransferOrderModel, id)
         if not order:
@@ -116,6 +161,8 @@ async def approve_order(id: str, actor: str = "district_officer") -> Dict[str, A
         order.updated_at = current_time
         order.approved_by = actor
         order.approved_at = current_time
+        src_facility = order.source_facility_id
+        dst_facility = order.destination_facility_id
 
         # Audit entry in same transaction
         audit_entry = audit_append(
@@ -129,13 +176,15 @@ async def approve_order(id: str, actor: str = "district_officer") -> Dict[str, A
                 "new_status": "APPROVED",
                 "quantity": order.quantity,
                 "drug_code": order.drug_code,
+                "source_facility_id": src_facility,
+                "destination_facility_id": dst_facility,
             },
             timestamp=current_time,
         )
 
         order.audit_hash = audit_entry.hash
         if not order.qr_token:
-            order.qr_token = f"tok-{hashlib.sha256(f'{id}:{audit_entry.hash}'.encode()).hexdigest()[:16]}"
+            order.qr_token = generate_qr_token(order.id)
 
         formatted = _format_order(order)
 
@@ -150,13 +199,21 @@ async def approve_order(id: str, actor: str = "district_officer") -> Dict[str, A
                 "old_status": old_status,
                 "new_status": "APPROVED",
                 "actor": actor,
+                "source_facility_id": src_facility,
+                "destination_facility_id": dst_facility,
                 "notes": "Approved for priority dispatch",
             },
         }
-        import asyncio
         await asyncio.wait_for(publish("order.status", event_payload), timeout=0.5)
     except Exception as exc:
         logger.warning(f"Could not publish order.status event: {exc}")
+
+    # Asynchronously trigger GenAI DTA voucher and credit memo generation
+    asyncio.create_task(_trigger_genai_docs(id))
+
+    # Auto-scan if requested or configured
+    if auto_scan or os.getenv("AUTO_SCAN", "0").lower() in ("1", "true", "yes"):
+        asyncio.create_task(_trigger_auto_scan(id))
 
     return formatted
 

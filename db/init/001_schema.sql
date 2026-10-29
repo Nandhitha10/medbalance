@@ -76,6 +76,7 @@ CREATE TABLE lot (
     batch_no VARCHAR(128) NOT NULL,
     expiry DATE NOT NULL,
     quantity INT NOT NULL CHECK (quantity >= 0),
+    status VARCHAR(32) DEFAULT 'active', -- active, in_transit, quarantined
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     CONSTRAINT uq_facility_drug_batch UNIQUE (facility_id, drug_code, batch_no)
@@ -255,7 +256,8 @@ CREATE TABLE custody_event (
     location VARCHAR(255),
     temperature_c NUMERIC(5, 2),
     signature_hash VARCHAR(128),
-    notes TEXT
+    notes TEXT,
+    deviation JSONB
 );
 
 -- 18. Credit Memo (Financial vouchers)

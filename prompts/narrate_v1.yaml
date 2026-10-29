@@ -43,3 +43,4 @@ json_schema:
     narration:
       type: string
       description: "2-3 plain, factual sentences explaining the clinical logistics decision for the District Drug Officer"
+

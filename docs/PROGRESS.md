@@ -1,7 +1,7 @@
 # Project Progress Log
 
 ## Status Overview
-- Current Phase: P16 Streaming Copilot Tool-Using Agent with Numeric Firewall & Chat History Complete
+- Current Phase: P17 Per-Order Approval, QR Chain of Custody with Deviation Detection & Hospital Closed Loop Complete
 - Updated: 2026-10-30
 
 ## Completed Tasks
@@ -334,6 +334,39 @@
       - `test_copilot_kannada_query`: Responds in Kannada with Rule F3 explanation.
       - `test_copilot_golden_questions_json_coverage`: Validates all 12 test cases in `evals/golden/copilot.json`.
       - `test_copilot_fastapi_endpoint_streaming`: Validates live SSE event stream over HTTP.
+- [x] **P17 Per-Order Approval Workflow, QR Chain of Custody with Deviation Detection & Hospital Closed Loop (`services/core-api/`, `services/sim-hospital/`, `tests/test_custody_approval.py`)**:
+  - **Per-Order Approval & Rejection (`services/core-api/src/routers/orders.py`)**:
+    - `POST /orders/{id}/approve`: Sets status to `APPROVED`, persists cryptographic audit log, sets tamper-evident HMAC `qr_token`, emits `order.status` event, and asynchronously triggers GenAI DTA voucher (`POST /docs/dta/{id}`) and credit memo (`POST /docs/credit-memo/{id}`) generation.
+    - `POST /orders/{id}/reject`: Sets status to `CANCELLED` with audit tracking and reason recording.
+  - **Custody Scanning Engine (`services/core-api/src/routers/custody.py`, `POST /custody/scan`)**:
+    - Payload: `{token, event: dispatch|receive|consume, qty, actor, location?, temperature_c?, order_id?, notes?}`.
+    - Strict HMAC-SHA256 verification against secret key (`DTA_HMAC_SECRET`); invalid or forged tokens rejected with `401 Unauthorized`.
+    - Strict state machine ordering: `APPROVED` -> `IN_TRANSIT` (on dispatch) -> `DELIVERED` (on receive) -> `COMPLETED` (on consume). Out-of-order scans rejected with `400 Bad Request`.
+    - **Dispatch Action**: Deducts quantity from source lot in core-api, marks lot `in_transit` if depleted, and invokes `sim-hospital(src) /transfers/outbound` to decrement source hospital SQLite stock.
+    - **Receive Action**: Invokes `sim-hospital(dst) /transfers/inbound` to increment destination hospital SQLite stock, and upserts destination lot in core-api (status `quarantined` if temperature excursion occurred, else `active`).
+  - **Deviation Detection & Firewalled Summary**:
+    - Detects 3 structural anomalies: (1) `qty_mismatch` (qty received ≠ dispatched), (2) `late_arrival` (arrival later than ETA + 1 day), (3) `temperature_excursion` (> 8.0°C or < 2.0°C on cold-chain items).
+    - Persists structured anomalies into PostgreSQL/SQLite `custody_event.deviation` JSONB.
+    - Firewalled one-line summary authored and stored in `custody_event.notes`.
+    - Emits `custody.scanned` event to Redis Streams.
+  - **Simulated Hospital Auto-Scan Flag**:
+    - `POST /custody/auto-scan/{order_id}` and `AUTO_SCAN=1` flag in `sim-hospital` and `core-api` enabling approved orders to flow automatically from dispatch through transit sleep to receive.
+  - **Audit Ledger & Admin Tamper Demo (`services/core-api/src/routers/audit.py`)**:
+    - Every state change audited in-transaction with SHA-256 hash chaining; `GET /audit/verify` confirms integrity.
+    - `POST /admin/tamper-demo`: Intentionally mutates audit log payload without recomputing hash; `GET /audit/verify` immediately catches break (`ok: False`, `first_bad_seq`).
+    - `POST /admin/restore-demo`: Restores original payload; `GET /audit/verify` immediately passes (`ok: True`).
+  - **Automated Verification (`tests/test_custody_approval.py`)**:
+    - 10 comprehensive tests passing (100% green):
+      1. `test_order_approve_and_audit`: Verifies approval, audit entry, and HMAC token.
+      2. `test_order_reject_and_audit`: Verifies cancellation and audit logging.
+      3. `test_custody_hmac_verification`: Verifies 401 rejection on forged token and success on valid token.
+      4. `test_custody_state_machine_enforcement`: Verifies 400 rejection on out-of-order state transitions.
+      5. `test_deviation_quantity_mismatch`: Verifies `qty_mismatch` detection.
+      6. `test_deviation_temperature_excursion_quarantines_lot`: Verifies `temperature_excursion` detection and destination lot quarantine.
+      7. `test_deviation_late_arrival`: Verifies `late_arrival` detection beyond ETA + 1 day.
+      8. `test_auto_scan_approved_order`: Verifies automated dispatch -> transit -> receive.
+      9. `test_admin_tamper_demo_and_restore`: Verifies tamper verify failure and restore verify pass.
+      10. `test_closed_loop_hospital_transfer_loop`: Verifies full end-to-end acceptance with simulated hospital nodes (H1 decrements by 25, H2 increments by 25, custody trail records dispatch & receive, audit verify ok).
 
 ### QpiAI Run Evidence Excerpt (`evidence/qpiai_runs/20261029_174952_fd9adf47.json`)
 
