@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 from uuid import uuid4
 import httpx
 from fastapi import APIRouter, HTTPException, Query, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from medbal_common.settings import get_settings
 from optimizer.baselines import greedy_f4, greedy_phone_call
@@ -19,6 +19,9 @@ from optimizer.qubo_builder import build_qubo
 from optimizer.scale_mode import generate_scale_district
 from optimizer.snapshot import fetch_snapshot, load_fixture_snapshot
 from optimizer.solver import _plans_store, run_planning_pipeline
+from optimizer.whatif import apply_snapshot_overrides, compute_kpi_deltas, compute_plan_diff
+from optimizer.whynot import explain_whynot_shortage
+from optimizer.auto_replan import trigger_auto_replan
 from optimizer.zoning import perform_zoning
 
 logger = logging.getLogger(__name__)
@@ -34,6 +37,8 @@ class PlanRunRequest(BaseModel):
 
 
 class WhatIfRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
     scenario_type: Optional[str] = Field(default="custom")
     overrides: Optional[Dict[str, Any]] = Field(default=None)
 
@@ -271,9 +276,22 @@ async def get_benchmark(id: str) -> Dict[str, Any]:
 
 
 @router.get("/plan/{id}/regret")
-async def get_regret(id: str, order_id: Optional[str] = Query(None)) -> List[Dict[str, Any]]:
+@router.get("/regret")
+async def get_regret(
+    id: Optional[str] = None,
+    order_id: Optional[str] = Query(None),
+) -> List[Dict[str, Any]]:
     """Inspect regret analysis and alternative destinations."""
-    plan = _plans_store.get(id)
+    plan = None
+    if id and id != "latest":
+        plan = _plans_store.get(id)
+    if not plan:
+        plan = _plans_store.get("latest_live")
+    if not plan:
+        live_plans = [p for p in _plans_store.values() if isinstance(p, dict) and p.get("mode") == "live"]
+        if live_plans:
+            plan = live_plans[-1]
+
     if plan:
         regrets = plan.get("regret", [])
         if order_id:
@@ -283,51 +301,104 @@ async def get_regret(id: str, order_id: Optional[str] = Query(None)) -> List[Dic
 
 
 @router.get("/whynot")
+@router.get("/plan/whynot")
 async def explain_whynot(
     facility: Optional[str] = Query(None),
     drug: Optional[str] = Query(None),
 ) -> Dict[str, Any]:
-    """Explain why a facility or drug lot was not allocated using F1-F6 failure breakdown."""
-    snapshot = await fetch_snapshot()
-    _, infeasible = generate_candidates(snapshot)
+    """Explain why a facility or drug lot was not allocated using F1-F6 failure breakdown and ΔH loss."""
+    try:
+        snapshot = await fetch_snapshot()
+    except Exception:
+        snapshot = load_fixture_snapshot()
 
-    fac_filter = facility or "H1"
-    drug_filter = drug or "INS-REG"
+    active_plan = _plans_store.get("latest_live")
+    if not active_plan:
+        live_plans = [p for p in _plans_store.values() if isinstance(p, dict) and p.get("mode") == "live"]
+        if live_plans:
+            active_plan = live_plans[-1]
 
-    matched_infeasible = [
-        inf for inf in infeasible
-        if (not facility or inf.source_facility_id == facility or inf.destination_facility_id == facility)
-        and (not drug or inf.drug_code == drug)
-    ]
+    fac_id = facility or "H4"
+    drug_code = drug or "INS-REG"
 
-    reasons: List[str] = []
-    seen_reasons = set()
-    for item in matched_infeasible:
-        for r in item.failed_rules:
-            detail = r.get("detail", "")
-            if detail and detail not in seen_reasons:
-                seen_reasons.add(detail)
-                reasons.append(detail)
-
-    if not reasons:
-        reasons = [
-            "F3 cold chain: destination lacks verified cold storage",
-            "F5 reserve: protected by minimum inventory reserve policy",
-        ]
-
-    return {
-        "facility_id": fac_filter,
-        "drug_code": drug_filter,
-        "candidates_evaluated": max(len(matched_infeasible), 4),
-        "feasible_candidates": 0,
-        "reasons": reasons[:5],
-    }
+    return explain_whynot_shortage(
+        facility_id=fac_id,
+        drug_code=drug_code,
+        snapshot=snapshot,
+        plan=active_plan,
+    )
 
 
 @router.post("/whatif")
-async def whatif(req: WhatIfRequest) -> Dict[str, Any]:
-    """Simulate allocation scenario without persistence."""
-    return await run_planning_pipeline(mode="whatif", overrides=req.overrides)
+@router.post("/plan/whatif")
+async def whatif(req: Optional[WhatIfRequest] = None) -> Dict[str, Any]:
+    """Simulate allocation scenario without altering or persisting live plan."""
+    overrides: Dict[str, Any] = {}
+    scenario_type = "custom"
+    if req:
+        scenario_type = req.scenario_type or "custom"
+        if req.overrides:
+            overrides.update(req.overrides)
+        # Include top-level extra fields
+        for k, v in req.__dict__.items():
+            if k not in ("scenario_type", "overrides") and v is not None:
+                overrides[k] = v
+
+    try:
+        snapshot = await fetch_snapshot()
+    except Exception:
+        snapshot = load_fixture_snapshot()
+
+    # Retrieve or generate baseline live plan
+    live_plan = _plans_store.get("latest_live")
+    if not live_plan:
+        live_plans = [p for p in _plans_store.values() if isinstance(p, dict) and p.get("mode") == "live"]
+        if live_plans:
+            live_plan = live_plans[-1]
+        else:
+            live_plan = await run_planning_pipeline(mode="live", snapshot=snapshot)
+
+    # Run what-if on isolated copy of snapshot with overrides applied
+    whatif_plan = await run_planning_pipeline(
+        mode="whatif",
+        snapshot=snapshot,
+        overrides=overrides,
+        solver_choice="qubo",
+    )
+
+    live_orders = live_plan.get("orders", [])
+    whatif_orders = whatif_plan.get("orders", [])
+    diff = compute_plan_diff(live_orders, whatif_orders)
+    kpi_deltas = compute_kpi_deltas(live_plan.get("metrics", {}), whatif_plan.get("metrics", {}))
+
+    return {
+        "mode": "whatif",
+        "status": "COMPLETED",
+        "scenario_type": scenario_type,
+        "applied_overrides": overrides,
+        "diff": diff,
+        "kpi_deltas": kpi_deltas,
+        "baseline_plan_id": live_plan.get("id"),
+        "whatif_plan_id": whatif_plan.get("id"),
+        "orders": whatif_orders,
+        "metrics": whatif_plan.get("metrics", {}),
+        "regret": whatif_plan.get("regret", []),
+        "plan": whatif_plan,
+    }
+
+
+@router.post("/auto-replan/trigger")
+@router.post("/plan/auto-replan")
+async def trigger_auto_replan_route(alert: Dict[str, Any]) -> Dict[str, Any]:
+    """Explicit route to trigger cold-chain auto re-planning on excursion alert."""
+    result = await trigger_auto_replan(
+        alert_data=alert,
+        plans_store=_plans_store,
+        run_planning_fn=run_planning_pipeline,
+    )
+    if not result:
+        return {"status": "ignored", "message": "Alert temperature within safe limits or no excursion"}
+    return result
 
 
 @router.post("/eval/replay")

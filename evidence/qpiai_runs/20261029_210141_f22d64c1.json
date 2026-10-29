@@ -1,0 +1,53 @@
+{
+  "timestamp": "2026-10-29T21:01:41.800083+00:00",
+  "tier": "dwave_neal_sa",
+  "time_ms": 28.81,
+  "energy": -1.508823,
+  "n_vars": 6,
+  "variable_names": [
+    "cand-LOT-INS-H1-01_c0-H2",
+    "cand-LOT-INS-H1-01_c1-H2",
+    "cand-LOT-INS-H1-01_c2-H2",
+    "cand-LOT-PAR-H3-01_c0-H4",
+    "cand-LOT-PAR-H3-01_c1-H4",
+    "cand-LOT-PAR-H3-01_c2-H4"
+  ],
+  "top_k_count": 3,
+  "best_sample": {
+    "0": 1,
+    "1": 1,
+    "2": 1,
+    "3": 0,
+    "4": 1,
+    "5": 1
+  },
+  "top_k_energies": [
+    -1.508823,
+    -1.502768,
+    -1.401025
+  ],
+  "prior_tier_errors": [
+    "qpiai_opt_platform failed: HTTPSConnectionPool(host='api.qpiai.tech', port=443): Max retries exceeded with url: /users/verify_secret_access_token (Caused by NameResolutionError(\"HTTPSConnection(host='api.qpiai.tech', port=443): Failed to resolve 'api.qpiai.tech' ([Errno 11001] getaddrinfo failed)\"))",
+    "qpiai_opt_local failed: time_limit, mip_rel_gap, and node_limit do not apply to QUBO, HUBO, or Ising; use num_reads and num_sweeps"
+  ],
+  "tier_attempts": [
+    {
+      "tier": "qpiai_opt_platform",
+      "time_ms": 12.13,
+      "status": "error",
+      "error": "HTTPSConnectionPool(host='api.qpiai.tech', port=443): Max retries exceeded with url: /users/verify_secret_access_token (Caused by NameResolutionError(\"HTTPSConnection(host='api.qpiai.tech', port=443): Failed to resolve 'api.qpiai.tech' ([Errno 11001] getaddrinfo failed)\"))"
+    },
+    {
+      "tier": "qpiai_opt_local",
+      "time_ms": 34.67,
+      "status": "error",
+      "error": "time_limit, mip_rel_gap, and node_limit do not apply to QUBO, HUBO, or Ising; use num_reads and num_sweeps"
+    },
+    {
+      "tier": "dwave_neal_sa",
+      "time_ms": 28.81,
+      "status": "success",
+      "samples_count": 3
+    }
+  ]
+}

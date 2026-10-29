@@ -5,6 +5,20 @@ import math
 from typing import Any, Dict, List, Optional, Tuple
 
 
+VEN_WEIGHTS: Dict[str, float] = {
+    "V": 3.0,
+    "E": 2.0,
+    "N": 1.0,
+}
+
+
+def get_ven_weight(category: Optional[str]) -> float:
+    """Resolve VEN priority multiplier pi_g."""
+    if not category:
+        return 1.0
+    return VEN_WEIGHTS.get(str(category).upper(), 1.0)
+
+
 def check_f1_rule(source_id: str, dest_id: str) -> Tuple[bool, Optional[str]]:
     """F1 (Identity): Source and destination must be distinct facilities."""
     if source_id == dest_id:
@@ -144,9 +158,11 @@ def evaluate_feasibility(
         failed_rules.append({"rule": "F2", "detail": reason_f2 or ""})
 
     # F3
-    is_cold = drug.get("storage_condition") == "cold_chain"
-    has_cold_storage = bool(dest_facility.get("cold_storage_available", False))
-    route_cold = bool(route.get("cold_chain_compliant", False)) if route else False
+    is_cold = drug.get("storage_condition") == "cold_chain" or drug.get("cold_chain", False)
+    has_cold_storage = bool(dest_facility.get("cold_storage_available", False) or dest_facility.get("has_cold_storage", False))
+    if dest_facility.get("cold_storage_status") == "FAIL" or dest_facility.get("ilr_status") in ("offline", "under_repair"):
+        has_cold_storage = False
+    route_cold = bool(route.get("cold_chain_compliant", False) or route.get("cold_chain_capable", False)) if route else False
     ok_f3, reason_f3 = check_f3_rule(is_cold, has_cold_storage, route_cold, vehicles)
     if not ok_f3:
         failed_rules.append({"rule": "F3", "detail": reason_f3 or ""})

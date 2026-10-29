@@ -1,7 +1,7 @@
 # Project Progress Log
 
 ## Status Overview
-- Current Phase: CP2 End-to-End Operational Scenarios Verification Complete (dengue_outbreak, bad_data, QUBO solver tier, 5-row benchmark, fridge_failure excursion)
+- Current Phase: P14 Explainability Core, What-If Sandbox & Reactive Cold-Chain Auto Re-Planning Complete
 - Updated: 2026-10-30
 
 ## Completed Tasks
@@ -201,6 +201,39 @@
     - Live streaming feed of active IDSP epidemiological signals and infrastructure shock bulletins (`GET /sim/signals`).
   - **Demo Moments 1–5 Verified**: All 5 core demo script walkthrough moments triggerable and verifiable purely from the UI.
   - **High-Resolution Screenshots**: Captured 7 full 1920x1080 screenshots saved to `docs/screens/`.
+- [x] **P14 Explainability Core, What-If Sandbox & Reactive Cold-Chain Auto Re-Planning (`services/optimizer/`)**:
+  - **Regret Ledger Engine (`optimizer/regret.py`, `GET /plan/{id}/regret`)**:
+    - For each transfer order, computes exact $\Delta H = E(x') - E(x^*)$ of reallocating its inventory chunk to each alternative destination facility across the district or to NOWHERE (cancelling transfer).
+    - Incorporates alternative sample solutions from solver top-$k$ samples.
+    - Categorizes each alternative with standardized reason codes: `LOWER_USABLE`, `HIGHER_COST`, `LOWER_VEN`, `FAILED_RULE_Fx`, `WORSE_FILL`.
+    - Generates deterministic, strictly numeric explanatory text citing exact units, rupee values, and $\Delta H$ penalties.
+    - Top 5 alternatives per order sorted ascending by $\Delta H$.
+  - **Why-Not Explanatory Engine (`optimizer/whynot.py`, `GET /whynot?facility=&drug=`)**:
+    - Audits unserved shortages for any hospital $\times$ drug pair across the district.
+    - Calculates initial shortage, plan allocated quantity, and remaining residual shortage.
+    - Evaluates every candidate source lot in the district, reporting its status (`ALLOCATED`, `LOST_IN_QUBO` with exact $\Delta H$, or `INFEASIBLE` with breakdown of failed rules F1 through F6).
+    - Returns structured JSON for clinical audits and copilot explanation.
+  - **What-If Simulation Sandbox (`optimizer/whatif.py`, `POST /whatif`)**:
+    - Evaluates operational counterfactuals on an isolated deep copy of the snapshot:
+      - `add_vehicle {type, route}`: Deploys supplementary ambient or refrigerated transport units.
+      - `close_route` / `open_route`: Simulates road washouts, landslips, or clearance.
+      - `set_reserve_days`: Adjusts hospital safety buffer horizon.
+      - `delay_days`: Simulates transit delays degrading shelf life at arrival.
+      - `repair_cold_storage {facility}`: Resolves compressor faults, certifying destination ILR cold storage.
+      - `set_multiplier {facility, drug, x}`: Simulates acute epidemiological demand spikes.
+    - Computes granular diff vs live plan (`orders_added`, `orders_removed`, `orders_changed`, net deltas) and performance KPI deltas (shortage reduction, avoided expiry INR, waste, transport costs).
+    - Guarantees complete isolation: what-if plans are never persisted to core-api or live store.
+  - **Reactive Cold-Chain Auto Re-Planning (`optimizer/auto_replan.py`)**:
+    - Background Redis stream consumer task listening to `coldchain.alert` within optimizer lifespan.
+    - On critical excursion (> 8.0 °C on refrigerated van e.g. `CV-02`), identifies live, un-dispatched cold orders on affected routes.
+    - Executes what-if re-planning with affected routes and vehicles marked unsafe.
+    - If valid (0 violations), assigns unique `PLAN-REV-...` ID, marks superseded orders as `SUPERSEDED`, stores revised plan, and publishes `plan.revised` event with diff to Redis Streams within 60s SLA.
+  - **Test Suite (`tests/test_regret_whatif.py`)**:
+    - `test_regret_delta_h_matches_energy_recomputation`: Verified $\Delta H$ strictly matches energy recomputation for single-variable flips and top-$k$ samples.
+    - `test_whynot_lists_f3_for_h4_insulin`: Verified Rule F3 cold storage failure is surfaced for H4 insulin while its ILR is offline.
+    - `test_whatif_repair_cold_storage_h4_makes_h4_destination`: Verified `repair_cold_storage(H4)` enables H4 to receive cold-chain inventory (`OXY-10` from H2), appearing in `orders_added`.
+    - `test_auto_replan_moves_cold_orders_off_cv02`: Verified orders assigned to failing `CV-02` are superseded and moved off `CV-02` in revised plan.
+    - `test_acceptance_fridge_failure_produces_plan_revised_within_60s`: Verified end-to-end auto re-planning executes in < 2.0 s (< 60 s SLA) producing valid `plan.revised` event with diff and 0 violations.
 
 ### QpiAI Run Evidence Excerpt (`evidence/qpiai_runs/20261029_174952_fd9adf47.json`)
 

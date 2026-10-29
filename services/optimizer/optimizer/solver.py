@@ -1,6 +1,7 @@
 """Planning pipeline execution: snapshot, positions, candidates, QUBO solver, metrics, and persistence."""
 
 import asyncio
+import copy
 from datetime import date
 import logging
 import time
@@ -16,9 +17,11 @@ from optimizer.metrics import calculate_plan_metrics
 from optimizer.models import Candidate, RegretEntry, TransferOrder
 from optimizer.positions import compute_positions_for_snapshot
 from optimizer.qubo_builder import build_qubo, energy, term_breakdown
+from optimizer.regret import compute_regret_for_orders
 from optimizer.snapshot import fetch_snapshot
 from optimizer.solvers.chain import solve_chain
 from optimizer.validator import repair, validate_and_simulate_fefo
+from optimizer.whatif import apply_snapshot_overrides
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +73,27 @@ def _cands_to_orders(
             "total_energy": bd.get("total_energy", 0.0),
         }
 
+        # Vehicle assignment
+        veh_id = None
+        if route and route.get("vehicle_id"):
+            veh_id = route["vehicle_id"]
+        elif route and route.get("assigned_vehicle_id"):
+            veh_id = route["assigned_vehicle_id"]
+        elif is_cold:
+            cold_vehs = [
+                v.get("id") or v.get("vehicle_id")
+                for v in snapshot.get("vehicles", [])
+                if v.get("cold_chain_capable") and v.get("is_active", True) and v.get("status") != "unsafe"
+            ]
+            veh_id = cold_vehs[idx % len(cold_vehs)] if cold_vehs else "CV-01"
+        else:
+            amb_vehs = [
+                v.get("id") or v.get("vehicle_id")
+                for v in snapshot.get("vehicles", [])
+                if not v.get("cold_chain_capable") and v.get("is_active", True) and v.get("status") != "unsafe"
+            ]
+            veh_id = amb_vehs[idx % len(amb_vehs)] if amb_vehs else "AV-01"
+
         orders.append(
             TransferOrder(
                 order_id=f"DTA/BLR-U/2026/{idx+1:06d}",
@@ -85,7 +109,7 @@ def _cands_to_orders(
                 total_cost_inr=round(cand.quantity * unit_cost, 2),
                 shortage_reduction=min(cand.usable_quantity, cand.quantity),
                 expiry_avoided=min(cand.usable_quantity, cand.quantity),
-                vehicle_id="CV-01" if is_cold else "AV-01",
+                vehicle_id=veh_id or ("CV-01" if is_cold else "AV-01"),
                 route_id=route_id,
                 status="PROPOSED",
                 term_breakdown=tb,
@@ -99,6 +123,7 @@ async def run_planning_pipeline(
     mode: str = "live",
     overrides: Optional[Dict[str, Any]] = None,
     solver_choice: str = "qubo",
+    snapshot: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Execute complete deterministic planning pipeline."""
     start_time = time.perf_counter()
@@ -109,9 +134,17 @@ async def run_planning_pipeline(
     if "solver" in ovr and solver_choice == "qubo":
         solver_choice = str(ovr["solver"])
 
-    # Stage 1: Fetch snapshot
+    # Stage 1: Fetch snapshot or use provided snapshot
     await _safe_publish("plan.progress", {"stage": "snapshot", "status": "started", "progress_pct": 10})
-    snapshot = await fetch_snapshot()
+    if snapshot is None:
+        snapshot = await fetch_snapshot()
+    else:
+        snapshot = copy.deepcopy(snapshot)
+
+    # Apply operational overrides to snapshot if provided
+    if ovr:
+        snapshot = apply_snapshot_overrides(snapshot, ovr)
+
     today_str = snapshot.get("today", "2026-11-01")
     today = date.fromisoformat(today_str) if isinstance(today_str, str) else today_str
     await _safe_publish("plan.progress", {"stage": "snapshot", "status": "completed", "progress_pct": 20})
@@ -139,6 +172,11 @@ async def run_planning_pipeline(
     solver_tier_name = solver_choice
     solver_meta: Dict[str, Any] = {}
     orders: List[TransferOrder] = []
+    q_mat = None
+    offset = 0.0
+    meta = None
+    best_sample = None
+    solve_res = None
 
     if solver_choice == "qubo":
         p1 = float(ovr.get("P1", 2.0))
@@ -281,11 +319,21 @@ async def run_planning_pipeline(
         orders = greedy_phone_call(snapshot)
         solver_tier_name = "greedy_phone_call"
         solver_meta = {"solver_tier": "greedy_phone_call", "time_ms": 1.0}
+        if feasible_cands:
+            try:
+                q_mat, offset, meta = build_qubo(candidates=feasible_cands, snapshot=snapshot)
+            except Exception:
+                pass
     else:
         # Default greedy_f4
         orders = greedy_f4(snapshot)
         solver_tier_name = "greedy_f4"
         solver_meta = {"solver_tier": "greedy_f4", "time_ms": 2.0}
+        if feasible_cands:
+            try:
+                q_mat, offset, meta = build_qubo(candidates=feasible_cands, snapshot=snapshot)
+            except Exception:
+                pass
 
     await _safe_publish("plan.progress", {
         "stage": "solving",
@@ -299,18 +347,35 @@ async def run_planning_pipeline(
     await _safe_publish("plan.progress", {"stage": "metrics", "status": "started", "progress_pct": 85})
     metrics = calculate_plan_metrics(orders, snapshot)
 
-    # Synthesize regret entries for explainability
+    # Compute regret ledger per order using regret.py
     regret_entries: List[RegretEntry] = []
-    for inf in infeasible_cands:
-        reasons_summary = "; ".join(r.get("detail", "") for r in inf.failed_rules)
-        regret_entries.append(
-            RegretEntry(
-                order_id=f"cand-{inf.chunk_id}",
-                rejected_destination_id=inf.destination_facility_id,
-                regret_inr=inf.reward_inr,
-                reason=reasons_summary or "Infeasible constraint",
-            )
+    if q_mat is not None and meta is not None:
+        order_cand_ids = {o.candidate_id for o in orders if o.candidate_id}
+        final_bits = [1 if name in order_cand_ids else 0 for name in meta.variable_names]
+        regret_entries = compute_regret_for_orders(
+            orders=orders,
+            feasible_candidates=feasible_cands,
+            infeasible_candidates=infeasible_cands,
+            snapshot=snapshot,
+            best_bitstring=final_bits,
+            variable_names=meta.variable_names,
+            Q=q_mat,
+            offset=offset,
+            top_k_samples=solve_res.samples if solve_res else None,
         )
+    else:
+        for inf in infeasible_cands:
+            reasons_summary = "; ".join(r.get("detail", "") for r in inf.failed_rules)
+            regret_entries.append(
+                RegretEntry(
+                    order_id=f"cand-{inf.chunk_id}",
+                    alternate_destination_id=inf.destination_facility_id,
+                    regret_inr=inf.reward_inr,
+                    reason=reasons_summary or "Infeasible constraint",
+                    reason_code="FAILED_RULE_Fx",
+                    reason_text=reasons_summary or "Infeasible constraint",
+                )
+            )
     await _safe_publish("plan.progress", {"stage": "metrics", "status": "completed", "progress_pct": 90})
 
     solve_duration = round(time.perf_counter() - start_time, 4)
@@ -320,7 +385,7 @@ async def run_planning_pipeline(
     persisted_plan_id = None
 
     core_api_url = settings.CORE_API_URL
-    if core_api_url:
+    if core_api_url and mode != "whatif":
         endpoints = [f"{core_api_url}/plans", f"{core_api_url}/api/core/plans"]
         payload = {
             "mode": mode,
@@ -358,9 +423,12 @@ async def run_planning_pipeline(
                 except Exception as e:
                     logger.debug(f"Failed to post plan to {url}: {e}")
 
-    # Fallback plan ID if core-api is unreachable
+    # Fallback plan ID if core-api is unreachable or what-if mode
     if not persisted_plan_id:
-        persisted_plan_id = f"PLAN-{today.strftime('%Y%m%d')}-{uuid4().hex[:6].upper()}"
+        if mode == "whatif":
+            persisted_plan_id = f"PLAN-WHATIF-{uuid4().hex[:6].upper()}"
+        else:
+            persisted_plan_id = f"PLAN-{today.strftime('%Y%m%d')}-{uuid4().hex[:6].upper()}"
 
     # Assign final plan_id to orders
     for o in orders:
@@ -389,14 +457,17 @@ async def run_planning_pipeline(
     }
 
     _plans_store[persisted_plan_id] = plan_dict
+    if mode == "live":
+        _plans_store["latest_live"] = plan_dict
 
-    await _safe_publish("plan.completed", {
-        "plan_id": persisted_plan_id,
-        "mode": mode,
-        "solver_tier": solver_tier_name,
-        "orders_count": len(orders),
-        "expiry_avoided_units": metrics.get("expiry_avoided_units", 0),
-        "expiry_avoided_inr": metrics.get("expiry_avoided_inr", 0.0),
-    })
+    if mode != "whatif":
+        await _safe_publish("plan.completed", {
+            "plan_id": persisted_plan_id,
+            "mode": mode,
+            "solver_tier": solver_tier_name,
+            "orders_count": len(orders),
+            "expiry_avoided_units": metrics.get("expiry_avoided_units", 0),
+            "expiry_avoided_inr": metrics.get("expiry_avoided_inr", 0.0),
+        })
 
     return plan_dict

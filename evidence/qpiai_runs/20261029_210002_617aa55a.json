@@ -1,0 +1,53 @@
+{
+  "timestamp": "2026-10-29T21:00:02.753961+00:00",
+  "tier": "dwave_neal_sa",
+  "time_ms": 479.36,
+  "energy": -1.508823,
+  "n_vars": 6,
+  "variable_names": [
+    "cand-LOT-INS-H1-01_c0-H2",
+    "cand-LOT-INS-H1-01_c1-H2",
+    "cand-LOT-INS-H1-01_c2-H2",
+    "cand-LOT-PAR-H3-01_c0-H4",
+    "cand-LOT-PAR-H3-01_c1-H4",
+    "cand-LOT-PAR-H3-01_c2-H4"
+  ],
+  "top_k_count": 3,
+  "best_sample": {
+    "0": 1,
+    "1": 1,
+    "2": 1,
+    "3": 0,
+    "4": 1,
+    "5": 1
+  },
+  "top_k_energies": [
+    -1.508823,
+    -1.502768,
+    -1.409491
+  ],
+  "prior_tier_errors": [
+    "qpiai_opt_platform failed: QPIAI_API_KEY is not configured or dummy credential",
+    "qpiai_opt_local failed: QPIAI_API_KEY is not configured for LocalProvider"
+  ],
+  "tier_attempts": [
+    {
+      "tier": "qpiai_opt_platform",
+      "time_ms": 0.01,
+      "status": "error",
+      "error": "QPIAI_API_KEY is not configured or dummy credential"
+    },
+    {
+      "tier": "qpiai_opt_local",
+      "time_ms": 0.01,
+      "status": "error",
+      "error": "QPIAI_API_KEY is not configured for LocalProvider"
+    },
+    {
+      "tier": "dwave_neal_sa",
+      "time_ms": 479.36,
+      "status": "success",
+      "samples_count": 3
+    }
+  ]
+}

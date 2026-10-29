@@ -75,7 +75,7 @@
       "unit": "ampoule",
       "pack_size": 5,
       "storage_condition": "cold_chain",
-      "min_residual_days": 30,
+      "min_residual_days": 14,
       "unit_cost_inr": 28.00
     },
     {
