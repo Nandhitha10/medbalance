@@ -13,6 +13,7 @@ router = APIRouter(tags=["Consumption Forecasting"])
 
 
 @router.post("/forecast/run", response_model=ForecastRunResponse)
+@router.post("/run", response_model=ForecastRunResponse)
 async def forecast_run(req: Optional[ForecastRunRequest] = None) -> ForecastRunResponse:
     """Run Holt-Winters baseline + signal-cited context multiplier forecasts."""
     fac = req.facility if req else None
@@ -35,6 +36,8 @@ async def forecast_run(req: Optional[ForecastRunRequest] = None) -> ForecastRunR
 
 
 @router.get("/forecast", response_model=List[ForecastItem])
+@router.get("", response_model=List[ForecastItem])
+@router.get("/", response_model=List[ForecastItem])
 async def get_forecast(
     facility: Optional[str] = Query(None, description="Optional facility ID filter"),
     drug: Optional[str] = Query(None, description="Optional drug code filter"),
@@ -44,6 +47,7 @@ async def get_forecast(
 
 
 @router.get("/forecast/backtest", response_model=BacktestResponse)
+@router.get("/backtest", response_model=BacktestResponse)
 async def get_backtest(
     facility: Optional[str] = Query(None, description="Facility ID to evaluate"),
     drug: Optional[str] = Query(None, description="Drug code to evaluate"),

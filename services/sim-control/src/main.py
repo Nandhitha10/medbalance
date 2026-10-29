@@ -80,6 +80,7 @@ def build_app() -> FastAPI:
         return scenario_manager.get_scenarios_list()
 
     @app.post("/scenario/{name}", response_model=Dict[str, Any])
+    @app.post("/scenarios/{name}", response_model=Dict[str, Any])
     async def apply_scenario(name: str) -> Dict[str, Any]:
         """Apply and activate a simulation scenario shock."""
         try:

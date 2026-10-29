@@ -63,6 +63,11 @@ def build_app() -> FastAPI:
     app.include_router(reports.router)
     app.include_router(reviews.router)
 
+    app.include_router(ingest.router, prefix="/api/ingest")
+    app.include_router(pull.router, prefix="/api/ingest")
+    app.include_router(reports.router, prefix="/api/ingest")
+    app.include_router(reviews.router, prefix="/api/ingest")
+
     fixtures.serve(app, "ingest-ai")
     return app
 

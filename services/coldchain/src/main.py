@@ -41,11 +41,13 @@ def build_app() -> FastAPI:
     app = create_app(name="coldchain", lifespan=lifespan)
 
     @app.get("/status", response_model=Dict[str, Any])
+    @app.get("/api/coldchain/status", response_model=Dict[str, Any])
     def get_status() -> Dict[str, Any]:
         """Get overall cold chain network health, monitored devices, and active excursions."""
         return coldchain_manager.get_status_summary()
 
     @app.get("/devices/{id}/telemetry", response_model=List[Dict[str, Any]])
+    @app.get("/api/coldchain/devices/{id}/telemetry", response_model=List[Dict[str, Any]])
     def get_device_telemetry(
         id: str,
         since: Optional[str] = Query(None, description="ISO timestamp to filter telemetry history"),
@@ -91,6 +93,7 @@ def build_app() -> FastAPI:
         return history
 
     @app.post("/telemetry", response_model=Dict[str, Any])
+    @app.post("/api/coldchain/telemetry", response_model=Dict[str, Any])
     async def inject_telemetry(payload: Dict[str, Any]) -> Dict[str, Any]:
         """Directly inject a telemetry packet into the state machine (useful for tests and manual dispatch)."""
         await coldchain_subscriber.handle_telemetry(payload)

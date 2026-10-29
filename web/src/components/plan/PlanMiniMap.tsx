@@ -187,3 +187,4 @@ export const PlanMiniMap: React.FC<PlanMiniMapProps> = ({
     </div>
   );
 };
+

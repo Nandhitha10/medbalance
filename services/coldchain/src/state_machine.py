@@ -269,6 +269,13 @@ class ColdChainManager:
         self.devices[device_id] = new_dev
         return new_dev
 
+    def process_reading(self, reading: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Convenience method to process incoming reading for device in manager."""
+        dev_id = reading.get("device_id") or reading.get("device") or "UNKNOWN"
+        assigned = reading.get("assigned_to") or reading.get("vehicle_id") or reading.get("facility_id")
+        dev = self.get_or_create_device(dev_id, assigned_to=assigned)
+        return dev.process_reading(reading)
+
     def get_status_summary(self) -> Dict[str, Any]:
         """Aggregate network health status for GET /status."""
         monitored_vehicles = 0

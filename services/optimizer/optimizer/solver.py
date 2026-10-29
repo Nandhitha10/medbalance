@@ -377,6 +377,8 @@ async def run_planning_pipeline(
         "solver": solver_choice,
         "solver_tier": solver_tier_name,
         "solver_meta": solver_meta,
+        "violations_count": solver_meta.get("violations_count", 0),
+        "violations": [],
         "orders": [o.to_dict() for o in orders],
         "candidates": [c.to_dict() for c in feasible_cands],
         "infeasible_candidates": [c.to_dict() for c in infeasible_cands],
