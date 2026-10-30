@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>MedBalance-Q &mdash; Science, shaped for you</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            color-scheme: light;
+            box-sizing: border-box;
+            padding-top: env(safe-area-inset-top, 0px);
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+            --ink: #1d2a3a;
+            --muted: #5d6f84;
+            --amber: #f28c28;
+            --medblue: #1E6BB8;
+            --medblue-dark: #14497c;
+            --medgreen: #10B981;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: inherit;
+        }
+
+        html {
+            scroll-padding-top: env(safe-area-inset-top, 0px);
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+            background: #e9eff5;
+            font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, Segoe UI, sans-serif;
+            color: var(--ink);
+        }
+
+        .bg {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(ellipse at 70% 40%, #f7fafd 0%, #e4ecf4 70%, #d9e4ee 100%);
+        }
+
+        .bokeh {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .bokeh i {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 196, 120, .75), rgba(255, 214, 160, .25) 60%, transparent 70%);
+            filter: blur(6px);
+            transition: transform .4s ease-out;
+        }
+
+        canvas {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            cursor: grab;
+            touch-action: none;
+        }
+
+        canvas:active {
+            cursor: grabbing;
+        }
+
+        nav {
+            position: fixed;
+            top: env(safe-area-inset-top, 0px);
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 5vw;
+            z-index: 10;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.4);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.6);
+        }
+
+        .brand-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--ink);
+        }
+
+        nav b {
+            font-size: 20px;
+            letter-spacing: -.02em;
+            font-weight: 800;
+        }
+
+        nav b span {
+            color: var(--amber);
+        }
+
+        .badge-quantum {
+            font-size: 10px;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: .08em;
+            background: rgba(242, 140, 40, 0.15);
+            color: #d16f15;
+            padding: 3px 8px;
+            border-radius: 20px;
+            border: 1px solid rgba(242, 140, 40, 0.3);
+        }
+
+        nav .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 28px;
+            font-size: 16px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        nav a.nav-item {
+            color: inherit;
+            text-decoration: none;
+            transition: color .2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        nav a.nav-item:hover {
+            color: var(--amber);
+        }
+
+        nav a.nav-cta {
+            background: var(--ink);
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 700;
+            padding: 10px 22px;
+            border-radius: 24px;
+            transition: all .2s;
+        }
+
+        nav a.nav-cta:hover {
+            background: var(--amber);
+            color: #ffffff;
+            transform: translateY(-1px);
+        }
+
+        .hero {
+            position: fixed;
+            left: 5vw;
+            top: 50%;
+            transform: translateY(-50%);
+            max-width: min(560px, 92vw);
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            letter-spacing: .15em;
+            font-size: 11px;
+            color: #d16f15;
+            font-weight: 700;
+            background: rgba(242, 140, 40, 0.12);
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(242, 140, 40, 0.25);
+            margin-bottom: 12px;
+        }
+
+        .hero-badge .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--amber);
+        }
+
+        .hero h1 {
+            font-size: clamp(36px, 5.5vw, 68px);
+            line-height: 1.05;
+            margin: 0 0 16px;
+            font-weight: 800;
+            letter-spacing: -.03em;
+            color: var(--ink);
+        }
+
+        .hero p {
+            color: var(--muted);
+            font-size: 16px;
+            line-height: 1.6;
+            margin: 0 0 26px;
+        }
+
+        .hero-actions {
+            pointer-events: auto;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-main {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--ink);
+            color: #ffffff !important;
+            padding: 14px 28px;
+            border-radius: 40px;
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 700;
+            transition: all .2s ease;
+            box-shadow: 0 6px 18px rgba(29, 42, 58, 0.2);
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-main:hover {
+            background: var(--amber);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(242, 140, 40, 0.35);
+        }
+
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--ink) !important;
+            padding: 13px 24px;
+            border-radius: 40px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            border: 1px solid rgba(93, 111, 132, 0.25);
+            backdrop-filter: blur(8px);
+            transition: all .2s ease;
+            cursor: pointer;
+        }
+
+        .btn-secondary:hover {
+            background: #ffffff;
+            border-color: var(--amber);
+            color: var(--amber) !important;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+        }
+
+        .btn-tertiary {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: transparent;
+            color: var(--muted) !important;
+            padding: 12px 18px;
+            border-radius: 40px;
+            text-decoration: none;
+            font-size: 13.5px;
+            font-weight: 600;
+            border: 1px dashed rgba(93, 111, 132, 0.35);
+            transition: all .2s ease;
+            cursor: pointer;
+        }
+
+        .btn-tertiary:hover {
+            color: var(--ink) !important;
+            border-color: var(--ink);
+            background: rgba(255, 255, 255, 0.6);
+            transform: translateY(-1px);
+        }
+
+        .hero-tags {
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .hero-tag-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .hero-tag-item svg {
+            color: var(--medgreen);
+        }
+
+        .hint {
+            position: fixed;
+            bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--muted);
+            letter-spacing: .15em;
+            z-index: 5;
+            pointer-events: none;
+            background: rgba(255, 255, 255, 0.65);
+            padding: 6px 16px;
+            border-radius: 20px;
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+        }
+
+        /* Modal for file protocol or dashboard connection */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(29, 42, 58, 0.45);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .25s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-box {
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 28px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            transform: translateY(12px) scale(0.97);
+            transition: transform .25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .modal-overlay.active .modal-box {
+            transform: translateY(0) scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+
+        .modal-badge {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--medblue);
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            padding: 3px 10px;
+            border-radius: 20px;
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            font-size: 22px;
+            cursor: pointer;
+            color: var(--muted);
+            padding: 0;
+            line-height: 1;
+        }
+
+        .modal-close:hover {
+            color: var(--ink);
+        }
+
+        .modal-box h3 {
+            margin: 0 0 8px;
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--ink);
+        }
+
+        .modal-box p {
+            margin: 0 0 20px;
+            font-size: 13.5px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .modal-links {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .modal-link-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border-radius: 14px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            text-decoration: none;
+            color: var(--ink);
+            transition: all .2s;
+        }
+
+        .modal-link-card:hover {
+            border-color: var(--amber);
+            background: #fffdfa;
+            transform: translateX(3px);
+        }
+
+        .modal-link-card.primary {
+            background: #f0f7ff;
+            border-color: #bcd9fb;
+        }
+
+        .modal-link-card.primary:hover {
+            border-color: var(--medblue);
+            background: #e5f0fe;
+        }
+
+        .modal-link-card .card-info strong {
+            display: block;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .modal-link-card .card-info span {
+            font-size: 11.5px;
+            color: var(--muted);
+            font-family: monospace;
+        }
+
+        .modal-tip {
+            font-size: 11.5px;
+            color: var(--muted);
+            background: #f1f5f9;
+            padding: 10px 14px;
+            border-radius: 10px;
+            line-height: 1.5;
+        }
+
+        .modal-tip code {
+            background: #ffffff;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-weight: 600;
+            color: var(--ink);
+        }
+
+        @media(max-width: 768px) {
+            nav .nav-links {
+                display: none;
+            }
+
+            .hero {
+                top: auto;
+                bottom: 80px;
+                transform: none;
+                left: 6vw;
+                right: 6vw;
+                max-width: none;
+            }
+
+            .hero h1 {
+                font-size: 38px;
+            }
+
+            .hero-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn-main,
+            .btn-secondary,
+            .btn-tertiary {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg"></div>
+    <div class="bokeh" id="bokeh"></div>
+    <canvas id="c"></canvas>
+
+    <!-- Navigation Header -->
+    <nav>
+        <a href="/landing.html" class="brand-link" onclick="handleNavigation(event, '/landing.html')">
+            <b>MedBalance<span>-Q</span></b>
+        </a>
+        <div class="nav-links">
+            <a href="/index.html?page=map" class="nav-item" onclick="handleNavigation(event, '/dashboard')">Dashboard Overview</a>
+            <a href="/index.html?page=plan" class="nav-item" onclick="handleNavigation(event, '/hub')">Feature Hub</a>
+            <a href="/index.html?page=plan" class="nav-item" onclick="handleNavigation(event, '/planner')">Transfer Planner</a>
+            <a href="/index.html?page=benchmark" class="nav-item" onclick="handleNavigation(event, '/quantum')">Quantum Solver</a>
+            <a href="http://localhost:8501" target="_blank" rel="noopener noreferrer" class="nav-item">Overview</a>
+            <a href="/index.html?page=map" class="nav-cta" onclick="handleNavigation(event, '/dashboard')">Launch Dashboard
+                &rarr;</a>
+        </div>
+    </nav>
+
+    <!-- Main Hero Presentation -->
+    <section class="hero">
+
+        <h1>No shelf runs empty while another runs out of time.</h1>
+        <p style="font-size: 26px; font-weight: 800; color: #f28c28; margin: 0 0 24px; letter-spacing: -0.01em;">Surplus
+            to Stockout</p>
+
+        <!-- Connected Action Buttons -->
+        <div class="hero-actions">
+            <a href="/index.html?page=map" id="btn-dashboard" class="btn-main" onclick="handleNavigation(event, '/dashboard')">
+                <span>Go to Dashboard</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+            </a>
+
+            <a href="/index.html?page=plan" id="btn-hub" class="btn-secondary" onclick="handleNavigation(event, '/hub')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                    <polyline points="2 17 12 22 22 17"></polyline>
+                    <polyline points="2 12 12 17 22 12"></polyline>
+                </svg>
+                <span>Feature Access Hub (6 Tools)</span>
+            </a>
+
+            <a href="http://localhost:8501" target="_blank" rel="noopener noreferrer" class="btn-tertiary"
+                title="Open Streamlit Dashboard on port 8501">
+                <span>Overview</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                    <polyline points="15 3 21 3 21 9"></polyline>
+                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                </svg>
+            </a>
+        </div>
+    </section>
+
+
+    <!-- Connection / Launcher Modal for Local Environments -->
+    <div id="modal-overlay" class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-box" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <span class="modal-badge">Dashboard Connection</span>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <h3>Choose a Dashboard</h3>
+            <p>Select which MedBalance dashboard you want to launch:</p>
+
+            <div class="modal-links">
+                <a href="http://localhost:3000/index.html?page=map" class="modal-link-card primary" onclick="handleNavigation(event, '/dashboard')">
+                    <div class="card-info">
+                        <strong>District Dashboard &amp; Hub (React App)</strong>
+                        <span>http://localhost:3000/index.html?page=map &bull; Port 3000</span>
+                    </div>
+                    <span>&rarr;</span>
+                </a>
+
+                <a href="http://localhost:3000/index.html?page=plan" class="modal-link-card" onclick="handleNavigation(event, '/hub')">
+                    <div class="card-info">
+                        <strong>Feature Access Hub (6 Pipeline Tools)</strong>
+                        <span>http://localhost:3000/index.html?page=plan &bull; Upload, Planner, Orders, Quantum</span>
+                    </div>
+                    <span>&rarr;</span>
+                </a>
+
+                <a href="http://localhost:8501" target="_blank" rel="noopener noreferrer" class="modal-link-card">
+                    <div class="card-info">
+                        <strong>Streamlit Optimization Dashboard</strong>
+                        <span>http://localhost:8501 &bull; 6 Core Tabs &amp; Solver Benchmarks</span>
+                    </div>
+                    <span>&rarr;</span>
+                </a>
+            </div>
+
+            <div class="modal-tip">
+                <strong>To start the local servers in terminal:</strong><br>
+                &bull; React Web App: <code>npm run dev</code> (Port 3000)<br>
+                &bull; Streamlit UI: <code>streamlit run dashboard/app.py</code> (Port 8501)<br>
+                &bull; FastAPI Backend: <code>python -m backend.main</code> (Port 8000)
+            </div>
+        </div>
+    </div>
+
+    <!-- Seamless Navigation & Server Detection Script -->
+    <script>
+        function handleNavigation(event, targetRoute) {
+            if (event && event.preventDefault) {
+                event.preventDefault();
+            }
+
+            var routeMap = {
+                '/': '/landing.html',
+                '/landing': '/landing.html',
+                '/landing.html': '/landing.html',
+                '/dashboard': '/index.html?page=map',
+                '/map': '/index.html?page=map',
+                '/hub': '/index.html?page=plan',
+                '/planner': '/index.html?page=plan',
+                '/plan': '/index.html?page=plan',
+                '/quantum': '/index.html?page=benchmark',
+                '/benchmark': '/index.html?page=benchmark',
+                '/coldchain': '/index.html?page=coldchain',
+                '/scenarios': '/index.html?page=scenarios',
+                '/ingestion': '/index.html?page=ingestion',
+                '/results': '/index.html?page=results',
+                '/ai-health': '/index.html?page=ai-health',
+                '/scan': '/index.html?page=scan'
+            };
+
+            var destination = routeMap[targetRoute] || targetRoute;
+
+            // If running on a web server (e.g. Vite dev server on http://localhost:3000)
+            if (window.location.protocol.startsWith('http')) {
+                window.location.href = destination;
+                return;
+            }
+
+            // If running via file:/// protocol (opened locally by double-clicking)
+            var host = 'http://localhost:3000';
+            var fullTarget = host + destination;
+
+            // Probe if Vite dev server is running on localhost:3000
+            fetch(host, { mode: 'no-cors' })
+                .then(function () {
+                    window.location.href = fullTarget;
+                })
+                .catch(function () {
+                    // Try checking Streamlit on 8501
+                    fetch('http://localhost:8501', { mode: 'no-cors' })
+                        .then(function () {
+                            window.location.href = 'http://localhost:8501';
+                        })
+                        .catch(function () {
+                            // Neither server responded, open selection modal with commands
+                            openModal();
+                        });
+                });
+        }
+
+        function openModal() {
+            var modal = document.getElementById('modal-overlay');
+            if (modal) modal.classList.add('active');
+        }
+
+        function closeModal(event) {
+            var modal = document.getElementById('modal-overlay');
+            if (modal) modal.classList.remove('active');
+        }
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeModal();
+        });
+    </script>
+
+    <!-- Three.js Interactive 3D Capsule Engine -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        (function () {
+            var cv = document.getElementById('c');
+            var R = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: true });
+            R.setPixelRatio(Math.min(devicePixelRatio, 2));
+            var S = new THREE.Scene();
+            S.fog = new THREE.Fog(0xe4ecf4, 6, 20);
+            var Cam = new THREE.PerspectiveCamera(35, 1, .1, 60); Cam.position.set(0, 0, 9);
+
+            // lights
+            S.add(new THREE.AmbientLight(0xffffff, .8));
+            var key = new THREE.DirectionalLight(0xffffff, 1.1); key.position.set(-3, 4, 5); S.add(key);
+            var warm = new THREE.PointLight(0xffb066, 1.2, 20); warm.position.set(-5, 1, 3); S.add(warm);
+            var rim = new THREE.DirectionalLight(0xaad4ff, .8); rim.position.set(4, -2, -3); S.add(rim);
+
+            // capsule (lathe halves, increased breadth for fuller look)
+            var r = .74, h = .88;
+            function half(sign) {
+                var p = [], n = 28, i, a;
+                p.push(new THREE.Vector2(0, 0));
+                p.push(new THREE.Vector2(r, 0));
+                p.push(new THREE.Vector2(r, h));
+                for (i = 1; i <= n; i++) { a = i / n * Math.PI / 2; p.push(new THREE.Vector2(Math.cos(a) * r, h + Math.sin(a) * r)); }
+                var g = new THREE.LatheGeometry(p, 64);
+                if (sign < 0) g.scale(1, -1, 1);
+                return g;
+            }
+            var orange = new THREE.MeshPhysicalMaterial({ color: 0xf97316, roughness: .28, metalness: .05, clearcoat: 1, clearcoatRoughness: .1, emissive: 0xc2410c, emissiveIntensity: .25 });
+            var glass = new THREE.MeshPhysicalMaterial({ color: 0xe0f2fe, roughness: .12, metalness: .06, transparent: true, opacity: .985, clearcoat: 1, clearcoatRoughness: .06, emissive: 0x7dd3fc, emissiveIntensity: .35, side: THREE.FrontSide, depthWrite: true });
+            var cap = new THREE.Group();
+            var top = new THREE.Mesh(half(1), orange); top.position.y = .09;
+            var bot = new THREE.Mesh(half(1), glass); bot.rotation.x = Math.PI; bot.position.y = -.09; bot.renderOrder = 2;
+            cap.add(top, bot);
+            var pivot = new THREE.Group(); pivot.add(cap); pivot.position.set(1.5, .1, 0);
+            pivot.rotation.z = -.35;
+            S.add(pivot);
+
+            // molecules
+            var mol = new THREE.Group(); S.add(mol);
+            var blue = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: .2, metalness: .1, transparent: false, opacity: 1.0 });
+            var amber = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: .2, metalness: .1, transparent: false, opacity: 1.0 });
+            var bond = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: .35 });
+            var pts = [], i, j;
+            function rnd(a, b) { return a + Math.random() * (b - a); }
+            for (i = 0; i < 70; i++)pts.push(new THREE.Vector3(rnd(-9, 9), rnd(-5, 5), rnd(-9, 2)));
+            pts.forEach(function (p) {
+                var big = Math.random() < .18, s = big ? rnd(.2, .32) : rnd(.1, .2);
+                var m = new THREE.Mesh(new THREE.SphereGeometry(s, 20, 20), Math.random() < .22 ? amber : blue);
+                m.position.copy(p); m.userData.s = Math.random() * 6; mol.add(m);
+            });
+            for (i = 0; i < pts.length; i++)for (j = i + 1; j < pts.length; j++) {
+                var d = pts[i].distanceTo(pts[j]);
+                if (d < 2.4 && Math.random() < .5) {
+                    var c = new THREE.Mesh(new THREE.CylinderGeometry(.025, .025, d, 6), bond);
+                    c.position.copy(pts[i]).add(pts[j]).multiplyScalar(.5);
+                    c.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), pts[j].clone().sub(pts[i]).normalize());
+                    mol.add(c);
+                }
+            }
+
+            // floating dust
+            var N = 250, pa = new Float32Array(N * 3);
+            for (i = 0; i < N; i++) { pa[i * 3] = rnd(-9, 9); pa[i * 3 + 1] = rnd(-5, 5); pa[i * 3 + 2] = rnd(-6, 5); }
+            var pg = new THREE.BufferGeometry(); pg.setAttribute('position', new THREE.BufferAttribute(pa, 3));
+            var dust = new THREE.Points(pg, new THREE.PointsMaterial({ color: 0xffffff, size: .04, transparent: true, opacity: .9 }));
+            S.add(dust);
+
+            // CSS bokeh
+            var bk = document.getElementById('bokeh');
+            [[4, 30, 180], [10, 52, 120], [2, 70, 150], [18, 18, 90], [28, 80, 110], [8, 8, 70], [40, 12, 100]].forEach(function (b, k) {
+                var e = document.createElement('i'); e.style.left = b[0] + '%'; e.style.top = b[1] + '%'; e.style.width = e.style.height = b[2] + 'px'; e.dataset.k = k; bk.appendChild(e);
+            });
+
+            // interaction
+            var mx = 0, my = 0, drag = false, lx = 0, ly = 0, spinX = 0, spinY = 0, velY = 0, velX = 0, zoom = 9, zt = 9;
+            addEventListener('pointermove', function (e) {
+                mx = e.clientX / innerWidth * 2 - 1; my = e.clientY / innerHeight * 2 - 1;
+                if (drag) { velY = (e.clientX - lx) * .01; velX = (e.clientY - ly) * .01; spinY += velY; spinX += velX; lx = e.clientX; ly = e.clientY; }
+                var bs = bk.children; for (var k = 0; k < bs.length; k++)bs[k].style.transform = 'translate(' + (-mx * (10 + k * 6)) + 'px,' + (-my * (8 + k * 5)) + 'px)';
+            });
+            cv.addEventListener('pointerdown', function (e) { drag = true; lx = e.clientX; ly = e.clientY; cv.setPointerCapture(e.pointerId); });
+            addEventListener('pointerup', function () { drag = false; });
+            addEventListener('wheel', function (e) { zt = Math.max(5.5, Math.min(11, zt + e.deltaY * .004)); }, { passive: true });
+
+            function resize() {
+                var w = innerWidth, h2 = innerHeight; R.setSize(w, h2, false); Cam.aspect = w / h2;
+                Cam.updateProjectionMatrix(); pivot.position.x = w < 700 ? 0 : 1.5;
+            }
+            addEventListener('resize', resize); resize();
+
+            var clk = new THREE.Clock();
+            function loop() {
+                var t = clk.getElapsedTime();
+                zoom += (zt - zoom) * .06;
+                Cam.position.x += ((mx * .8) - Cam.position.x) * .05;
+                Cam.position.y += ((-my * .5) - Cam.position.y) * .05;
+                Cam.position.z = zoom; Cam.lookAt(0, 0, 0);
+                if (!drag) { velY *= .95; velX *= .95; spinY += velY; spinX += velX; spinY += .004; }
+                spinX *= .985;
+                cap.rotation.y = spinY; cap.rotation.x = spinX + Math.sin(t * .6) * .12;
+                pivot.position.y = .1 + Math.sin(t * .8) * .18;
+                mol.rotation.y = t * .02 + mx * .05; mol.rotation.x = my * .03;
+                mol.children.forEach(function (m) { if (m.userData.s !== undefined) m.position.y += Math.sin(t + m.userData.s) * .0006; });
+                dust.rotation.y = t * .01;
+                R.render(S, Cam); requestAnimationFrame(loop);
+            }
+            loop();
+        })();
+    </script>
+</body>
+
+</html>

@@ -21,13 +21,43 @@ import { Flame, ArrowRight, ShieldAlert } from "lucide-react";
 export const AppShell: React.FC = () => {
   const getUrlParams = () => {
     if (typeof window === "undefined") return { page: "map" as NavPage, facilityId: null };
-    if (window.location.pathname.startsWith("/scan")) {
+    const pathname = window.location.pathname.toLowerCase();
+    const params = new URLSearchParams(window.location.search);
+    const pageParam = params.get("page") as NavPage | null;
+    const facilityId = params.get("facility");
+
+    if (pageParam) {
+      return { page: pageParam, facilityId };
+    }
+    if (pathname.startsWith("/scan")) {
       return { page: "scan" as NavPage, facilityId: null };
     }
-    const params = new URLSearchParams(window.location.search);
-    const page = (params.get("page") as NavPage) || "map";
-    const facilityId = params.get("facility");
-    return { page, facilityId };
+    if (pathname.includes("/hub") || pathname.includes("/planner") || pathname.includes("/plan")) {
+      return { page: "plan" as NavPage, facilityId };
+    }
+    if (pathname.includes("/quantum") || pathname.includes("/benchmark")) {
+      return { page: "benchmark" as NavPage, facilityId };
+    }
+    if (pathname.includes("/coldchain")) {
+      return { page: "coldchain" as NavPage, facilityId };
+    }
+    if (pathname.includes("/scenarios") || pathname.includes("/scenario")) {
+      return { page: "scenarios" as NavPage, facilityId };
+    }
+    if (pathname.includes("/ingestion") || pathname.includes("/review")) {
+      return { page: "ingestion" as NavPage, facilityId };
+    }
+    if (pathname.includes("/results")) {
+      return { page: "results" as NavPage, facilityId };
+    }
+    if (pathname.includes("/ai-health") || pathname.includes("/aihealth")) {
+      return { page: "ai-health" as NavPage, facilityId };
+    }
+    if (pathname.includes("/dashboard") || pathname.includes("/map")) {
+      return { page: "map" as NavPage, facilityId };
+    }
+
+    return { page: "map" as NavPage, facilityId };
   };
 
   const initialParams = getUrlParams();
@@ -226,10 +256,10 @@ export const AppShell: React.FC = () => {
       )}
 
       {/* Main Workspace with Sidebar Nav and Active Screen */}
-      <div className="flex flex-1 overflow-hidden relative">
+      <div className="flex flex-1 overflow-hidden relative min-h-0">
         <SidebarNav activePage={activePage} onSelectPage={handleSelectPage} />
 
-        <main className="flex-1 overflow-hidden relative bg-slate-50">
+        <main className={`flex-1 relative ${activePage === "map" ? "overflow-hidden" : "overflow-y-auto"} bg-slate-50 min-h-0`}>
           {activePage === "map" && (
             <DistrictMap
               facilities={enrichedFacilities}
