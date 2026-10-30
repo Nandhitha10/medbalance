@@ -70,15 +70,15 @@ export const BenchmarkScreen: React.FC = () => {
   });
 
   return (
-    <div className="p-8 space-y-6 max-w-7xl mx-auto overflow-y-auto select-none">
+    <div className="p-8 space-y-6 max-w-7xl mx-auto select-none">
       {/* Header */}
       <div>
         <div className="flex items-center space-x-3 mb-1">
           <h1 className="text-2xl font-black text-slate-900 tracking-tight">
             Solver Benchmark & Algorithmic Comparison
           </h1>
-          <span className="bg-purple-100 text-purple-800 text-xs font-bold px-2.5 py-1 rounded-full border border-purple-300 flex items-center space-x-1">
-            <Scale className="w-3.5 h-3.5 text-purple-600 mr-1" />
+          <span className="bg-blue-50 text-blue-800 text-xs font-bold px-2.5 py-1 rounded-full border border-blue-200 flex items-center space-x-1">
+            <Scale className="w-3.5 h-3.5 text-blue-600 mr-1" />
             <span>Honest Evaluation against Exact MILP Optimum</span>
           </span>
         </div>
@@ -113,7 +113,7 @@ export const BenchmarkScreen: React.FC = () => {
             Solve Time Comparison
           </span>
           <div className="flex items-baseline space-x-2">
-            <span className="text-3xl font-black text-teal-700">
+            <span className="text-3xl font-black text-blue-700">
               {(solver_time_sec * 1000).toFixed(0)} ms
             </span>
             <span className="text-xs font-bold text-slate-500">
@@ -171,7 +171,7 @@ export const BenchmarkScreen: React.FC = () => {
           </div>
           <div className="flex items-center space-x-3 text-xs">
             <span className="flex items-center space-x-1.5">
-              <span className="w-3 h-3 rounded bg-teal-600"></span>
+              <span className="w-3 h-3 rounded bg-blue-600"></span>
               <span className="font-semibold text-slate-700">Shortage Reduced (Units)</span>
             </span>
             <span className="flex items-center space-x-1.5">
@@ -196,7 +196,7 @@ export const BenchmarkScreen: React.FC = () => {
                   fontSize: "12px",
                 }}
               />
-              <Bar dataKey="shortage_reduced" name="Shortage Reduced" fill="#0d9488" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="shortage_reduced" name="Shortage Reduced" fill="#2563eb" radius={[4, 4, 0, 0]} />
               <Bar dataKey="waste_moved" name="Waste Moved" fill="#f43f5e" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -239,7 +239,7 @@ export const BenchmarkScreen: React.FC = () => {
                     key={row.policy}
                     className={`transition-colors ${
                       isQubo
-                        ? "bg-purple-50/50 font-bold"
+                        ? "bg-blue-50/70 font-bold"
                         : isMilp
                         ? "bg-emerald-50/40"
                         : "hover:bg-slate-50"
@@ -259,7 +259,7 @@ export const BenchmarkScreen: React.FC = () => {
                             : "No Transfer"}
                         </span>
                         {isQubo && (
-                          <span className="bg-purple-100 text-purple-800 text-[10px] px-1.5 py-0.2 rounded border border-purple-200">
+                          <span className="bg-blue-100 text-blue-800 text-[10px] px-1.5 py-0.2 rounded border border-blue-200">
                             Active
                           </span>
                         )}
@@ -275,7 +275,7 @@ export const BenchmarkScreen: React.FC = () => {
                       {row.objective_value.toFixed(2)}
                     </td>
 
-                    <td className="py-3 px-3 text-right font-bold text-teal-800">
+                    <td className="py-3 px-3 text-right font-bold text-blue-700">
                       {formatNumber(row.shortage_reduction)} units
                     </td>
 

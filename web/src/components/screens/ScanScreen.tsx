@@ -607,3 +607,4 @@ export const ScanScreen: React.FC<ScanScreenProps> = ({ initialToken, onNavigate
     </div>
   );
 };
+

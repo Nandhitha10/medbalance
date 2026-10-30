@@ -66,7 +66,7 @@ export const ResultsScreen: React.FC = () => {
       error: 6,
       ci_low: 32,
       ci_high: 44,
-      color: "#0f766e",
+      color: "#2563eb",
     },
     {
       policy: "Classical MILP",
@@ -204,7 +204,7 @@ export const ResultsScreen: React.FC = () => {
       gap_pct: "0.0%",
       runtime: "0.042s",
       badge: "QpiAI Certified",
-      badgeColor: "bg-teal-100 text-teal-800 font-black ring-1 ring-teal-500",
+      badgeColor: "bg-blue-100 text-blue-800 font-black ring-1 ring-blue-500",
     },
     {
       name: "Classical MILP (OR-Tools)",
@@ -222,7 +222,7 @@ export const ResultsScreen: React.FC = () => {
   ];
 
   return (
-    <div className="p-8 space-y-6 max-w-7xl mx-auto overflow-y-auto select-none">
+    <div className="p-8 space-y-6 max-w-7xl mx-auto select-none">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -230,8 +230,8 @@ export const ResultsScreen: React.FC = () => {
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">
               Impact Evaluation & Algorithmic Ablation Study
             </h1>
-            <span className="inline-flex items-center space-x-1 bg-teal-100 text-teal-800 text-xs font-bold px-2.5 py-1 rounded-full border border-teal-300 shadow-2xs">
-              <Award className="w-3.5 h-3.5 text-teal-600 mr-1" />
+            <span className="inline-flex items-center space-x-1 bg-blue-50 text-blue-800 text-xs font-bold px-2.5 py-1 rounded-full border border-blue-200 shadow-2xs">
+              <Award className="w-3.5 h-3.5 text-blue-600 mr-1" />
               <span>0.0% Optimality Gap</span>
             </span>
           </div>
@@ -245,7 +245,7 @@ export const ResultsScreen: React.FC = () => {
             onClick={() => setSelectedMetric("stockouts")}
             className={`px-3 py-1.5 rounded-lg transition-all ${
               selectedMetric === "stockouts"
-                ? "bg-white text-teal-800 shadow-xs"
+                ? "bg-blue-600 text-white shadow-xs"
                 : "text-slate-600 hover:text-slate-900"
             }`}
           >
@@ -255,7 +255,7 @@ export const ResultsScreen: React.FC = () => {
             onClick={() => setSelectedMetric("financial")}
             className={`px-3 py-1.5 rounded-lg transition-all ${
               selectedMetric === "financial"
-                ? "bg-white text-teal-800 shadow-xs"
+                ? "bg-blue-600 text-white shadow-xs"
                 : "text-slate-600 hover:text-slate-900"
             }`}
           >
@@ -270,7 +270,7 @@ export const ResultsScreen: React.FC = () => {
           <span className="text-xs font-bold uppercase text-slate-500 block">
             Cumulative Shortage Reduced
           </span>
-          <div className="text-3xl font-black text-teal-700">1,350 units</div>
+          <div className="text-3xl font-black text-blue-700">1,350 units</div>
           <p className="text-[11px] text-slate-500 pt-1 border-t border-slate-100">
             <strong>92% reduction</strong> across high-volume district hospital facilities
           </p>
@@ -325,7 +325,7 @@ export const ResultsScreen: React.FC = () => {
 
           <div className="flex items-center space-x-3 text-xs">
             <span className="inline-flex items-center space-x-1.5">
-              <span className="w-3 h-3 rounded bg-teal-600 inline-block" />
+              <span className="w-3 h-3 rounded bg-blue-600 inline-block" />
               <span className="font-semibold text-slate-700">QpiAI QUBO</span>
             </span>
             <span className="inline-flex items-center space-x-1.5">
@@ -384,7 +384,7 @@ export const ResultsScreen: React.FC = () => {
                     dataKey="error"
                     width={4}
                     strokeWidth={2}
-                    stroke="#0f766e"
+                    stroke="#2563eb"
                   />
                   {stockoutData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
@@ -432,7 +432,7 @@ export const ResultsScreen: React.FC = () => {
                 <Bar
                   dataKey="avoided_expiry_inr"
                   name="Avoided Expiry (₹)"
-                  fill="#0f766e"
+                  fill="#2563eb"
                   radius={[4, 4, 0, 0]}
                   maxBarSize={40}
                 />

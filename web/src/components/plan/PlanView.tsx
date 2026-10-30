@@ -133,7 +133,7 @@ export const PlanView: React.FC<PlanViewProps> = ({
     plan.qcloud_tier || "QpiAI QCloud (QAOA Max-Cut Zoning, p=2)";
 
   return (
-    <div className="p-8 space-y-6 max-w-7xl mx-auto overflow-y-auto select-none">
+    <div className="p-8 space-y-6 max-w-7xl mx-auto select-none">
       {/* Top Header & Solver Trigger */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -158,7 +158,7 @@ export const PlanView: React.FC<PlanViewProps> = ({
             value={selectedSolver}
             onChange={(e) => setSelectedSolver(e.target.value)}
             disabled={isSolving}
-            className="bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 shadow-2xs focus:ring-2 focus:ring-teal-500"
+            className="bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 shadow-2xs focus:ring-2 focus:ring-blue-500"
           >
             <option value="qubo">QUBO (QpiAI Opt Platform / Local)</option>
             <option value="greedy_f4">Safe Greedy F4 (Deterministic Core)</option>
@@ -171,7 +171,7 @@ export const PlanView: React.FC<PlanViewProps> = ({
             className={`flex items-center space-x-2 px-5 py-2.5 rounded-xl text-sm font-bold shadow-md transition-all ${
               isSolving
                 ? "bg-slate-400 text-white cursor-not-allowed"
-                : "bg-teal-700 hover:bg-teal-800 text-white active:scale-95"
+                : "bg-blue-600 hover:bg-blue-700 text-white active:scale-95"
             }`}
           >
             {isSolving ? (
@@ -190,27 +190,27 @@ export const PlanView: React.FC<PlanViewProps> = ({
       </div>
 
       {/* Solver Tier Badges Banner */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-slate-900 text-slate-100 rounded-xl shadow-xs">
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-blue-950 text-blue-100 rounded-xl shadow-xs border border-blue-900">
         <div className="flex items-center space-x-2 text-xs">
-          <Cpu className="w-4 h-4 text-teal-400" />
-          <span className="font-bold text-slate-300">Active Quantum & Classical Solver Hierarchy:</span>
+          <Cpu className="w-4 h-4 text-blue-400" />
+          <span className="font-bold text-blue-200">Active Quantum & Classical Solver Hierarchy:</span>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           {/* QpiAI Opt Platform Badge */}
-          <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold bg-teal-900/80 text-teal-200 border border-teal-700">
-            <Sparkles className="w-3 h-3 text-teal-400 mr-1.5" />
+          <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold bg-blue-900/90 text-blue-200 border border-blue-700">
+            <Sparkles className="w-3 h-3 text-blue-400 mr-1.5" />
             <span>QpiAI Opt: {solverTierText}</span>
           </span>
 
           {/* QCloud QAOA Max-Cut Badge */}
-          <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold bg-purple-900/80 text-purple-200 border border-purple-700">
-            <Zap className="w-3 h-3 text-purple-400 mr-1.5" />
+          <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold bg-indigo-900/90 text-indigo-200 border border-indigo-700">
+            <Zap className="w-3 h-3 text-indigo-400 mr-1.5" />
             <span>QCloud Zoning: {qcloudTierText}</span>
           </span>
 
           {/* Runtime */}
-          <span className="font-mono text-[11px] font-bold text-slate-400 px-2 py-1 bg-slate-800 rounded">
+          <span className="font-mono text-[11px] font-bold text-blue-200 px-2 py-1 bg-blue-900/60 rounded border border-blue-800">
             {plan.execution_time_sec ? `${plan.execution_time_sec.toFixed(3)}s` : "0.042s"}
           </span>
         </div>
@@ -220,7 +220,7 @@ export const PlanView: React.FC<PlanViewProps> = ({
       <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs space-y-2">
         <div className="flex items-center justify-between text-xs font-bold text-slate-700 mb-2">
           <span>Optimization Pipeline Execution Workflow</span>
-          <span className="text-teal-700">
+          <span className="text-blue-700">
             {isSolving ? `Stage ${activeStageIndex + 1} of 6: ${stages[activeStageIndex]?.label}` : "Pipeline Completed (6/6)"}
           </span>
         </div>
@@ -235,9 +235,9 @@ export const PlanView: React.FC<PlanViewProps> = ({
                 key={stg.id}
                 className={`p-2.5 rounded-lg border text-left transition-all space-y-1 ${
                   isCurrent
-                    ? "bg-teal-50 border-teal-500 ring-2 ring-teal-500/20"
+                    ? "bg-blue-50 border-blue-500 ring-2 ring-blue-500/20"
                     : isCompleted
-                    ? "bg-emerald-50/50 border-emerald-300"
+                    ? "bg-blue-50/40 border-blue-200"
                     : "bg-slate-50 border-slate-200 opacity-60"
                 }`}
               >
@@ -246,9 +246,9 @@ export const PlanView: React.FC<PlanViewProps> = ({
                     0{idx + 1}
                   </span>
                   {isCompleted && !isCurrent ? (
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />
                   ) : isCurrent ? (
-                    <RotateCw className="w-3.5 h-3.5 text-teal-600 animate-spin" />
+                    <RotateCw className="w-3.5 h-3.5 text-blue-600 animate-spin" />
                   ) : (
                     <div className="w-2 h-2 rounded-full bg-slate-300"></div>
                   )}

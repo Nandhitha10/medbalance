@@ -115,7 +115,7 @@ export const AiHealthScreen: React.FC = () => {
   ];
 
   return (
-    <div className="p-8 space-y-6 max-w-7xl mx-auto overflow-y-auto select-none">
+    <div className="p-8 space-y-6 max-w-7xl mx-auto select-none">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -138,16 +138,16 @@ export const AiHealthScreen: React.FC = () => {
           disabled={healthFetching}
           className="flex items-center space-x-2 px-4 py-2 bg-white border border-slate-300 hover:bg-slate-50 active:scale-95 text-slate-700 text-xs font-bold rounded-xl shadow-2xs transition-all"
         >
-          <RotateCw className={`w-3.5 h-3.5 text-teal-600 ${healthFetching ? "animate-spin" : ""}`} />
+          <RotateCw className={`w-3.5 h-3.5 text-blue-600 ${healthFetching ? "animate-spin" : ""}`} />
           <span>Refresh Metrics</span>
         </button>
       </div>
 
       {/* Numeric Firewall Alert Notice */}
       {firewallBlocks > 0 && (
-        <div className="p-4 bg-teal-900 text-teal-100 rounded-xl shadow-sm border border-teal-700 flex items-center justify-between">
+        <div className="p-4 bg-blue-950 text-blue-100 rounded-xl shadow-sm border border-blue-900 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 rounded-lg bg-teal-800 flex items-center justify-center text-teal-300 font-bold shrink-0">
+            <div className="w-9 h-9 rounded-lg bg-blue-900 flex items-center justify-center text-blue-300 font-bold shrink-0">
               <ShieldCheck className="w-5 h-5 text-emerald-400" />
             </div>
             <div>
@@ -157,7 +157,7 @@ export const AiHealthScreen: React.FC = () => {
                   {firewallBlocks} Blocks Enforced
                 </span>
               </div>
-              <p className="text-xs text-teal-200 mt-0.5">
+              <p className="text-xs text-blue-200 mt-0.5">
                 The firewall intercepted ungrounded numeric claims in LLM draft narrations, automatically falling back to deterministic certified templates with ±0.5% tolerance verification.
               </p>
             </div>
@@ -175,9 +175,9 @@ export const AiHealthScreen: React.FC = () => {
         <div className="p-4 bg-white border border-slate-200 rounded-xl shadow-xs space-y-1.5">
           <div className="flex items-center justify-between text-slate-500">
             <span className="text-xs font-bold uppercase tracking-wider">Active Provider</span>
-            <Cpu className="w-4 h-4 text-teal-600" />
+            <Cpu className="w-4 h-4 text-blue-600" />
           </div>
-          <div className="text-xl font-black text-teal-700">
+          <div className="text-xl font-black text-blue-700">
             {health?.primary_provider || "ClaudeProvider"}
           </div>
           <div className="text-[11px] text-slate-500 flex flex-col space-y-0.5 pt-1 border-t border-slate-100">
@@ -278,7 +278,7 @@ export const AiHealthScreen: React.FC = () => {
                       <div className="flex items-center space-x-2">
                         <div className="w-24 bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200">
                           <div
-                            className="bg-teal-600 h-2 rounded-full"
+                            className="bg-blue-600 h-2 rounded-full"
                             style={{ width: `${hitRate}%` }}
                           />
                         </div>
@@ -367,7 +367,7 @@ export const AiHealthScreen: React.FC = () => {
             <span className="text-[10px] font-bold uppercase text-slate-400 block mb-0.5">
               QUBO Optimality Gap
             </span>
-            <span className="text-base font-black text-teal-700">
+            <span className="text-base font-black text-blue-700">
               {evalSummary.qubo_optimality_gap_pct}% vs MILP
             </span>
           </div>

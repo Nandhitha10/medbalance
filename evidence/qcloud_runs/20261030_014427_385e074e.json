@@ -1,0 +1,36 @@
+{
+  "timestamp": "2026-10-30T01:44:27.475284+00:00",
+  "tier": "qsv_local",
+  "depth": 1,
+  "shots": 512,
+  "n_nodes": 5,
+  "n_edges": 10,
+  "cut_value": 3.866,
+  "exact_cut_value": 3.866,
+  "approximation_ratio": 1.0,
+  "time_ms": 2924.66,
+  "partition": {
+    "H1": 1,
+    "H2": 0,
+    "H3": 0,
+    "H4": 1,
+    "W0": 0
+  },
+  "prior_tier_errors": [
+    "qpiai_qcloud_simulator failed: QpiAI QCloud authentication failed: API key is invalid or expired"
+  ],
+  "tier_attempts": [
+    {
+      "tier": "qpiai_qcloud_simulator",
+      "time_ms": 100.23,
+      "status": "error",
+      "error": "QpiAI QCloud authentication failed: API key is invalid or expired"
+    },
+    {
+      "tier": "qsv_local",
+      "time_ms": 2924.66,
+      "status": "success",
+      "cut_value": 3.866
+    }
+  ]
+}

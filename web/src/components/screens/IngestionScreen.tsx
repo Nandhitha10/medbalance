@@ -170,7 +170,7 @@ export const IngestionScreen: React.FC = () => {
   };
 
   return (
-    <div className="p-8 space-y-6 max-w-7xl mx-auto overflow-y-auto">
+    <div className="p-8 space-y-6 max-w-7xl mx-auto select-none">
       {/* Page Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -188,7 +188,7 @@ export const IngestionScreen: React.FC = () => {
           className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-bold shadow-xs transition-all ${
             isPulling
               ? "bg-slate-300 text-slate-600 cursor-not-allowed"
-              : "bg-teal-700 hover:bg-teal-800 text-white active:scale-95"
+              : "bg-blue-600 hover:bg-blue-700 text-white active:scale-95"
           }`}
         >
           <RefreshCw className={`w-3.5 h-3.5 ${isPulling ? "animate-spin" : ""}`} />
@@ -207,7 +207,7 @@ export const IngestionScreen: React.FC = () => {
             }}
             className={`p-4 bg-white border rounded-xl shadow-xs space-y-2 cursor-pointer transition-all ${
               selectedReport?.facility_code === ch.code
-                ? "border-teal-500 ring-2 ring-teal-500/20 bg-teal-50/20"
+                ? "border-blue-500 ring-2 ring-blue-500/20 bg-blue-50/20"
                 : "border-slate-200 hover:border-slate-300"
             }`}
           >
@@ -215,7 +215,7 @@ export const IngestionScreen: React.FC = () => {
               <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded border ${ch.badgeColor}`}>
                 {ch.type}
               </span>
-              <span className="text-[11px] font-bold text-teal-700">{ch.confidence} Match</span>
+              <span className="text-[11px] font-bold text-blue-700">{ch.confidence} Match</span>
             </div>
             <div className="flex items-center space-x-2">
               {ch.icon}
@@ -223,7 +223,7 @@ export const IngestionScreen: React.FC = () => {
             </div>
             <div className="text-xs text-slate-500 flex items-center justify-between pt-1 border-t border-slate-100">
               <span className="truncate">{ch.format}</span>
-              <span className="flex items-center text-teal-700 font-semibold shrink-0 ml-1">
+              <span className="flex items-center text-blue-700 font-semibold shrink-0 ml-1">
                 <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
                 Live
               </span>

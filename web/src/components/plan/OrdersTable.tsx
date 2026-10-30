@@ -70,8 +70,8 @@ export const OrdersTable: React.FC<OrdersTableProps> = ({
           </p>
         </div>
 
-        <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-teal-50 text-teal-800 border border-teal-200 flex items-center space-x-1">
-          <ShieldCheck className="w-3.5 h-3.5 text-teal-600 mr-1" />
+        <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-blue-50 text-blue-800 border border-blue-200 flex items-center space-x-1">
+          <ShieldCheck className="w-3.5 h-3.5 text-blue-600 mr-1" />
           <span>F1–F6 Feasibility Enforced</span>
         </span>
       </div>
@@ -98,7 +98,7 @@ export const OrdersTable: React.FC<OrdersTableProps> = ({
               {/* Destination Facility Group Header */}
               <div className="p-4 bg-slate-50/80 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center space-x-3">
-                  <div className="w-9 h-9 rounded-lg bg-teal-700 text-white font-bold flex items-center justify-center text-xs shadow-xs">
+                  <div className="w-9 h-9 rounded-xl bg-blue-600 text-white font-black flex items-center justify-center text-xs shadow-xs">
                     {dstId}
                   </div>
                   <div>
@@ -163,10 +163,10 @@ export const OrdersTable: React.FC<OrdersTableProps> = ({
                             <button
                               onClick={() => onSelectOrder?.(order)}
                               title="Inspect provenance DAG and order details"
-                              className="flex items-center space-x-1.5 hover:text-teal-700 transition-colors cursor-pointer text-left group"
+                              className="flex items-center space-x-1.5 hover:text-blue-700 transition-colors cursor-pointer text-left group"
                             >
-                              <FileText className="w-3.5 h-3.5 text-teal-600 group-hover:scale-110 transition-transform shrink-0" />
-                              <span className="underline decoration-slate-300 group-hover:decoration-teal-600">{order.id}</span>
+                              <FileText className="w-3.5 h-3.5 text-blue-600 group-hover:scale-110 transition-transform shrink-0" />
+                              <span className="underline decoration-slate-300 group-hover:decoration-blue-600 font-bold">{order.id}</span>
                             </button>
                           </td>
 
@@ -240,17 +240,17 @@ export const OrdersTable: React.FC<OrdersTableProps> = ({
                             <div className="flex items-center justify-end space-x-1.5">
                               <button
                                 onClick={() => onSelectOrder?.(order)}
-                                className="bg-slate-100 hover:bg-teal-50 hover:text-teal-800 text-slate-700 font-semibold px-2 py-1.5 rounded text-xs transition-colors border border-slate-200 inline-flex items-center"
+                                className="bg-slate-50 hover:bg-blue-50 hover:text-blue-700 text-slate-700 font-bold px-2.5 py-1.5 rounded-lg text-xs transition-colors border border-slate-200 inline-flex items-center shadow-2xs"
                                 title="Inspect Provenance DAG, QUBO breakdown, and Custody Trail"
                               >
-                                <Eye className="w-3.5 h-3.5 mr-1 text-teal-600" />
+                                <Eye className="w-3.5 h-3.5 mr-1 text-blue-600" />
                                 <span>Inspect</span>
                               </button>
 
                               {!isApproved ? (
                                 <button
                                   onClick={() => onApproveOrder(order.id)}
-                                  className="bg-teal-700 hover:bg-teal-800 active:scale-95 text-white font-bold px-3 py-1.5 rounded text-xs transition-colors shadow-2xs inline-flex items-center space-x-1"
+                                  className="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-colors shadow-2xs inline-flex items-center space-x-1"
                                 >
                                   <Check className="w-3 h-3 mr-1" />
                                   <span>Approve</span>
@@ -258,7 +258,7 @@ export const OrdersTable: React.FC<OrdersTableProps> = ({
                               ) : (
                                 <button
                                   onClick={() => handleDownloadDta(order.id)}
-                                  className="bg-teal-700 hover:bg-teal-800 active:scale-95 text-white font-semibold px-2.5 py-1.5 rounded text-xs transition-colors shadow-2xs inline-flex items-center space-x-1"
+                                  className="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-semibold px-2.5 py-1.5 rounded-lg text-xs transition-colors shadow-2xs inline-flex items-center space-x-1"
                                   title="Download Drug Transfer Advice (DTA) PDF voucher"
                                 >
                                   <Download className="w-3.5 h-3.5 mr-1" />

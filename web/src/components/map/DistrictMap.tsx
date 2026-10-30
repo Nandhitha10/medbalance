@@ -19,17 +19,16 @@ export const DistrictMap: React.FC<DistrictMapProps> = ({
   selectedFacilityId,
   onSelectFacility,
 }) => {
-  const [viewMode, setViewMode] = useState<"leaflet" | "svg">("svg"); // Default to SVG schematic for instant zero-latency projector rendering
+  // Default to genuine Leaflet OpenStreetMap geographic view
+  const [viewMode, setViewMode] = useState<"leaflet" | "svg">("leaflet");
 
-  // Create custom HTML DivIcon for Leaflet
+  // Create clean White & Blue themed custom HTML DivIcon for Leaflet
   const createFacilityIcon = (facility: Facility) => {
-    let ringColor = "#10b981"; // Emerald
-    let pulseAnim = "";
+    let ringColor = "#10b981"; // Emerald for healthy
     if (facility.health_status === "critical") {
-      ringColor = "#ef4444"; // Red
-      pulseAnim = "animate-ping";
+      ringColor = "#ef4444"; // Red for critical shortage
     } else if (facility.health_status === "warning") {
-      ringColor = "#f59e0b"; // Amber
+      ringColor = "#f59e0b"; // Amber for warning
     }
 
     const isSelected = selectedFacilityId === facility.id;
@@ -38,18 +37,19 @@ export const DistrictMap: React.FC<DistrictMapProps> = ({
       className: "custom-facility-marker",
       html: `
         <div style="position: relative; display: flex; flex-direction: column; align-items: center; cursor: pointer;">
-          <div style="width: 44px; height: 44px; border-radius: 9999px; border: 3px solid ${ringColor}; background: rgba(15, 23, 42, 0.95); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); ${
-            isSelected ? "transform: scale(1.15); border-width: 4px;" : ""
+          <div style="width: 44px; height: 44px; border-radius: 9999px; border: 3px solid ${ringColor}; background: #ffffff; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(15, 23, 42, 0.18); transition: transform 0.15s ease; ${
+            isSelected ? "transform: scale(1.18); border-width: 4px; box-shadow: 0 6px 14px rgba(37, 99, 235, 0.35);" : ""
           }">
-            <span style="color: white; font-weight: 800; font-size: 13px; letter-spacing: -0.5px;">${facility.id}</span>
+            <span style="color: #1e3a8a; font-weight: 900; font-size: 14px; letter-spacing: -0.5px;">${facility.id}</span>
             ${
               facility.cold_storage_available
-                ? '<div style="position: absolute; top: -3px; right: -3px; width: 14px; height: 14px; border-radius: 9999px; background: #06b6d4; border: 2px solid #0f172a;"></div>'
+                ? '<div style="position: absolute; top: -3px; right: -3px; width: 14px; height: 14px; border-radius: 9999px; background: #0284c7; border: 2px solid #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></div>'
                 : ""
             }
           </div>
-          <div style="margin-top: 4px; background: #0f172a; color: #f8fafc; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; border: 1px solid #334155; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-            ${facility.name}
+          <div style="margin-top: 4px; background: #ffffff; color: #0f172a; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; border: 1px solid #cbd5e1; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.12); display: flex; align-items: center; gap: 4px;">
+            <span style="width: 6px; height: 6px; border-radius: 9999px; background: ${ringColor}; display: inline-block;"></span>
+            <span>${facility.name}</span>
           </div>
         </div>
       `,
@@ -62,38 +62,42 @@ export const DistrictMap: React.FC<DistrictMapProps> = ({
   facilities.forEach((f) => facilityMap.set(f.id, f));
 
   return (
-    <div className="relative w-full h-full flex flex-col overflow-hidden bg-slate-900">
+    <div className="relative w-full h-full flex flex-col overflow-hidden bg-slate-100">
       {/* Top Map Floating Bar: View Toggle and District Header */}
       <div className="absolute top-4 left-4 z-20 flex items-center space-x-3 pointer-events-auto">
-        <div className="bg-slate-900/90 backdrop-blur-xs border border-slate-700 px-4 py-2 rounded-xl shadow-lg flex items-center space-x-3 text-white">
-          <span className="w-2.5 h-2.5 rounded-full bg-teal-400 animate-pulse"></span>
+        <div className="bg-white/95 backdrop-blur-md border border-slate-200/90 px-4 py-2.5 rounded-2xl shadow-md flex items-center space-x-3 text-slate-800">
+          <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse"></span>
           <div>
-            <h2 className="text-sm font-bold tracking-tight">Bengaluru Urban District Twin</h2>
-            <p className="text-[11px] text-slate-400 font-medium">5 Facilities · Active Transfer Network</p>
+            <h2 className="text-sm font-black tracking-tight text-slate-900">
+              Bengaluru Urban District Overview
+            </h2>
+            <p className="text-[11px] text-slate-500 font-medium">
+              5 Primary Facilities · Real-Time Geographic Routing
+            </p>
           </div>
         </div>
 
         {/* View Toggle */}
-        <div className="bg-slate-900/90 backdrop-blur-xs border border-slate-700 p-1 rounded-xl shadow-lg flex items-center space-x-1">
-          <button
-            onClick={() => setViewMode("svg")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-              viewMode === "svg"
-                ? "bg-teal-600 text-white shadow-sm"
-                : "text-slate-400 hover:text-white"
-            }`}
-          >
-            Schematic SVG
-          </button>
+        <div className="bg-white/95 backdrop-blur-md border border-slate-200/90 p-1 rounded-2xl shadow-md flex items-center space-x-1">
           <button
             onClick={() => setViewMode("leaflet")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
               viewMode === "leaflet"
-                ? "bg-teal-600 text-white shadow-sm"
-                : "text-slate-400 hover:text-white"
+                ? "bg-blue-600 text-white shadow-xs"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            Geographic GIS
+            Geographic GIS (Original Map)
+          </button>
+          <button
+            onClick={() => setViewMode("svg")}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              viewMode === "svg"
+                ? "bg-blue-600 text-white shadow-xs"
+                : "text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            Schematic Diagram
           </button>
         </div>
       </div>
@@ -136,17 +140,17 @@ export const DistrictMap: React.FC<DistrictMapProps> = ({
                 }}
               >
                 <Popup>
-                  <div className="p-1">
+                  <div className="p-1 space-y-1">
                     <h3 className="font-bold text-sm text-slate-900">{facility.name}</h3>
                     <p className="text-xs text-slate-600 font-semibold">Level: {facility.facility_type}</p>
-                    <p className="text-xs text-teal-700 mt-1 font-medium">
-                      Cold Chain: {facility.cold_storage_available ? "Available" : "None"}
+                    <p className="text-xs text-blue-700 font-semibold">
+                      Cold Storage: {facility.cold_storage_available ? "Operational (2–8 °C)" : "None"}
                     </p>
                     <button
                       onClick={() => onSelectFacility(facility)}
-                      className="mt-2 w-full bg-teal-600 text-white py-1 px-2 rounded text-xs font-bold"
+                      className="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white py-1.5 px-3 rounded-lg text-xs font-bold shadow-xs transition-colors"
                     >
-                      Inspect Stock & FEFO
+                      Inspect Stock & FEFO Drawer
                     </button>
                   </div>
                 </Popup>
@@ -169,16 +173,16 @@ export const DistrictMap: React.FC<DistrictMapProps> = ({
                     [dst.latitude, dst.longitude],
                   ]}
                   pathOptions={{
-                    color: isCold ? "#06b6d4" : "#0d9488",
+                    color: isCold ? "#0284c7" : "#2563eb",
                     weight: isCold ? 4 : 3,
-                    dashArray: isCold ? "8, 6" : undefined,
-                    opacity: 0.85,
+                    dashArray: isCold ? "6, 6" : undefined,
+                    opacity: 0.9,
                   }}
                 >
                   <Tooltip sticky>
-                    <div className="text-xs font-semibold">
-                      <span className="font-bold">{order.id}</span>
-                      <div>
+                    <div className="text-xs font-semibold p-1">
+                      <span className="font-bold text-blue-900">{order.id}</span>
+                      <div className="text-slate-800">
                         {order.quantity} units of {order.drug_code}
                       </div>
                       <div className="text-[10px] text-slate-500">
