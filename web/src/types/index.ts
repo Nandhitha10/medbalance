@@ -58,7 +58,7 @@ export interface TransferOrder {
   lot_quantity?: number;
   quantity: number;
   usable_quantity: number;
-  status: "DRAFT" | "APPROVED" | "IN_TRANSIT" | "DELIVERED" | "CANCELLED";
+  status: "DRAFT" | "APPROVED" | "IN_TRANSIT" | "DELIVERED" | "COMPLETED" | "CANCELLED";
   temperature_controlled: boolean;
   savings_inr?: number;
   qr_token?: string;
@@ -115,7 +115,51 @@ export type NavPage =
   | "coldchain"
   | "results"
   | "ai-health"
-  | "scenarios";
+  | "scenarios"
+  | "order-detail"
+  | "scan";
+
+export interface ProvenanceNode {
+  id: string;
+  type: string;
+  label: string;
+  detail: Record<string, any>;
+}
+
+export interface ProvenanceDAG {
+  order_id: string;
+  plan_id?: string;
+  generated_at?: string;
+  solver_tier?: string;
+  source_lot?: Record<string, any>;
+  destination_position?: Record<string, any>;
+  feasibility_proof?: Record<string, any>;
+  audit_seq?: number;
+  report?: Record<string, any>;
+  extraction?: Record<string, any>;
+}
+
+export interface CustodyEventItem {
+  id: number;
+  order_id: string;
+  actor: string;
+  event_type: "DISPATCH" | "RECEIVE" | "CONSUME" | string;
+  timestamp: string;
+  location?: string | null;
+  temperature_c?: number | null;
+  signature_hash?: string | null;
+  notes?: string | null;
+  deviation?: Record<string, any> | null;
+}
+
+export interface RegretAlternative {
+  alternate_destination_id: string;
+  chosen_reward: number;
+  alternate_reward: number;
+  regret_delta: number;
+  reason: string;
+  reason_code?: string;
+}
 
 export interface ExtractionItem {
   id: string;

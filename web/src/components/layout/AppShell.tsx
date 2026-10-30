@@ -11,6 +11,8 @@ import { BenchmarkScreen } from "../screens/BenchmarkScreen";
 import { ResultsScreen } from "../screens/ResultsScreen";
 import { AiHealthScreen } from "../screens/AiHealthScreen";
 import { ScenariosScreen } from "../screens/ScenariosScreen";
+import { ScanScreen } from "../screens/ScanScreen";
+import { CopilotPanel } from "../copilot/CopilotPanel";
 import { useEventSource } from "../../hooks/useEventSource";
 import { api } from "../../lib/api";
 import { Facility, NavPage, PlanRun, Position, Drug } from "../../types";
@@ -19,6 +21,9 @@ import { Flame, ArrowRight, ShieldAlert } from "lucide-react";
 export const AppShell: React.FC = () => {
   const getUrlParams = () => {
     if (typeof window === "undefined") return { page: "map" as NavPage, facilityId: null };
+    if (window.location.pathname.startsWith("/scan")) {
+      return { page: "scan" as NavPage, facilityId: null };
+    }
     const params = new URLSearchParams(window.location.search);
     const page = (params.get("page") as NavPage) || "map";
     const facilityId = params.get("facility");
@@ -175,6 +180,20 @@ export const AppShell: React.FC = () => {
     } catch {}
   };
 
+  // Dedicated full-screen mobile layout when opened via /scan on a phone over LAN
+  if (typeof window !== "undefined" && window.location.pathname.startsWith("/scan")) {
+    return (
+      <ScanScreen
+        onNavigateHome={() => {
+          try {
+            window.history.pushState({}, "", "/?page=map");
+          } catch {}
+          setActivePage("map");
+        }}
+      />
+    );
+  }
+
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-slate-100">
       {/* Top Bar with Simulation Clock and Live Event Ticker */}
@@ -234,6 +253,7 @@ export const AppShell: React.FC = () => {
           {activePage === "results" && <ResultsScreen />}
           {activePage === "ai-health" && <AiHealthScreen />}
           {activePage === "scenarios" && <ScenariosScreen />}
+          {activePage === "scan" && <ScanScreen onNavigateHome={() => handleSelectPage("map")} />}
         </main>
 
         {/* Facility Inspection Drawer */}
@@ -245,6 +265,9 @@ export const AppShell: React.FC = () => {
           />
         )}
       </div>
+
+      {/* Floating Persistently Available Copilot Drawer */}
+      <CopilotPanel />
     </div>
   );
 };

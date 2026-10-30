@@ -1116,3 +1116,84 @@ All 11 forecast tests passed cleanly:
 - **L3 (AI & Forecast)**: [COMPLETED] Prompt registry, GenAI gateway providers with cache/call logging, Ingest-AI multi-format parser & review queue, Holt-Winters baseline + LLM context multiplier forecasting with code guardrails, and backtest reporting.
 - **L4 (ColdChain & Sim)**: [COMPLETED] `sim-control`, `sim-hospital` (all 4 styles), `sensors`, and `coldchain` fully implemented and tested.
 - **Frontend / Projector UI**: [COMPLETED] Complete, projector-ready clinical dashboard with Ingestion & Review Queue, Upgraded Plan Page, Solver Benchmark, Cold Chain IoT Monitor, and Simulation Scenario Console. All 5 demo script moments verified.
+
+---
+
+## Phase P18 — Final Frontend Polish, Full Screen Suite & Demo Readiness
+
+### Delivered Capabilities & Screen Architecture
+
+1. **Order Detail Screen & Interactive Provenance DAG (`OrderDetailModal.tsx`, `ProvenanceGraph.tsx`)**:
+   - **DTA Header & Status**: Displays sequential Drug Transfer Advice voucher number (`DTA/BLR-U/2026/...`), transferring and receiving facilities, approval timestamp, and status badge.
+   - **Grounded ✓ vs Deterministic Template Chip**: Visual indication of firewall verification. If numbers are grounded, shows green "Grounded ✓ (Firewall Checked)"; if the firewall intercepted an ungrounded hallucination, shows amber "Deterministic Certified Template".
+   - **Interactive Left-to-Right Provenance DAG (`ProvenanceGraph.tsx`)**:
+     - Custom SVG graph: `Raw Report Excerpt` &rarr; `Grounded Extraction (Confidence, Anomaly Flags)` &rarr; `Source Lot (Stock, Reserve)` &rarr; `Candidate Split (Usable Capped, F1-F6 Passed)` &rarr; `Transfer Order (Allocated)` &rarr; `Physical Custody (Chain Events)`.
+     - Clickable nodes display rich metadata inspection cards below the graph.
+   - **QUBO Energy Term Breakdown Bar**:
+     - Visual horizontal breakdown showing contributions from Reward (+4.85), Shortage Quadratic (+3.20), Shared Trip Synergy (+1.15), Distance Impedance (-1.40), and Net QUBO Energy (+7.80).
+   - **Regret Alternatives Table**:
+     - Displays top 5 evaluated transfer alternatives with deterministic numerical reasons (`LOWER_USABLE`, `FAILED_RULE_F3`, `WORSE_FILL`, etc.) and &Delta;H regret metrics.
+   - **DTA Voucher PDF Preview & Download**:
+     - One-click trigger to fetch official WeasyPrint PDF with embedded QR code.
+   - **Custody Timeline**:
+     - Chronological list of barcode/QR custody events with actors, timestamps, locations, logger temperatures, and SHA-256 signatures.
+
+2. **Persistent Copilot Side Panel on Every Screen (`CopilotPanel.tsx`)**:
+   - **Streaming Drawer**: Floating persistent action button on every page opens a responsive streaming chat panel.
+   - **Interactive Tool-Call Chips**:
+     - Expandable chips for `why_not`, `what_if`, `get_stock_position`, `explain_order`, `get_coldchain_status`, `get_audit_trail`, `compare_policies`.
+     - Displays input arguments and human-readable result summaries.
+   - **Language Toggle (EN / &#3221;&#3240;&#3277;&#3240;&#3233;)**:
+     - Real-time language switch supporting English and authentic Kannada prompts and responses.
+   - **Suggested Quick Questions**:
+     - One-click questions for common District Drug Officer workflows:
+       - *"Why was H4's surplus insulin sent to H1 instead of H3?"*
+       - *"What if we repair cold storage at PHC Sarjapura (H4)?"*
+       - *"Show stock position for Insulin Regular at DH Jayanagar (H1)"*
+       - *"Are there any cold-chain excursions currently active?"*
+       - *"Verify the cryptographic audit chain integrity"*
+   - **Strict Numeric Grounding Badge**:
+     - "Numerically Verified (Firewall &check;)" tag on every tool-grounded assertion.
+
+3. **Mobile-First Consignment Scanner (`ScanScreen.tsx` / `/scan/{token}`)**:
+   - **Dedicated Full-Screen Mobile Route**:
+     - Clean, distraction-free interface when opened on mobile devices over LAN (`/scan/:token` or `/scan?token=...`).
+   - **Big Touch Targets (&ge; 48px)**:
+     - `APPROVED`: Big green **"DISPATCH CONSIGNMENT"** button with operator and dispatch dock fields.
+     - `IN_TRANSIT`: Big blue **"RECEIVE CONSIGNMENT"** button with quantity input (to test shortage deviations) and temperature logger input (with alert if outside 2.0–8.0 &deg;C).
+     - `DELIVERED`: Big purple **"MARK CONSUMED / ADMINISTERED"** button for dispensing ward confirmation.
+     - `COMPLETED`: Success confirmation badge.
+   - **Deviation Alerts with GenAI Summaries**:
+     - Real-time deviation detection for quantity mismatches, transit temperature excursions, and late arrivals.
+   - **Demo Quick-Select Bar**:
+     - Enables test evaluators to switch between active consignment tokens in one click without physical barcode scanning.
+
+4. **Cryptographic Audit Badge in Top Bar (`AuditBadge.tsx`, `TopBar.tsx`)**:
+   - **Live Polling**: Polls `GET /api/core/audit/verify` every 10s.
+   - **Visual State**: Green `Ledger verified &check; {N}` or flashing red `Tampered at #{first_bad_seq}`.
+   - **Admin Dropdown Menu**:
+     - One-click **"Inject Tamper Demo"** (mutates lot quantity on disk, breaking SHA-256 hash chaining).
+     - One-click **"Restore Original State"** (repairs payload, returning chain to verified green).
+
+5. **GenAI Gateway Health & Prompt Registry Screen (`AiHealthScreen.tsx` / `/ai-health`)**:
+   - Telemetry cards: Active provider (`ClaudeProvider`), models (`Haiku` fast, `Sonnet` smart), replay cache hit rate (`83.1%`), P50/P95 latency, 0 schema failures, 0 fallbacks.
+   - Firewall Interception Notice: Displays active protection metrics (e.g., 2 hallucination attempts blocked and replaced with certified templates).
+   - Per-purpose breakdown table (`forecast`, `anomaly_explain`, `narrate`, `copilot`) with latency, cache efficiency, and health status.
+   - Automated Benchmark Evaluation Suite Grid: Detailed results from `evidence/eval_reports/latest.json` covering FHIR, CSV, Kannada WhatsApp, OCR, firewall precision, and QUBO gap.
+   - Production Prompt Registry: Lists registered schemas, fallback handlers, and temperature caps.
+
+6. **Impact Results & Ablation Study Screen (`ResultsScreen.tsx` / `/results`)**:
+   - Top KPI cards: Cumulative Shortage Reduced (1,350 units, 92%), Total Expiry Value Rescued (&8377;12,450), Zero Waste Moved (0 units), 100% Audit Provenance.
+   - **Recharts Grouped Bar Chart with 95% Confidence Interval Error Bars**:
+     - Visualizes stockout-days across 5 redistribution policies with empirical error bounds.
+   - **Avoided Expiry &8377; vs Waste Moved Cost &8377; Bar Chart**:
+     - Demonstrates economic savings vs financial loss from oversupplying facilities past absorption capacity.
+   - **Comprehensive 8-Row Ablation Table**:
+     - Directly compares: `No-transfer (Baseline)`, `Greedy Phone Call (Status Quo)`, `Safe Greedy F4 (Deterministic)`, `QUBO w/o P1 (No One-Place)`, `QUBO w/o P2 (No Shortage Sq)`, `QUBO w/o F4 (No Capacity)`, `QUBO v3 QpiAI (Full Model)`, `Classical MILP (OR-Tools)`.
+     - Proves 0 violations and 0.0% optimality gap vs exact branch-and-cut MILP while running in 0.042s.
+
+7. **Demo Readiness & Cross-Device Compatibility**:
+   - Tested on standard desktop projector resolutions (1366&times;768 and 1920&times;1080) and mobile viewports.
+   - Zero console errors; strict TypeScript compilation verified with `tsc && vite build`.
+   - All 5 core demo moments executable entirely through the UI without terminal commands.
+

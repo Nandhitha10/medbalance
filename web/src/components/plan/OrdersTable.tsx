@@ -1,6 +1,6 @@
 import React from "react";
 import { TransferOrder, Drug, Facility } from "../../types";
-import { Snowflake, ArrowRight, CheckCircle2, Clock, FileText, Check, ShieldCheck, MapPin, Download } from "lucide-react";
+import { Snowflake, ArrowRight, CheckCircle2, Clock, FileText, Check, ShieldCheck, MapPin, Download, Eye } from "lucide-react";
 import { formatNumber } from "../../lib/utils";
 
 interface OrdersTableProps {
@@ -8,6 +8,7 @@ interface OrdersTableProps {
   drugs: Drug[];
   facilities: Facility[];
   onApproveOrder: (orderId: string) => void;
+  onSelectOrder?: (order: TransferOrder) => void;
 }
 
 export const OrdersTable: React.FC<OrdersTableProps> = ({
@@ -15,6 +16,7 @@ export const OrdersTable: React.FC<OrdersTableProps> = ({
   drugs,
   facilities,
   onApproveOrder,
+  onSelectOrder,
 }) => {
   const drugMap = new Map<string, Drug>();
   drugs.forEach((d) => drugMap.set(d.code, d));
@@ -158,10 +160,14 @@ export const OrdersTable: React.FC<OrdersTableProps> = ({
                         <tr key={order.id} className="hover:bg-slate-50 transition-colors">
                           {/* DTA Voucher */}
                           <td className="py-3 px-4 font-mono font-bold text-slate-900">
-                            <div className="flex items-center space-x-1.5">
-                              <FileText className="w-3.5 h-3.5 text-teal-600 shrink-0" />
-                              <span>{order.id}</span>
-                            </div>
+                            <button
+                              onClick={() => onSelectOrder?.(order)}
+                              title="Inspect provenance DAG and order details"
+                              className="flex items-center space-x-1.5 hover:text-teal-700 transition-colors cursor-pointer text-left group"
+                            >
+                              <FileText className="w-3.5 h-3.5 text-teal-600 group-hover:scale-110 transition-transform shrink-0" />
+                              <span className="underline decoration-slate-300 group-hover:decoration-teal-600">{order.id}</span>
+                            </button>
                           </td>
 
                           {/* Drug & Batch */}
@@ -231,29 +237,35 @@ export const OrdersTable: React.FC<OrdersTableProps> = ({
 
                           {/* Action */}
                           <td className="py-3 px-4 text-right">
-                            {!isApproved ? (
+                            <div className="flex items-center justify-end space-x-1.5">
                               <button
-                                onClick={() => onApproveOrder(order.id)}
-                                className="bg-teal-700 hover:bg-teal-800 active:scale-95 text-white font-bold px-3 py-1.5 rounded text-xs transition-colors shadow-2xs inline-flex items-center space-x-1"
+                                onClick={() => onSelectOrder?.(order)}
+                                className="bg-slate-100 hover:bg-teal-50 hover:text-teal-800 text-slate-700 font-semibold px-2 py-1.5 rounded text-xs transition-colors border border-slate-200 inline-flex items-center"
+                                title="Inspect Provenance DAG, QUBO breakdown, and Custody Trail"
                               >
-                                <Check className="w-3 h-3 mr-1" />
-                                <span>Approve</span>
+                                <Eye className="w-3.5 h-3.5 mr-1 text-teal-600" />
+                                <span>Inspect</span>
                               </button>
-                            ) : (
-                              <div className="flex items-center justify-end space-x-2">
+
+                              {!isApproved ? (
+                                <button
+                                  onClick={() => onApproveOrder(order.id)}
+                                  className="bg-teal-700 hover:bg-teal-800 active:scale-95 text-white font-bold px-3 py-1.5 rounded text-xs transition-colors shadow-2xs inline-flex items-center space-x-1"
+                                >
+                                  <Check className="w-3 h-3 mr-1" />
+                                  <span>Approve</span>
+                                </button>
+                              ) : (
                                 <button
                                   onClick={() => handleDownloadDta(order.id)}
                                   className="bg-teal-700 hover:bg-teal-800 active:scale-95 text-white font-semibold px-2.5 py-1.5 rounded text-xs transition-colors shadow-2xs inline-flex items-center space-x-1"
                                   title="Download Drug Transfer Advice (DTA) PDF voucher"
                                 >
                                   <Download className="w-3.5 h-3.5 mr-1" />
-                                  <span>DTA Voucher</span>
+                                  <span>DTA</span>
                                 </button>
-                                <span className="text-[11px] text-emerald-700 font-bold hidden sm:inline">
-                                  Ready
-                                </span>
-                              </div>
-                            )}
+                              )}
+                            </div>
                           </td>
                         </tr>
                       );

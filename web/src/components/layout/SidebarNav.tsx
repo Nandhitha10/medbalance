@@ -10,6 +10,7 @@ import {
   Cpu,
   Sliders,
   AlertCircle,
+  QrCode,
 } from "lucide-react";
 import { NavPage } from "../../types";
 import { api } from "../../lib/api";
@@ -75,6 +76,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
     { id: "results", label: "Impact Results", icon: <TrendingUp className="w-5 h-5" /> },
     { id: "ai-health", label: "GenAI Gateway", icon: <Cpu className="w-5 h-5" /> },
     { id: "scenarios", label: "Sim Scenarios", icon: <Sliders className="w-5 h-5" /> },
+    { id: "scan", label: "Mobile Scanner", icon: <QrCode className="w-5 h-5" />, badge: "LAN", badgeVariant: "teal" },
   ];
 
   return (

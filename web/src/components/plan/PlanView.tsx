@@ -18,6 +18,8 @@ import { PlanRun, Drug, Facility } from "../../types";
 import { PlanKpiHeader } from "./PlanKpiHeader";
 import { OrdersTable } from "./OrdersTable";
 import { PlanMiniMap } from "./PlanMiniMap";
+import { OrderDetailModal } from "./OrderDetailModal";
+import { TransferOrder } from "../../types";
 import { PlanProgressInfo } from "../../hooks/useEventSource";
 
 interface PlanViewProps {
@@ -35,6 +37,7 @@ export const PlanView: React.FC<PlanViewProps> = ({
   const [isSolving, setIsSolving] = useState(false);
   const [activeStageIndex, setActiveStageIndex] = useState<number>(5); // default completed
   const [selectedSolver, setSelectedSolver] = useState<string>("qubo");
+  const [selectedOrder, setSelectedOrder] = useState<TransferOrder | null>(null);
 
   const stages = [
     { id: "snapshot", label: "Snapshot (FEFO)", desc: "Build in-memory state & rates" },
@@ -274,7 +277,16 @@ export const PlanView: React.FC<PlanViewProps> = ({
         drugs={drugs}
         facilities={facilities}
         onApproveOrder={(orderId) => approveMutation.mutate(orderId)}
+        onSelectOrder={(ord) => setSelectedOrder(ord)}
       />
+
+      {/* Order Detail & Provenance DAG Modal */}
+      {selectedOrder && (
+        <OrderDetailModal
+          order={selectedOrder}
+          onClose={() => setSelectedOrder(null)}
+        />
+      )}
     </div>
   );
 };

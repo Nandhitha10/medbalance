@@ -14,6 +14,7 @@ import {
 import { api } from "../../lib/api";
 import { ClockState, SSEEvent } from "../../types";
 import { formatDateTime } from "../../lib/utils";
+import { AuditBadge } from "./AuditBadge";
 
 interface TopBarProps {
   events: SSEEvent[];
@@ -133,7 +134,8 @@ export const TopBar: React.FC<TopBarProps> = ({ events, isConnected }) => {
       </div>
 
       {/* Right: Simulation Clock Controls */}
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-3">
+        <AuditBadge />
         {/* Sim Date */}
         <div className="flex items-center space-x-2 bg-teal-50 border border-teal-200 px-3 py-1.5 rounded-lg shadow-2xs">
           <Clock className="w-4 h-4 text-teal-700" />

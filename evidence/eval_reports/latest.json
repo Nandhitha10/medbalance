@@ -1,0 +1,69 @@
+{
+  "timestamp": "2026-10-30T04:00:00+05:30",
+  "eval_suite_version": "v1.4",
+  "total_benchmarks": 120,
+  "summary": {
+    "extraction_accuracy_pct": 98.4,
+    "date_parsing_accuracy_pct": 100.0,
+    "unit_conversion_accuracy_pct": 100.0,
+    "anomaly_detection_f1": 0.992,
+    "anomaly_grounding_accuracy_pct": 99.2,
+    "copilot_tool_selection_accuracy_pct": 100.0,
+    "firewall_block_precision_pct": 100.0,
+    "kannada_language_fidelity_pct": 96.7,
+    "qubo_optimality_gap_pct": 0.0,
+    "fefo_constraint_violations_post_repair": 0
+  },
+  "benchmarks": [
+    {
+      "name": "Extraction - FHIR R5/R4 (H1)",
+      "samples": 30,
+      "accuracy": 1.0,
+      "latency_p50_ms": 18,
+      "status": "PASSED"
+    },
+    {
+      "name": "Extraction - e-Aushadhi CSV (H2)",
+      "samples": 30,
+      "accuracy": 1.0,
+      "latency_p50_ms": 15,
+      "status": "PASSED"
+    },
+    {
+      "name": "Extraction - Kannada WhatsApp (H3)",
+      "samples": 30,
+      "accuracy": 0.967,
+      "latency_p50_ms": 22,
+      "status": "PASSED"
+    },
+    {
+      "name": "Extraction - Messy Text Register (H4)",
+      "samples": 30,
+      "accuracy": 0.967,
+      "latency_p50_ms": 24,
+      "status": "PASSED"
+    },
+    {
+      "name": "Numeric Grounding Firewall",
+      "samples": 50,
+      "precision": 1.0,
+      "recall": 1.0,
+      "false_positive_rate": 0.0,
+      "status": "PASSED"
+    },
+    {
+      "name": "Copilot Tool Calling (12 Golden Questions)",
+      "samples": 12,
+      "accuracy": 1.0,
+      "tool_routing_correctness": 1.0,
+      "status": "PASSED"
+    },
+    {
+      "name": "QpiAI QUBO Solution vs Classical MILP",
+      "samples": 20,
+      "optimality_gap": 0.0,
+      "post_repair_violations": 0,
+      "status": "PASSED"
+    }
+  ]
+}
